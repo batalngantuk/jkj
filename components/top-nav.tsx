@@ -39,8 +39,8 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="lg:hidden"
             onClick={onMenuClick}
+            className="text-foreground"
           >
             <Menu className="h-5 w-5" />
           </Button>

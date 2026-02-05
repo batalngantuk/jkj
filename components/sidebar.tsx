@@ -90,6 +90,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Dashboard', href: '/purchasing' },
         { label: 'Suppliers', href: '/purchasing/suppliers' },
         { label: 'Purchase Orders', href: '/purchasing/po' },
+        { label: 'BC 2.3 (Import)', href: '/purchasing/bc23' },
       ]
     },
     { 
@@ -121,6 +122,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Sales Analysis', href: '/reports/sales' },
         { label: 'Production Yield', href: '/reports/production' },
         { label: 'Inventory Value', href: '/reports/inventory' },
+        { label: 'Material Traceability', href: '/reports/traceability' },
       ]
     },
   ]
@@ -136,12 +138,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
       
       {/* Sidebar */}
-      <div className={`
+      <aside className={`
         fixed lg:static inset-y-0 left-0 z-50
-        w-64 border-r border-border bg-card text-card-foreground shadow-lg
-        transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        h-screen overflow-y-auto
+        border-r border-border bg-card text-card-foreground shadow-lg
+        transition-all duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0 lg:w-0 lg:border-none overflow-hidden'}
+        h-screen
       `}>
         {/* Close button for mobile */}
         <div className="lg:hidden flex justify-end p-4">
@@ -150,8 +152,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Button>
         </div>
 
-        {/* Sidebar Content */}
-        <div className="flex flex-col gap-6 p-6">
+        {/* Sidebar Content wrapper to prevent layout shift during transition if needed */}
+        <div className="w-64 flex flex-col h-full">
+
+        <div className="flex flex-col gap-6 p-6 overflow-y-auto flex-1">
           {/* Header */}
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground/60">
@@ -261,8 +265,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <span>Help & Support</span>
             </Button>
           </div>
+          </div>
         </div>
-      </div>
+      </aside>
     </>
   )
 }

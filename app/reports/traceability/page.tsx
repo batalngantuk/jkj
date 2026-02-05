@@ -1,293 +1,262 @@
 'use client'
 
+import React, { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, Download, Printer as Print, Mail, ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Search, Download, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import AppLayout from '@/components/app-layout'
+import { TraceabilityChain, TraceabilityStep } from '@/components/customs/traceability-chain'
+import { MOCK_TRACEABILITY } from '@/lib/mock-data/traceability'
 
-export default function TraceabilityReport() {
+export default function TraceabilityReportPage() {
+  const [searchType, setSearchType] = useState<string>('lot')
+  const [searchValue, setSearchValue] = useState<string>('')
+  const [selectedRecord, setSelectedRecord] = useState(MOCK_TRACEABILITY[0])
+
+  const handleSearch = () => {
+    // Mock search - in real app would filter based on searchType and searchValue
+    // For now just show first record
+  }
+
+  const traceabilitySteps: TraceabilityStep[] = [
+    {
+      type: 'BC23',
+      id: selectedRecord.bc23Id,
+      number: selectedRecord.bc23Number,
+      description: selectedRecord.rmDescription,
+      date: selectedRecord.grDate,
+      quantity: `${selectedRecord.rmQuantity.toLocaleString()} ${selectedRecord.rmUnit}`,
+      lotNumber: selectedRecord.rmLotNumber,
+      href: `/purchasing/bc23/${selectedRecord.bc23Id}`
+    },
+    {
+      type: 'GR',
+      id: selectedRecord.grId,
+      number: selectedRecord.grNumber,
+      description: `PO: ${selectedRecord.poNumber}`,
+      date: selectedRecord.grDate,
+      quantity: `${selectedRecord.rmQuantity.toLocaleString()} ${selectedRecord.rmUnit}`,
+      lotNumber: selectedRecord.rmLotNumber
+    },
+    {
+      type: 'WO',
+      id: selectedRecord.woId,
+      number: selectedRecord.woNumber,
+      description: selectedRecord.productName,
+      date: selectedRecord.productionDate,
+      quantity: `${selectedRecord.fgQuantity.toLocaleString()} ${selectedRecord.fgUnit}`,
+      lotNumber: selectedRecord.fgLotNumber,
+      href: `/production/wo/${selectedRecord.woId}`
+    },
+    {
+      type: 'FG',
+      id: selectedRecord.fgLotNumber,
+      number: selectedRecord.fgLotNumber,
+      description: selectedRecord.productName,
+      date: selectedRecord.productionDate,
+      quantity: `${selectedRecord.fgQuantity.toLocaleString()} ${selectedRecord.fgUnit}`,
+      lotNumber: selectedRecord.fgLotNumber
+    }
+  ]
+
+  // Add BC 3.0 if exported
+  if (selectedRecord.bc30Id) {
+    traceabilitySteps.push({
+      type: 'BC30',
+      id: selectedRecord.bc30Id,
+      number: selectedRecord.bc30Number!,
+      description: `Export to customer`,
+      date: selectedRecord.exportDate!,
+      quantity: `${selectedRecord.exportQuantity!.toLocaleString()} ${selectedRecord.fgUnit}`,
+      lotNumber: selectedRecord.fgLotNumber,
+      href: `/logistics/bc30/${selectedRecord.bc30Id}`
+    })
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header Navigation */}
-      <div className="border-b border-border bg-card px-6 py-4">
+    <AppLayout>
+      <div className="p-6 space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <Link href="/reports">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Reports
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <span className="text-muted-foreground">•</span>
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <span>Material Traceability</span>
-              <ChevronRight className="h-4 w-4" />
-              <span>Compliance Report</span>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-              <Print className="h-4 w-4" />
-              Print
-            </Button>
-            <Button className="bg-primary hover:bg-primary/90 gap-2">
-              <Download className="h-4 w-4" />
-              Download PDF
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Report Content */}
-      <div className="mx-auto max-w-4xl space-y-6 p-6">
-        {/* Official Header */}
-        <div className="border-b-2 border-primary pb-6 text-center">
-          <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Kementerian Keuangan Republik Indonesia
-          </div>
-          <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Direktorat Jenderal Bea dan Cukai
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">
-            MATERIAL TRACEABILITY COMPLIANCE REPORT
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            BC 2.3 Import to BC 3.0 Export Documentation Flow
-          </p>
-        </div>
-
-        {/* Report Metadata */}
-        <Card className="p-4">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div>
-              <p className="text-xs font-semibold text-muted-foreground">Report Date</p>
-              <p className="mt-1 font-medium text-foreground">15 February 2026</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground">Report Period</p>
-              <p className="mt-1 font-medium text-foreground">Feb 2026</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground">Company</p>
-              <p className="mt-1 font-medium text-foreground">JKJ Manufacturing</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground">NPWP</p>
-              <p className="mt-1 font-medium text-foreground">12.345.678.901-999</p>
+              <h1 className="text-2xl font-bold text-foreground">Material Traceability Report</h1>
+              <p className="text-sm text-muted-foreground">Track materials from import to export for customs compliance</p>
             </div>
           </div>
-        </Card>
-
-        {/* Executive Summary */}
-        <div>
-          <h2 className="mb-3 text-lg font-bold text-foreground">Executive Summary</h2>
-          <Card className="border-l-4 border-l-primary p-4">
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Imports (BC 2.3)</p>
-                <p className="mt-1 text-2xl font-bold text-primary">45 POs</p>
-                <p className="mt-1 text-xs text-muted-foreground">Rp 2.5 Billion</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Materials Traced to Exports</p>
-                <p className="mt-1 text-2xl font-bold text-green-600">42 POs</p>
-                <p className="mt-1 text-xs text-muted-foreground">93.3% Coverage</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Export Value (BC 3.0)</p>
-                <p className="mt-1 text-2xl font-bold text-blue-600">Rp 4.8 Billion</p>
-                <p className="mt-1 text-xs text-muted-foreground">Finalized</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Material Flow Diagram */}
-        <div>
-          <h2 className="mb-3 text-lg font-bold text-foreground">Material Flow Overview</h2>
-          <div className="space-y-2 rounded-lg border border-border bg-secondary/20 p-4">
-            <div className="flex items-center justify-between">
-              <div className="rounded-lg bg-blue-100 px-4 py-3 text-center">
-                <p className="text-xs font-semibold text-blue-900">IMPORT</p>
-                <p className="text-sm font-bold text-blue-900">BC 2.3 Filed</p>
-                <p className="text-xs text-blue-800">45 Purchase Orders</p>
-              </div>
-              <div className="flex-1 border-t-2 border-dashed border-primary mx-2"></div>
-              <div className="rounded-lg bg-yellow-100 px-4 py-3 text-center">
-                <p className="text-xs font-semibold text-yellow-900">IN WAREHOUSE</p>
-                <p className="text-sm font-bold text-yellow-900">Stock Control</p>
-                <p className="text-xs text-yellow-800">Material Tracking</p>
-              </div>
-              <div className="flex-1 border-t-2 border-dashed border-primary mx-2"></div>
-              <div className="rounded-lg bg-green-100 px-4 py-3 text-center">
-                <p className="text-xs font-semibold text-green-900">EXPORT</p>
-                <p className="text-sm font-bold text-green-900">BC 3.0 Filed</p>
-                <p className="text-xs text-green-800">42 Sales Orders</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Detailed Traceability Table */}
-        <div>
-          <h2 className="mb-3 text-lg font-bold text-foreground">Material Traceability Details</h2>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Import Doc</TableHead>
-                  <TableHead>Material Code</TableHead>
-                  <TableHead>Qty Imported</TableHead>
-                  <TableHead>Qty Used</TableHead>
-                  <TableHead>Export Doc</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {[
-                  {
-                    import: 'BC.2.3/2026/001',
-                    material: 'LAT-001',
-                    imported: '5,000 kg',
-                    used: '4,800 kg',
-                    export: 'BC.3.0/2026/001',
-                    status: 'Approved',
-                  },
-                  {
-                    import: 'BC.2.3/2026/002',
-                    material: 'NIT-002',
-                    imported: '3,000 kg',
-                    used: '2,950 kg',
-                    export: 'BC.3.0/2026/002',
-                    status: 'Approved',
-                  },
-                  {
-                    import: 'BC.2.3/2026/003',
-                    material: 'CHM-001',
-                    imported: '500 L',
-                    used: '480 L',
-                    export: 'BC.3.0/2026/001',
-                    status: 'Approved',
-                  },
-                  {
-                    import: 'BC.2.3/2026/004',
-                    material: 'PKG-005',
-                    imported: '10,000 pcs',
-                    used: '9,850 pcs',
-                    export: 'BC.3.0/2026/003',
-                    status: 'Pending',
-                  },
-                  {
-                    import: 'BC.2.3/2026/005',
-                    material: 'LAT-001',
-                    imported: '2,500 kg',
-                    used: '2,200 kg',
-                    export: 'BC.3.0/2026/004',
-                    status: 'Approved',
-                  },
-                ].map((row, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell className="font-medium">{row.import}</TableCell>
-                    <TableCell>{row.material}</TableCell>
-                    <TableCell>{row.imported}</TableCell>
-                    <TableCell>{row.used}</TableCell>
-                    <TableCell className="text-blue-600">{row.export}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs font-semibold ${
-                          row.status === 'Approved'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}
-                      >
-                        {row.status}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-
-        {/* Material Balance */}
-        <Card className="p-4">
-          <h3 className="mb-4 font-bold text-foreground">Material Balance Sheet</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between border-b border-border pb-2">
-              <span className="text-sm text-muted-foreground">Total Imported Quantity</span>
-              <span className="font-semibold text-foreground">45,000 kg</span>
-            </div>
-            <div className="flex justify-between border-b border-border pb-2">
-              <span className="text-sm text-muted-foreground">Total Used in Production</span>
-              <span className="font-semibold text-green-600">42,200 kg</span>
-            </div>
-            <div className="flex justify-between border-b border-border pb-2">
-              <span className="text-sm text-muted-foreground">Waste / Scrap</span>
-              <span className="font-semibold text-yellow-600">1,800 kg (4%)</span>
-            </div>
-            <div className="flex justify-between bg-secondary/50 px-3 py-2 rounded">
-              <span className="font-semibold text-foreground">Ending Inventory</span>
-              <span className="font-bold text-primary">1,000 kg</span>
-            </div>
-          </div>
-        </Card>
-
-        {/* Compliance Statement */}
-        <div>
-          <h2 className="mb-3 text-lg font-bold text-foreground">Compliance Statement</h2>
-          <Card className="border-l-4 border-l-green-500 p-4">
-            <p className="text-sm text-muted-foreground">
-              JKJ Manufacturing hereby certifies that all materials imported under BC 2.3 declarations have been 
-              properly tracked, accounted for, and traced to corresponding exports under BC 3.0 declarations. 
-              The material balance discrepancies of 4% are within acceptable industry standards and attributed to 
-              processing waste. All supporting documentation is available for DJP audit verification.
-            </p>
-          </Card>
-        </div>
-
-        {/* Signature Block */}
-        <div className="border-t border-border pt-6">
-          <p className="mb-4 text-sm font-semibold text-foreground">Authorized by:</p>
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-2">
-            <div>
-              <p className="text-xs text-muted-foreground">Finance Manager</p>
-              <div className="mt-8 h-16"></div>
-              <p className="border-t border-border pt-2 text-xs font-semibold">Budi Santoso</p>
-              <p className="text-xs text-muted-foreground">15 February 2026</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Plant Manager</p>
-              <div className="mt-8 h-16"></div>
-              <p className="border-t border-border pt-2 text-xs font-semibold">Siti Nurhaliza</p>
-              <p className="text-xs text-muted-foreground">15 February 2026</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-2 border-t border-border pt-6">
-          <Link href="/reports">
-            <Button variant="outline">Back to Reports</Button>
-          </Link>
-          <Button variant="outline" className="gap-2 bg-transparent">
-            <Mail className="h-4 w-4" />
-            Email Report
-          </Button>
-          <Button className="bg-primary hover:bg-primary/90 gap-2 ml-auto">
+          <Button className="gap-2">
             <Download className="h-4 w-4" />
-            Download as PDF
+            Export Certificate
           </Button>
         </div>
+
+        {/* Search */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Search Traceability</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <Select value={searchType} onValueChange={setSearchType}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lot">Lot Number</SelectItem>
+                  <SelectItem value="bc23">BC 2.3 Number</SelectItem>
+                  <SelectItem value="bc30">BC 3.0 Number</SelectItem>
+                  <SelectItem value="wo">Work Order</SelectItem>
+                  <SelectItem value="po">PO Number</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex-1 relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder={`Enter ${searchType}...`}
+                  className="pl-8"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                />
+              </div>
+              <Button onClick={handleSearch}>Search</Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Traceability Chain */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Traceability Chain</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TraceabilityChain 
+              steps={traceabilitySteps}
+              showConversion={true}
+              conversionData={{
+                input: selectedRecord.rmQuantity,
+                output: selectedRecord.fgQuantity,
+                ratio: selectedRecord.conversionRatio,
+                standardRatio: selectedRecord.standardRatio,
+                variance: selectedRecord.variance,
+                waste: selectedRecord.waste
+              }}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Certificate Preview */}
+        <Card className="border-2 border-primary/20">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Material Traceability Certificate
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="text-center border-b pb-4">
+                <h2 className="text-2xl font-bold">MATERIAL TRACEABILITY CERTIFICATE</h2>
+                <p className="text-sm text-muted-foreground mt-2">For Customs Compliance & Audit</p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <h3 className="font-semibold mb-2">Raw Material (Import)</h3>
+                  <div className="space-y-1 text-sm">
+                    <p><span className="text-muted-foreground">BC 2.3:</span> <span className="font-mono">{selectedRecord.bc23Number}</span></p>
+                    <p><span className="text-muted-foreground">Description:</span> {selectedRecord.rmDescription}</p>
+                    <p><span className="text-muted-foreground">Lot Number:</span> <span className="font-mono text-primary">{selectedRecord.rmLotNumber}</span></p>
+                    <p><span className="text-muted-foreground">Quantity:</span> {selectedRecord.rmQuantity.toLocaleString()} {selectedRecord.rmUnit}</p>
+                    <p><span className="text-muted-foreground">GR Date:</span> {new Date(selectedRecord.grDate).toLocaleDateString('id-ID')}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Finished Goods (Export)</h3>
+                  <div className="space-y-1 text-sm">
+                    {selectedRecord.bc30Number ? (
+                      <>
+                        <p><span className="text-muted-foreground">BC 3.0:</span> <span className="font-mono">{selectedRecord.bc30Number}</span></p>
+                        <p><span className="text-muted-foreground">Product:</span> {selectedRecord.productName}</p>
+                        <p><span className="text-muted-foreground">Lot Number:</span> <span className="font-mono text-primary">{selectedRecord.fgLotNumber}</span></p>
+                        <p><span className="text-muted-foreground">Quantity:</span> {selectedRecord.fgQuantity.toLocaleString()} {selectedRecord.fgUnit}</p>
+                        <p><span className="text-muted-foreground">Export Date:</span> {selectedRecord.exportDate ? new Date(selectedRecord.exportDate).toLocaleDateString('id-ID') : '-'}</p>
+                      </>
+                    ) : (
+                      <p className="text-muted-foreground italic">Not yet exported</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-2">Production Details</h3>
+                <div className="grid gap-4 md:grid-cols-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Work Order</p>
+                    <p className="font-mono">{selectedRecord.woNumber}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Production Date</p>
+                    <p>{new Date(selectedRecord.productionDate).toLocaleDateString('id-ID')}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Conversion Ratio</p>
+                    <p className="font-semibold">{(selectedRecord.conversionRatio * 100).toFixed(2)}%</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4 text-xs text-muted-foreground">
+                <p>This certificate confirms the traceability of materials from import (BC 2.3) through production to export (BC 3.0).</p>
+                <p className="mt-2">Generated on: {new Date().toLocaleDateString('id-ID')} | System: JKJ Manufacturing ERP</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* All Traceability Records */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Traceability Records</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {MOCK_TRACEABILITY.map((record) => (
+                <div 
+                  key={record.id}
+                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                    selectedRecord.id === record.id ? 'border-primary bg-primary/5' : 'hover:bg-secondary/50'
+                  }`}
+                  onClick={() => setSelectedRecord(record)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold">{record.productName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {record.rmLotNumber} → {record.fgLotNumber}
+                        {record.bc30Number && ` → ${record.bc30Number}`}
+                      </p>
+                    </div>
+                    <div className="text-right text-sm">
+                      <p className="font-mono text-primary">{record.bc23Number}</p>
+                      <p className="text-muted-foreground">{new Date(record.productionDate).toLocaleDateString('id-ID')}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </AppLayout>
   )
 }

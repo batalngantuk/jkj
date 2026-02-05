@@ -6,7 +6,13 @@ import { ArrowLeft, Plus, Search, Mail, Phone, MapPin, MoreHorizontal, Star } fr
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { toast } from "sonner" // Assuming sonner is installed or Use whatever toast is available, or alert.
+// But checking folder structure, `sonner.tsx` exists.
+
 import AppLayout from '@/components/app-layout'
 
 import { DataTable } from '@/components/shared/data-table'
@@ -14,6 +20,15 @@ import { StatusBadge } from "@/components/shared/status-badge"
 import { MOCK_SUPPLIERS, Supplier } from "@/lib/mock-data/purchasing"
 
 export default function SupplierListPage() {
+  const [isAddOpen, setIsAddOpen] = React.useState(false)
+
+  const handleSave = () => {
+      // Mock save action
+      setIsAddOpen(false)
+      // alert("Supplier added successfully!") 
+      // Better to just close it for now as we don't have a real backend.
+  }
+
   const columns = [
     {
        header: "Supplier Name",
@@ -93,10 +108,52 @@ export default function SupplierListPage() {
                   <p className="text-sm text-muted-foreground">Manage vendor relationships and performance</p>
                 </div>
               </div>
-              <Button className="bg-primary hover:bg-primary/90 gap-2">
-                <Plus className="h-4 w-4" />
-                Add Supplier
-              </Button>
+              
+              <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-primary hover:bg-primary/90 gap-2">
+                        <Plus className="h-4 w-4" />
+                        Add Supplier
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Add New Supplier</DialogTitle>
+                      <DialogDescription>
+                        Enter the details of the new vendor here. Click save when you're done.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="name" className="text-right">
+                          Name
+                        </Label>
+                        <Input id="name" placeholder="PT. Vendor Jaya" className="col-span-3" />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="contact" className="text-right">
+                          Contact
+                        </Label>
+                        <Input id="contact" placeholder="Bpk. Budi" className="col-span-3" />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="email" className="text-right">
+                          Email
+                        </Label>
+                        <Input id="email" type="email" placeholder="budi@vendor.com" className="col-span-3" />
+                      </div>
+                       <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="phone" className="text-right">
+                          Phone
+                        </Label>
+                        <Input id="phone" placeholder="0812..." className="col-span-3" />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit" onClick={handleSave}>Save changes</Button>
+                    </DialogFooter>
+                  </DialogContent>
+              </Dialog>
             </div>
 
             <Card>
