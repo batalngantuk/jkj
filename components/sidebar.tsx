@@ -101,6 +101,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Dashboard', href: '/logistics' },
         { label: 'Fleet Management', href: '/logistics/fleet' },
         { label: 'Shipments', href: '/logistics/shipments' },
+        { label: 'BC 3.0 (Export)', href: '/logistics/bc30' },
       ]
     },
     { 
