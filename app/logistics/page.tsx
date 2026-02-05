@@ -11,6 +11,8 @@ import AppLayout from '@/components/app-layout'
 import { DataTable } from '@/components/shared/data-table'
 import { StatusBadge } from "@/components/shared/status-badge"
 import { MOCK_SHIPMENTS, MOCK_VEHICLES, MOCK_DRIVERS } from "@/lib/mock-data/logistics"
+import { LineChartComponent } from '@/components/charts/line-chart'
+import { PieChartComponent } from '@/components/charts/pie-chart'
 
 export default function LogisticsDashboard() {
   const activeShipments = MOCK_SHIPMENTS.filter(s => s.status === 'In Transit').length
@@ -120,10 +122,58 @@ export default function LogisticsDashboard() {
                         columns={shipmentColumns}
                     />
                 </CardContent>
-            </Card>
+             </Card>
 
-             {/* Fleet Status */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             {/* Charts Section */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Shipment Trend</CardTitle>
+                        <CardDescription>Monthly delivery performance</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <LineChartComponent
+                          data={[
+                            { month: 'Jan', shipments: 45, onTime: 44 },
+                            { month: 'Feb', shipments: 52, onTime: 51 },
+                            { month: 'Mar', shipments: 48, onTime: 47 },
+                            { month: 'Apr', shipments: 58, onTime: 57 },
+                            { month: 'May', shipments: 62, onTime: 61 },
+                            { month: 'Jun', shipments: 55, onTime: 54 },
+                          ]}
+                          xKey="month"
+                          lines={[
+                            { key: 'shipments', color: '#3b82f6', name: 'Total Shipments' },
+                            { key: 'onTime', color: '#10b981', name: 'On-Time Deliveries' }
+                          ]}
+                          height={250}
+                        />
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Fleet Utilization</CardTitle>
+                        <CardDescription>Vehicle status distribution</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <PieChartComponent
+                          data={[
+                            { name: 'Available', value: MOCK_VEHICLES.filter(v => v.status === 'Available').length },
+                            { name: 'In Transit', value: MOCK_VEHICLES.filter(v => v.status === 'In Transit').length },
+                            { name: 'Maintenance', value: MOCK_VEHICLES.filter(v => v.status === 'Maintenance').length },
+                          ]}
+                          nameKey="name"
+                          valueKey="value"
+                          colors={['#10b981', '#3b82f6', '#f59e0b']}
+                          height={250}
+                        />
+                    </CardContent>
+                </Card>
+             </div>
+
+              {/* Fleet Status */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
                     <CardHeader>
                         <CardTitle>Vehicle Status</CardTitle>
