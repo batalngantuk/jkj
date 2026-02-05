@@ -16,7 +16,8 @@ import {
   ChevronRight,
   Settings,
   HelpCircle,
-  X
+  X,
+  Shield
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
