@@ -53,7 +53,7 @@ export default function Sidebar() {
       href: '/sales',
       subItems: [
         { label: 'All Orders', href: '/sales' },
-        { label: 'Create Order', href: '/sales/create' },
+        { label: 'Create Order', href: '/sales/new' },
       ]
     },
     { 
