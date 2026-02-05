@@ -284,21 +284,124 @@ graph TB
 
 **Fitur**:
 
-- Invoice management (AP & AR)
-- Payment tracking
-- Tax management (Faktur Pajak)
-- 3-way matching (PO-GR-Invoice)
-- Cash flow monitoring
+#### Accounts Receivable (`/finance/ar`)
+
+- AR Invoice list dengan filters
+- Auto-generate invoice dari SO
+- Faktur Pajak generation
+- Payment recording
+- Aging report (30/60/90 days)
+- Collection reminders
+
+#### Accounts Payable (`/finance/ap`)
+
+- Vendor invoice list
+- 3-way matching (PO - GR - Invoice)
+- Tax verification
+- Payment scheduling
+- Approval workflow
+- Link to BC 2.3 for duty payments
+
+#### Payment Management (`/finance/payments`)
+
+- Payment list (AR & AP)
+- Payment recording
+- Bank reconciliation
+- Payment method tracking (Bank Transfer, Cash, Check, Credit Card)
+- Receipt generation
+- Payment history
 
 **User**: Finance Staff, Finance Manager
 
+**Integration**:
+
+- Auto-generate AR invoice from SO
+- Link AP invoice to PO + GR
+- Link to BC 2.3 for import duty payments
+- Update SO/PO status when paid
+
 ---
 
-### 9. 📊 Reports (`/reports`)
+### 9. 🚚 Logistics (`/logistics`)
 
-**Fungsi**: Analytics dan compliance reporting
+**Fungsi**: Shipment, fleet, dan delivery management
 
 **Fitur**:
+
+#### Logistics Dashboard
+
+- Active shipments count
+- Fleet utilization chart (PieChart)
+- Shipment trend chart (LineChart)
+- Delivery performance metrics
+- BC 3.0 status overview
+
+#### Fleet Management (`/logistics/fleet`)
+
+- Vehicle list (trucks, vans, etc)
+- Driver list
+- Availability status
+- Maintenance tracking
+- Utilization monitoring
+
+#### Shipment Tracking (`/logistics/shipments`)
+
+- Shipment list with tracking
+- Create shipment from SO
+- Link to BC 3.0 export
+- Driver & vehicle assignment
+- Real-time status updates
+- POD (Proof of Delivery) management
+
+**User**: Logistics Staff, Logistics Manager
+
+#### 📋 BC 3.0 Export Module (`/logistics/bc30`)
+
+**Fungsi**: Manajemen dokumen export customs
+
+**Fitur**:
+
+- BC 3.0 document creation & tracking
+- PEB (Pemberitahuan Ekspor Barang) tracking
+- NPE (Nomor Pendaftaran Eksportir)
+- **Full traceability chain** (link to BC 2.3)
+- Document checklist (Invoice, Packing List, COO, Health Cert, Form E)
+- Conversion analysis display
+- Status timeline
+- Activity log
+
+**Status Flow**:
+`DRAFT` → `VERIFIED` → `SUBMITTED` → `UNDER REVIEW` → `APPROVED` → `EXPORTED` → `CLOSED`
+
+---
+
+### 10. 📊 Reports (`/reports`)
+
+**Fungsi**: Analytics, insights, dan compliance reporting
+
+**Fitur**:
+
+#### Reports Overview (`/reports`)
+
+- Revenue Trend chart (LineChart)
+- Top Customers visualization
+- Executive summary metrics
+
+#### Sales Analysis (`/reports/sales`)
+
+- Revenue & Orders Trend (LineChart)
+- Monthly Orders (BarChart)
+- Sales by Product Category (PieChart)
+- Top Customers by Revenue (BarChart)
+- Summary metrics (Total Revenue, Orders, Avg Order Value, Active Customers)
+
+#### Inventory Valuation (`/reports/inventory`)
+
+- Inventory Value by Category (BarChart)
+- Stock Status Distribution (PieChart)
+- Inventory Value & Turnover Trend (LineChart)
+- Top Items by Value (BarChart)
+- Summary metrics (Total Value, Turnover, SKUs, Low Stock Items)
 
 #### 📈 Material Traceability (`/reports/traceability`)
 
@@ -780,24 +883,34 @@ A: Verify BOM standard ratio dan actual quantity di WO.
 ### Phase 1 ✅ (Completed)
 
 - Core modules (Sales, Production, Warehouse, Purchasing)
-- BC 2.3 & BC 3.0 management
+- BC 2.3 & BC 3.0 management with auto-calculations
 - Material Traceability System
 - Compliance Dashboard
-- Executive Dashboard
+- Executive Dashboard with charts
 
-### Phase 2 🚧 (In Progress)
+### Phase 2 ✅ (Completed)
 
-- Finance module completion
-- Logistics module enhancement
-- Advanced reporting
-- User management & permissions
+- **Finance module** (AR, AP, Payments)
+- **Logistics module** (Fleet, Shipments, Tracking)
+- **Advanced reporting** (Sales Analysis, Inventory Valuation)
+- **Charts & Visualization** (Recharts integration)
+- **BC Forms** (Create/Edit with traceability)
 
 ### Phase 3 📋 (Planned)
 
+- User management & permissions
 - CEISA integration (real customs API)
 - Mobile app
 - Advanced analytics & AI
 - Multi-warehouse support
+- Email notifications
+- Document OCR
+
+---
+
+**© 2026 JKJ Manufacturing ERP**  
+_Platform Overview v2.0 - All Core Modules Complete_
+
 - Multi-currency support
 
 ---

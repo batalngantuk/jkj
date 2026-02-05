@@ -8,7 +8,7 @@
 
 ```
 📊 Dashboard (/)
-   └─ Overview bisnis & metrics
+   └─ Overview bisnis & metrics dengan charts
 
 🛡️ Compliance (/compliance)
    ├─ BC 2.3 Status
@@ -18,12 +18,14 @@
 
 🛒 Sales Orders (/sales)
    ├─ All Orders
-   └─ Create Order (/sales/new)
+   ├─ Create Order (/sales/new)
+   └─ Order Detail (/sales/[id])
 
 🏭 Production (/production)
    ├─ Dashboard
    ├─ Planning (/production/planning)
-   └─ Work Orders (/production/wo)
+   ├─ Work Orders (/production/wo)
+   └─ New Work Order (/production/wo/new)
 
 📦 Warehouse (/warehouse)
    ├─ Dashboard
@@ -34,20 +36,30 @@
    ├─ Dashboard
    ├─ Suppliers (/purchasing/suppliers)
    ├─ Purchase Orders (/purchasing/po)
-   └─ BC 2.3 Import (/purchasing/bc23) 🆕
+   ├─ New PO (/purchasing/po/new)
+   └─ BC 2.3 Import (/purchasing/bc23) ✅
+      └─ New BC 2.3 (/purchasing/bc23/new) ✅
 
 🚚 Logistics (/logistics)
-   ├─ Shipments
-   └─ BC 3.0 Export (/logistics/bc30) 🆕
+   ├─ Dashboard (with charts) ✅
+   ├─ Fleet Management (/logistics/fleet) ✅
+   ├─ Shipments Tracking (/logistics/shipments) ✅
+   └─ BC 3.0 Export (/logistics/bc30) ✅
+      └─ New BC 3.0 (/logistics/bc30/new) ✅
 
-💰 Finance (/finance)
-   ├─ Invoices
-   └─ Payments
+💰 Finance (/finance) ✅
+   ├─ Dashboard ✅
+   ├─ Accounts Receivable (/finance/ar) ✅
+   ├─ Accounts Payable (/finance/ap) ✅
+   └─ Payments (/finance/payments) ✅
 
-📊 Reports (/reports)
-   ├─ Material Traceability (/reports/traceability) 🆕
-   ├─ Stock Movement (/reports/stock-movement) 🆕
-   └─ Production Yield (/reports/production) 🆕
+📊 Reports (/reports) ✅
+   ├─ Overview (with charts) ✅
+   ├─ Sales Analysis (/reports/sales) ✅
+   ├─ Inventory Valuation (/reports/inventory) ✅
+   ├─ Material Traceability (/reports/traceability) ✅
+   ├─ Stock Movement (/reports/stock-movement) ✅
+   └─ Production Yield (/reports/production) ✅
 ```
 
 ---
@@ -101,8 +113,35 @@
 1. Logistics → BC 3.0 → New BC 3.0
 2. Link to SO
 3. Select FG with lot number
-4. Fill PEB details
-5. Submit for verification
+4. System auto-shows traceability chain
+5. Fill PEB details
+6. Submit for verification
+
+**Create Shipment**:
+
+1. Logistics → Shipments → New Shipment
+2. Link to SO and BC 3.0
+3. Assign vehicle and driver
+4. Schedule delivery
+5. Track status and update POD
+
+### Finance Staff
+
+**Create AR Invoice**:
+
+1. Finance → AR → New Invoice
+2. Link to Sales Order
+3. System auto-fills customer and items
+4. Generate Faktur Pajak
+5. Send to customer
+
+**Record Payment**:
+
+1. Finance → Payments → New Payment
+2. Link to invoice (AR or AP)
+3. Select payment method
+4. Input amount and reference
+5. Complete payment
 
 ---
 
