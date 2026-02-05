@@ -23,10 +23,10 @@ export default function BC30DetailPage() {
   const traceability = MOCK_TRACEABILITY.find(t => t.bc30Id === bc30.id)
 
   const statusSteps = [
-    { label: 'Draft', status: 'complete' as const, date: bc30.createdAt },
-    { label: 'Verified', status: bc30.status === 'VERIFIED' || bc30.status === 'SUBMITTED' || bc30.status === 'APPROVED' ? 'complete' as const : 'pending' as const },
-    { label: 'Submitted', status: bc30.submissionDate ? 'complete' as const : 'pending' as const, date: bc30.submissionDate },
-    { label: 'Approved', status: bc30.status === 'APPROVED' ? 'complete' as const : 'pending' as const, date: bc30.approvalDate }
+    { id: '1', label: 'Draft', status: 'complete' as const, date: bc30.createdAt },
+    { id: '2', label: 'Verified', status: bc30.status === 'VERIFIED' || bc30.status === 'SUBMITTED' || bc30.status === 'APPROVED' ? 'completed' as const : 'upcoming' as const },
+    { id: '3', label: 'Submitted', status: bc30.submissionDate ? 'completed' as const : 'upcoming' as const, date: bc30.submissionDate },
+    { id: '4', label: 'Approved', status: bc30.status === 'APPROVED' ? 'completed' as const : 'upcoming' as const, date: bc30.approvalDate }
   ]
 
   // Build traceability chain if data exists

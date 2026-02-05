@@ -53,6 +53,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const menuItems = [
     { icon: Layout, label: 'Dashboard', href: '/' },
+    { icon: Shield, label: 'Compliance', href: '/compliance' },
     { 
       icon: ShoppingCart, 
       label: 'Sales Orders', 
@@ -124,6 +125,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Production Yield', href: '/reports/production' },
         { label: 'Inventory Value', href: '/reports/inventory' },
         { label: 'Material Traceability', href: '/reports/traceability' },
+        { label: 'Stock Movement', href: '/reports/stock-movement' },
       ]
     },
   ]
