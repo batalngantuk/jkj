@@ -261,13 +261,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <Settings className="h-4 w-4" />
               <span>Settings</span>
             </Button>
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3 text-foreground hover:bg-accent"
-            >
-              <HelpCircle className="h-4 w-4" />
-              <span>Help & Support</span>
-            </Button>
+            <Link href="/help" className="block">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-foreground hover:bg-accent"
+              >
+                <HelpCircle className="h-4 w-4" />
+                <span>Help & Support</span>
+              </Button>
+            </Link>
           </div>
           </div>
         </div>
