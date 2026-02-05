@@ -2,9 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, User, LogOut, Settings } from 'lucide-react'
+import { Bell, User, LogOut, Settings, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +12,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-export default function TopNav() {
+interface TopNavProps {
+  onMenuClick: () => void
+}
+
+export default function TopNav({ onMenuClick }: TopNavProps) {
   const pathname = usePathname()
 
   const navItems = [
@@ -30,16 +33,29 @@ export default function TopNav() {
   return (
     <nav className="border-b border-border bg-card shadow-sm">
       <div className="flex h-16 items-center justify-between px-6">
-        {/* Logo and Company Name */}
-        <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-bold text-primary-foreground">JKJ</span>
-          </div>
-          <span className="text-lg font-bold text-foreground">JKJ Manufacturing</span>
-        </Link>
+        {/* Left Section: Hamburger + Logo */}
+        <div className="flex items-center gap-4">
+          {/* Hamburger Menu */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="lg:hidden"
+            onClick={onMenuClick}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
 
-        {/* Menu Items */}
-        <div className="flex items-center gap-1">
+          {/* Logo and Company Name */}
+          <Link href="/" className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+              <span className="text-sm font-bold text-primary-foreground">JKJ</span>
+            </div>
+            <span className="text-lg font-bold text-foreground hidden sm:block">JKJ Manufacturing</span>
+          </Link>
+        </div>
+
+        {/* Menu Items - Hidden on mobile */}
+        <div className="hidden md:flex items-center gap-1">
           {navItems.map((item) => (
             <Link
               key={item.label}

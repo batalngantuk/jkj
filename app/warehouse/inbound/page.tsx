@@ -8,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import Sidebar from '@/components/sidebar'
-import TopNav from '@/components/top-nav'
+import AppLayout from '@/components/app-layout'
+
 import { DataTable } from '@/components/shared/data-table'
 import { StatusBadge } from "@/components/shared/status-badge"
 import { FileUpload } from "@/components/shared/file-upload"
@@ -70,11 +70,7 @@ export default function InboundPage() {
   ]
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopNav />
-        <main className="flex-1 overflow-auto bg-gradient-to-br from-background to-secondary/5 p-6">
+    <AppLayout><div className="p-6">
           <div className="space-y-6">
             
             <div className="flex items-center gap-4">
@@ -187,8 +183,5 @@ export default function InboundPage() {
             </Dialog>
 
           </div>
-        </main>
-      </div>
-    </div>
-  )
+        </div></AppLayout>)
 }

@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { ShoppingCart, Users, FileText, TrendingUp, AlertCircle, Plus, DollarSign } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import Sidebar from '@/components/sidebar'
-import TopNav from '@/components/top-nav'
+import AppLayout from '@/components/app-layout'
+
 import { MOCK_PURCHASE_ORDERS, MOCK_SUPPLIERS } from "@/lib/mock-data/purchasing"
 
 export default function PurchasingDashboard() {
@@ -14,11 +14,7 @@ export default function PurchasingDashboard() {
   const totalSpend = MOCK_PURCHASE_ORDERS.reduce((acc, curr) => acc + curr.totalAmount, 0)
   
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopNav />
-        <main className="flex-1 overflow-auto bg-gradient-to-br from-background to-secondary/5 p-6">
+    <AppLayout><div className="p-6">
           <div className="space-y-6">
             
             {/* Header */}
@@ -112,8 +108,5 @@ export default function PurchasingDashboard() {
             </div>
 
           </div>
-        </main>
-      </div>
-    </div>
-  )
+        </div></AppLayout>)
 }

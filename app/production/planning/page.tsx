@@ -6,8 +6,8 @@ import { ArrowLeft, Calendar, CheckCircle, Factory, AlertCircle } from 'lucide-r
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { DataTable } from '@/components/shared/data-table'
-import TopNav from '@/components/top-nav'
-import Sidebar from '@/components/sidebar'
+
+import AppLayout from '@/components/app-layout'
 import { MOCK_SALES_ORDERS } from "@/lib/mock-data/sales"
 import { AlertBadge } from "@/components/shared/alert-badge"
 
@@ -62,11 +62,7 @@ export default function ProductionPlanningPage() {
   ]
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopNav />
-        <main className="flex-1 overflow-auto bg-gradient-to-br from-background to-secondary/5 p-6">
+    <AppLayout><div className="p-6">
           <div className="space-y-6">
             
             {/* Header */}
@@ -130,8 +126,5 @@ export default function ProductionPlanningPage() {
             </Card>
 
           </div>
-        </main>
-      </div>
-    </div>
-  )
+        </div></AppLayout>)
 }

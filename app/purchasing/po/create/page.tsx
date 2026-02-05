@@ -10,8 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import Sidebar from '@/components/sidebar'
-import TopNav from '@/components/top-nav'
+import AppLayout from '@/components/app-layout'
+
 import { MOCK_SUPPLIERS } from "@/lib/mock-data/purchasing"
 
 export default function CreatePOPage() {
@@ -48,11 +48,7 @@ export default function CreatePOPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopNav />
-        <main className="flex-1 overflow-auto bg-gradient-to-br from-background to-secondary/5 p-6">
+    <AppLayout><div className="p-6">
           <div className="max-w-4xl mx-auto space-y-6">
             
             <div className="flex items-center gap-4">
@@ -191,8 +187,5 @@ export default function CreatePOPage() {
             </form>
 
           </div>
-        </main>
-      </div>
-    </div>
-  )
+        </div></AppLayout>)
 }

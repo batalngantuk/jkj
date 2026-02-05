@@ -14,8 +14,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import TopNav from '@/components/top-nav'
-import Sidebar from '@/components/sidebar'
+import AppLayout from '@/components/app-layout'
 
 // Mock Data Imports
 import { MOCK_SALES_REPORT } from '@/lib/mock-data/reports'
@@ -39,12 +38,8 @@ export default function Dashboard() {
   const activeShipments = MOCK_SHIPMENTS.filter(s => s.status === 'In Transit').length
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopNav />
-        <main className="flex-1 overflow-auto bg-gradient-to-br from-background to-secondary/5 p-6">
-          <div className="space-y-6">
+    <AppLayout>
+      <div className="p-6 space-y-6">
             
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -233,9 +228,7 @@ export default function Dashboard() {
               </Card>
 
             </div>
-          </div>
-        </main>
       </div>
-    </div>
+    </AppLayout>
   )
 }

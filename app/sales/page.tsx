@@ -19,8 +19,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import TopNav from '@/components/top-nav'
-import Sidebar from '@/components/sidebar'
+
+import AppLayout from '@/components/app-layout'
 import { MOCK_SALES_ORDERS, SalesOrder } from "@/lib/mock-data/sales"
 import { StatusBadge } from "@/components/shared/status-badge"
 import { DataTable } from "@/components/shared/data-table"
@@ -110,12 +110,7 @@ export default function SalesOrderManagement() {
   ]
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopNav />
-
-        <main className="flex-1 overflow-auto bg-gradient-to-br from-background to-secondary/5 p-6">
+    <AppLayout><div className="p-6">
           <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -208,8 +203,5 @@ export default function SalesOrderManagement() {
                />
             </Card>
           </div>
-        </main>
-      </div>
-    </div>
-  )
+        </div></AppLayout>)
 }

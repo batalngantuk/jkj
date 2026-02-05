@@ -6,8 +6,8 @@ import { Truck, MapPin, Calendar, FileText, Anchor, Users, AlertCircle } from 'l
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import Sidebar from '@/components/sidebar'
-import TopNav from '@/components/top-nav'
+import AppLayout from '@/components/app-layout'
+
 import { DataTable } from '@/components/shared/data-table'
 import { StatusBadge } from "@/components/shared/status-badge"
 import { MOCK_SHIPMENTS, MOCK_VEHICLES, MOCK_DRIVERS } from "@/lib/mock-data/logistics"
@@ -43,11 +43,7 @@ export default function LogisticsDashboard() {
   ]
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopNav />
-        <main className="flex-1 overflow-auto bg-gradient-to-br from-background to-secondary/5 p-6">
+    <AppLayout><div className="p-6">
           <div className="space-y-6">
             
             {/* Header */}
@@ -177,8 +173,5 @@ export default function LogisticsDashboard() {
             </div>
 
           </div>
-        </main>
-      </div>
-    </div>
-  )
+        </div></AppLayout>)
 }

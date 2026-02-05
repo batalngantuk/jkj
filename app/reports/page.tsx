@@ -5,17 +5,13 @@ import Link from 'next/link'
 import { ArrowUpRight, BarChart, TrendingUp, PieChart, Package, DollarSign } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import Sidebar from '@/components/sidebar'
-import TopNav from '@/components/top-nav'
+import AppLayout from '@/components/app-layout'
+
 import { MOCK_SALES_REPORT, MOCK_PRODUCTION_YIELD, TOP_CUSTOMERS } from "@/lib/mock-data/reports"
 
 export default function ReportsDashboard() {
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopNav />
-        <main className="flex-1 overflow-auto bg-gradient-to-br from-background to-secondary/5 p-6">
+    <AppLayout><div className="p-6">
           <div className="space-y-6">
             
             {/* Header */}
@@ -143,8 +139,5 @@ export default function ReportsDashboard() {
             </div>
 
           </div>
-        </main>
-      </div>
-    </div>
-  )
+        </div></AppLayout>)
 }

@@ -6,8 +6,8 @@ import { Calendar, Activity, TrendingUp, AlertCircle, Play, Pause, Eye, Plus, Fa
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import Sidebar from '@/components/sidebar'
-import TopNav from '@/components/top-nav'
+import AppLayout from '@/components/app-layout'
+
 import { StatusBadge } from "@/components/shared/status-badge"
 import { MOCK_PRODUCTION_LINES, MOCK_WORK_ORDERS } from "@/lib/mock-data/production"
 import { DataTable } from "@/components/shared/data-table"
@@ -70,11 +70,7 @@ export default function ProductionDashboard() {
   ]
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopNav />
-        <main className="flex-1 overflow-auto bg-gradient-to-br from-background to-secondary/5 p-6">
+    <AppLayout><div className="p-6">
           <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -192,8 +188,5 @@ export default function ProductionDashboard() {
             </Card>
 
           </div>
-        </main>
-      </div>
-    </div>
-  )
+        </div></AppLayout>)
 }
