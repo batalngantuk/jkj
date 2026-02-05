@@ -24,7 +24,7 @@ import AppLayout from '@/components/app-layout'
 import { MOCK_SALES_REPORT } from '@/lib/mock-data/reports'
 import { MOCK_PRODUCTION_YIELD } from '@/lib/mock-data/reports'
 import { MOCK_INVENTORY_VALUE } from '@/lib/mock-data/reports'
-import { MOCK_INVOICES } from '@/lib/mock-data/finance'
+import { MOCK_AR_INVOICES, MOCK_AP_INVOICES, getTotalAR, getTotalAP } from '@/lib/mock-data/finance'
 import { MOCK_SHIPMENTS } from '@/lib/mock-data/logistics'
 import { MOCK_BC23, MOCK_BC30, getBC23ByStatus, getBC30ByStatus } from '@/lib/mock-data/customs'
 import { MOCK_TRACEABILITY } from '@/lib/mock-data/traceability'
@@ -35,11 +35,10 @@ export default function Dashboard() {
   const avgYield = MOCK_PRODUCTION_YIELD.reduce((acc, curr) => acc + curr.yield, 0) / MOCK_PRODUCTION_YIELD.length
   const totalInventoryValue = MOCK_INVENTORY_VALUE.reduce((acc, curr) => acc + curr.value, 0)
   
-  const totalReceivables = MOCK_INVOICES.filter(i => i.type === 'AR' && i.status !== 'Paid' && i.status !== 'Cancelled')
-      .reduce((acc, curr) => acc + curr.amount, 0)
-  const totalPayables = MOCK_INVOICES.filter(i => i.type === 'AP' && i.status !== 'Paid' && i.status !== 'Cancelled')
-      .reduce((acc, curr) => acc + curr.amount, 0)
+  const totalReceivables = getTotalAR()
+  const totalPayables = getTotalAP()
   const netCashflow = totalReceivables - totalPayables
+
 
   const activeShipments = MOCK_SHIPMENTS.filter(s => s.status === 'In Transit').length
 

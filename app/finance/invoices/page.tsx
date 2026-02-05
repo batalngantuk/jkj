@@ -10,44 +10,66 @@ import AppLayout from '@/components/app-layout'
 
 import { DataTable } from '@/components/shared/data-table'
 import { StatusBadge } from "@/components/shared/status-badge"
-import { MOCK_INVOICES } from "@/lib/mock-data/finance"
+import { MOCK_AR_INVOICES, MOCK_AP_INVOICES } from "@/lib/mock-data/finance"
 import { ArrowUpRight, ArrowDownLeft } from 'lucide-react'
 
 export default function InvoicesPage() {
+  // Combine AR and AP invoices into a unified format
+  const combinedInvoices = [
+    ...MOCK_AR_INVOICES.map(inv => ({
+      id: inv.invoiceNumber,
+      referenceNumber: inv.soNumber,
+      type: 'AR' as const,
+      counterparty: inv.customerName,
+      amount: inv.totalAmount,
+      dueDate: inv.dueDate,
+      status: inv.status
+    })),
+    ...MOCK_AP_INVOICES.map(inv => ({
+      id: inv.invoiceNumber,
+      referenceNumber: inv.poNumber,
+      type: 'AP' as const,
+      counterparty: inv.vendorName,
+      amount: inv.totalAmount,
+      dueDate: inv.dueDate,
+      status: inv.status
+    }))
+  ]
+
   const columns = [
     {
        header: "Invoice #",
-       accessorKey: "id" as keyof typeof MOCK_INVOICES[0],
-       cell: (item: typeof MOCK_INVOICES[0]) => (
+       accessorKey: "id" as keyof typeof combinedInvoices[0],
+       cell: (item: typeof combinedInvoices[0]) => (
            <div className="flex flex-col">
                <span className="font-medium text-primary">{item.id}</span>
                <span className="text-xs text-muted-foreground">{item.referenceNumber}</span>
            </div>
        )
     },
-    { header: "Party", accessorKey: "counterparty" as keyof typeof MOCK_INVOICES[0] },
+    { header: "Party", accessorKey: "counterparty" as keyof typeof combinedInvoices[0] },
     {
        header: "Type",
-       accessorKey: "type" as keyof typeof MOCK_INVOICES[0],
-       cell: (item: typeof MOCK_INVOICES[0]) => (
+       accessorKey: "type" as keyof typeof combinedInvoices[0],
+       cell: (item: typeof combinedInvoices[0]) => (
            <div className={`flex items-center gap-1 font-medium ${item.type === 'AR' ? 'text-green-600' : 'text-orange-600'}`}>
                {item.type === 'AR' ? <ArrowDownLeft className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
                {item.type === 'AR' ? 'Receivable' : 'Payable'}
            </div>
        )
     },
-    { header: "Due Date", accessorKey: "dueDate" as keyof typeof MOCK_INVOICES[0] },
+    { header: "Due Date", accessorKey: "dueDate" as keyof typeof combinedInvoices[0] },
     {
        header: "Amount",
-       accessorKey: "amount" as keyof typeof MOCK_INVOICES[0],
-       cell: (item: typeof MOCK_INVOICES[0]) => (
+       accessorKey: "amount" as keyof typeof combinedInvoices[0],
+       cell: (item: typeof combinedInvoices[0]) => (
            <span className="font-semibold">Rp {item.amount.toLocaleString()}</span>
        )
     },
     {
        header: "Status",
-       accessorKey: "status" as keyof typeof MOCK_INVOICES[0],
-       cell: (item: typeof MOCK_INVOICES[0]) => <StatusBadge status={item.status} />
+       accessorKey: "status" as keyof typeof combinedInvoices[0],
+       cell: (item: typeof combinedInvoices[0]) => <StatusBadge status={item.status} />
     }
   ]
 
@@ -84,7 +106,7 @@ export default function InvoicesPage() {
                         </div>
                     </div>
                     <DataTable 
-                        data={MOCK_INVOICES}
+                        data={combinedInvoices}
                         columns={columns}
                     />
                 </CardContent>

@@ -2,142 +2,288 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { DollarSign, TrendingUp, TrendingDown, FileText, PieChart, ArrowUpRight, ArrowDownLeft } from 'lucide-react'
+import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, FileText, AlertCircle, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import AppLayout from '@/components/app-layout'
+import { StatusBadge } from '@/components/shared/status-badge'
+import { 
+  MOCK_AR_INVOICES, 
+  MOCK_AP_INVOICES, 
+  getTotalAR, 
+  getTotalAP, 
+  getOverdueAR, 
+  getOverdueAP 
+} from '@/lib/mock-data/finance'
 
-import { DataTable } from '@/components/shared/data-table'
-import { StatusBadge } from "@/components/shared/status-badge"
-import { MOCK_INVOICES } from "@/lib/mock-data/finance"
+export default function FinanceDashboardPage() {
+  const totalAR = getTotalAR()
+  const totalAP = getTotalAP()
+  const overdueAR = getOverdueAR()
+  const overdueAP = getOverdueAP()
+  const cashBalance = 500000000 // Mock cash balance
+  const netPosition = cashBalance + totalAR - totalAP
 
-export default function FinanceDashboard() {
-  const totalReceivables = MOCK_INVOICES.filter(i => i.type === 'AR' && i.status !== 'Paid' && i.status !== 'Cancelled')
-    .reduce((acc, curr) => acc + curr.amount, 0)
-    
-  const totalPayables = MOCK_INVOICES.filter(i => i.type === 'AP' && i.status !== 'Paid' && i.status !== 'Cancelled')
-    .reduce((acc, curr) => acc + curr.amount, 0)
-    
-  const columns = [
-    {
-       header: "Invoice #",
-       accessorKey: "id" as keyof typeof MOCK_INVOICES[0],
-       cell: (item: typeof MOCK_INVOICES[0]) => (
-           <div className="flex flex-col">
-               <span className="font-medium text-primary">{item.id}</span>
-               <span className="text-xs text-muted-foreground">{item.referenceNumber}</span>
-           </div>
-       )
-    },
-    { header: "Party", accessorKey: "counterparty" as keyof typeof MOCK_INVOICES[0] },
-    {
-       header: "Type",
-       accessorKey: "type" as keyof typeof MOCK_INVOICES[0],
-       cell: (item: typeof MOCK_INVOICES[0]) => (
-           <div className={`flex items-center gap-1 font-medium ${item.type === 'AR' ? 'text-green-600' : 'text-orange-600'}`}>
-               {item.type === 'AR' ? <ArrowDownLeft className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
-               {item.type === 'AR' ? 'Receivable' : 'Payable'}
-           </div>
-       )
-    },
-    { 
-       header: "Due Date", 
-       accessorKey: "dueDate" as keyof typeof MOCK_INVOICES[0],
-       cell: (item: typeof MOCK_INVOICES[0]) => (
-           <span className={item.status === 'Overdue' ? 'text-red-500 font-bold' : ''}>{item.dueDate}</span>
-       )
-    },
-    {
-       header: "Amount",
-       accessorKey: "amount" as keyof typeof MOCK_INVOICES[0],
-       cell: (item: typeof MOCK_INVOICES[0]) => (
-           <span className="font-semibold">Rp {item.amount.toLocaleString()}</span>
-       )
-    },
-    {
-       header: "Status",
-       accessorKey: "status" as keyof typeof MOCK_INVOICES[0],
-       cell: (item: typeof MOCK_INVOICES[0]) => <StatusBadge status={item.status} />
-    }
-  ]
+  // Recent invoices (last 5)
+  const recentARInvoices = MOCK_AR_INVOICES.slice(0, 5)
+  const recentAPInvoices = MOCK_AP_INVOICES.slice(0, 5)
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0
+    }).format(amount)
+  }
 
   return (
-    <AppLayout><div className="p-6">
-          <div className="space-y-6">
-            
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">Finance Overview</h1>
-                <p className="text-sm text-muted-foreground">Financial health, AR, and AP monitoring</p>
-              </div>
-              <div className="flex gap-3">
-                 <Link href="/finance/invoices">
-                    <Button variant="outline" className="gap-2">
-                        <FileText className="h-4 w-4" />
-                        Invoices (AR/AP)
-                    </Button>
-                 </Link>
-                 <Link href="/finance/reports">
-                    <Button className="bg-primary hover:bg-primary/90 gap-2">
-                        <PieChart className="h-4 w-4" />
-                        Financial Reports
-                    </Button>
-                 </Link>
-              </div>
+    <AppLayout>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Finance Dashboard</h1>
+              <p className="text-sm text-muted-foreground">Accounts Receivable, Payable & Cash Management</p>
             </div>
-
-            {/* Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-               <Card className="border-green-100 bg-green-50/20">
-                   <CardContent className="p-6">
-                       <div className="flex items-center justify-between mb-2">
-                           <p className="text-sm text-muted-foreground">Outstanding Receivables (AR)</p>
-                           <TrendingUp className="h-4 w-4 text-green-500" />
-                       </div>
-                       <p className="text-3xl font-bold text-green-700">Rp {(totalReceivables / 1000000).toFixed(1)} M</p>
-                       <p className="text-xs text-muted-foreground mt-1">Pending payments from customers</p>
-                   </CardContent>
-               </Card>
-               <Card className="border-orange-100 bg-orange-50/20">
-                    <CardContent className="p-6">
-                       <div className="flex items-center justify-between mb-2">
-                           <p className="text-sm text-muted-foreground">Outstanding Payables (AP)</p>
-                           <TrendingDown className="h-4 w-4 text-orange-500" />
-                       </div>
-                       <p className="text-3xl font-bold text-orange-700">Rp {(totalPayables / 1000000).toFixed(1)} M</p>
-                       <p className="text-xs text-muted-foreground mt-1">Pending bills to suppliers</p>
-                   </CardContent>
-               </Card>
-               <Card>
-                   <CardContent className="p-6">
-                       <div className="flex items-center justify-between mb-2">
-                           <p className="text-sm text-muted-foreground">Net Cash Flow Forecast</p>
-                           <DollarSign className="h-4 w-4 text-blue-500" />
-                       </div>
-                       <p className="text-3xl font-bold text-blue-700">
-                           {totalReceivables - totalPayables > 0 ? '+' : ''}
-                           Rp {((totalReceivables - totalPayables) / 1000000).toFixed(1)} M
-                        </p>
-                       <p className="text-xs text-muted-foreground mt-1">Projected balance (AR - AP)</p>
-                   </CardContent>
-               </Card>
-            </div>
-
-            {/* Recent Transactions */}
-            <Card className="flex-1">
-                <CardHeader>
-                    <CardTitle>Recent Invoices & Bills</CardTitle>
-                    <CardDescription>Latest financial documents generated</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <DataTable 
-                        data={MOCK_INVOICES}
-                        columns={columns}
-                    />
-                </CardContent>
-            </Card>
-
           </div>
-        </div></AppLayout>)
+        </div>
+
+        {/* Overview Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* Total AR */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Receivables</CardTitle>
+              <TrendingUp className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalAR)}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {overdueAR.length} overdue invoice{overdueAR.length !== 1 ? 's' : ''}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Total AP */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Payables</CardTitle>
+              <TrendingDown className="h-4 w-4 text-red-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{formatCurrency(totalAP)}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {overdueAP.length} overdue bill{overdueAP.length !== 1 ? 's' : ''}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Cash Balance */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Cash Balance</CardTitle>
+              <DollarSign className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{formatCurrency(cashBalance)}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Available funds
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Net Position */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Net Position</CardTitle>
+              <FileText className="h-4 w-4 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${netPosition >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(netPosition)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Cash + AR - AP
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Alerts */}
+        {(overdueAR.length > 0 || overdueAP.length > 0) && (
+          <Card className="border-orange-200 bg-orange-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-orange-800">
+                <AlertCircle className="h-5 w-5" />
+                Attention Required
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {overdueAR.length > 0 && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-orange-800">
+                    <strong>{overdueAR.length}</strong> overdue receivable{overdueAR.length !== 1 ? 's' : ''} totaling{' '}
+                    <strong>{formatCurrency(overdueAR.reduce((sum, inv) => sum + inv.balance, 0))}</strong>
+                  </p>
+                  <Link href="/finance/ar">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      Review <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+              )}
+              {overdueAP.length > 0 && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-orange-800">
+                    <strong>{overdueAP.length}</strong> overdue payable{overdueAP.length !== 1 ? 's' : ''} totaling{' '}
+                    <strong>{formatCurrency(overdueAP.reduce((sum, inv) => sum + inv.balance, 0))}</strong>
+                  </p>
+                  <Link href="/finance/ap">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      Review <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Quick Actions */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Link href="/finance/ar">
+            <Card className="hover:bg-accent cursor-pointer transition-colors">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  Accounts Receivable
+                </CardTitle>
+                <CardDescription>Manage customer invoices & payments</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/finance/ap">
+            <Card className="hover:bg-accent cursor-pointer transition-colors">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <TrendingDown className="h-5 w-5 text-red-600" />
+                  Accounts Payable
+                </CardTitle>
+                <CardDescription>Manage vendor bills & payments</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/finance/payments">
+            <Card className="hover:bg-accent cursor-pointer transition-colors">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-blue-600" />
+                  Payments
+                </CardTitle>
+                <CardDescription>Track all payment transactions</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+        </div>
+
+        {/* Recent Invoices */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Recent AR */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Recent Receivables</CardTitle>
+                <Link href="/finance/ar">
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    View All <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+              <CardDescription>Latest customer invoices</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Invoice</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentARInvoices.map((invoice) => (
+                    <TableRow key={invoice.id}>
+                      <TableCell>
+                        <Link href={`/finance/ar/${invoice.id}`} className="font-mono text-sm text-primary hover:underline">
+                          {invoice.invoiceNumber}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-sm">{invoice.customerName}</TableCell>
+                      <TableCell className="text-sm font-medium">{formatCurrency(invoice.balance)}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={invoice.status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Recent AP */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Recent Payables</CardTitle>
+                <Link href="/finance/ap">
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    View All <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+              <CardDescription>Latest vendor bills</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Invoice</TableHead>
+                    <TableHead>Vendor</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentAPInvoices.map((invoice) => (
+                    <TableRow key={invoice.id}>
+                      <TableCell>
+                        <Link href={`/finance/ap/${invoice.id}`} className="font-mono text-sm text-primary hover:underline">
+                          {invoice.invoiceNumber}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-sm">{invoice.vendorName}</TableCell>
+                      <TableCell className="text-sm font-medium">{formatCurrency(invoice.balance)}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={invoice.status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </AppLayout>
+  )
 }
