@@ -6,6 +6,8 @@ import { ArrowUpRight, BarChart, TrendingUp, PieChart, Package, DollarSign } fro
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import AppLayout from '@/components/app-layout'
+import { LineChartComponent } from '@/components/charts/line-chart'
+import { BarChartComponent } from '@/components/charts/bar-chart'
 
 import { MOCK_SALES_REPORT, MOCK_PRODUCTION_YIELD, TOP_CUSTOMERS } from "@/lib/mock-data/reports"
 
@@ -98,17 +100,17 @@ export default function ReportsDashboard() {
                         <CardDescription>Monthly revenue last 6 months</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px] flex items-end justify-between px-4 pb-2 pt-10">
-                            {MOCK_SALES_REPORT.map((item, i) => (
-                                <div key={i} className="flex flex-col items-center gap-2 group w-full">
-                                    <div 
-                                        className="w-8 bg-blue-500 rounded-t-sm transition-all group-hover:bg-blue-600"
-                                        style={{ height: `${(item.revenue / 400000000) * 100}%` }}
-                                    />
-                                    <span className="text-xs font-medium text-muted-foreground">{item.month}</span>
-                                </div>
-                            ))}
-                        </div>
+                        <LineChartComponent
+                          data={MOCK_SALES_REPORT.map(item => ({
+                            month: item.month,
+                            revenue: item.revenue / 1000000000
+                          }))}
+                          xKey="month"
+                          lines={[
+                            { key: 'revenue', color: '#3b82f6', name: 'Revenue (B)' }
+                          ]}
+                          height={300}
+                        />
                     </CardContent>
                 </Card>
 
