@@ -10,10 +10,14 @@ import {
   DollarSign, 
   ShoppingCart,
   ArrowRight,
-  Activity
+  Activity,
+  Shield,
+  FileText,
+  AlertTriangle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import AppLayout from '@/components/app-layout'
 
 // Mock Data Imports
@@ -22,6 +26,8 @@ import { MOCK_PRODUCTION_YIELD } from '@/lib/mock-data/reports'
 import { MOCK_INVENTORY_VALUE } from '@/lib/mock-data/reports'
 import { MOCK_INVOICES } from '@/lib/mock-data/finance'
 import { MOCK_SHIPMENTS } from '@/lib/mock-data/logistics'
+import { MOCK_BC23, MOCK_BC30, getBC23ByStatus, getBC30ByStatus } from '@/lib/mock-data/customs'
+import { MOCK_TRACEABILITY } from '@/lib/mock-data/traceability'
 
 export default function Dashboard() {
   // 1. Calculate Metrics
@@ -36,6 +42,14 @@ export default function Dashboard() {
   const netCashflow = totalReceivables - totalPayables
 
   const activeShipments = MOCK_SHIPMENTS.filter(s => s.status === 'In Transit').length
+
+  // Customs Compliance Metrics
+  const bc23Pending = getBC23ByStatus('SUBMITTED').length + getBC23ByStatus('UNDER REVIEW').length
+  const bc30Pending = getBC30ByStatus('SUBMITTED').length + getBC30ByStatus('UNDER REVIEW').length
+  const totalComplianceAlerts = bc23Pending + bc30Pending
+  const traceabilityRecords = MOCK_TRACEABILITY.length
+  const exportedRecords = MOCK_TRACEABILITY.filter(t => t.bc30Id).length
+  const traceabilityGaps = traceabilityRecords - exportedRecords
 
   return (
     <AppLayout>
@@ -191,6 +205,30 @@ export default function Dashboard() {
                       </Link>
                   </div>
 
+                  {/* Customs Compliance */}
+                  <div className={`flex items-center justify-between p-3 rounded-lg border ${
+                    totalComplianceAlerts > 0 ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200'
+                  }`}>
+                      <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-full ${
+                            totalComplianceAlerts > 0 ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'
+                          }`}>
+                              <Shield className="h-4 w-4" />
+                          </div>
+                          <div>
+                              <p className="font-semibold">Customs Compliance</p>
+                              <p className="text-xs text-muted-foreground">
+                                {totalComplianceAlerts > 0 ? `${totalComplianceAlerts} Pending Approvals` : 'All Clear'}
+                              </p>
+                          </div>
+                      </div>
+                      <Link href="/compliance">
+                        <Button variant="outline" size="sm" className="gap-2">
+                            Monitor <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                  </div>
+
                 </CardContent>
               </Card>
 
@@ -202,6 +240,13 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
+                      <div className="flex gap-3 text-sm">
+                          <Activity className="h-4 w-4 text-muted-foreground mt-0.5" />
+                          <div>
+                              <p className="font-medium">BC 2.3 Approved</p>
+                              <p className="text-xs text-muted-foreground">5 mins ago • Import clearance received</p>
+                          </div>
+                      </div>
                       <div className="flex gap-3 text-sm">
                           <Activity className="h-4 w-4 text-muted-foreground mt-0.5" />
                           <div>
@@ -219,8 +264,8 @@ export default function Dashboard() {
                       <div className="flex gap-3 text-sm">
                           <Activity className="h-4 w-4 text-muted-foreground mt-0.5" />
                           <div>
-                              <p className="font-medium">PO-2026-003 Approved</p>
-                              <p className="text-xs text-muted-foreground">2 hours ago • Auto-approval rules</p>
+                              <p className="font-medium">Material Traceability Completed</p>
+                              <p className="text-xs text-muted-foreground">2 hours ago • WO-2026-001 linked to BC 3.0</p>
                           </div>
                       </div>
                   </div>
