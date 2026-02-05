@@ -208,7 +208,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                               {item.subItems?.map((sub) => {
                                   const isSubActive = pathname === sub.href
                                   return (
-                                      <Link key={sub.href} href={sub.href} className="block" onClick={onClose}>
+                                      <Link key={sub.href} href={sub.href} className="block">
                                           <Button
                                               variant="ghost"
                                               size="sm"
@@ -229,7 +229,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               }
 
               return (
-                <Link key={item.label} href={item.href} onClick={onClose}>
+                <Link key={item.label} href={item.href}>
                   <Button
                     variant={isActive ? 'secondary' : 'ghost'}
                     className={`w-full justify-start gap-3 ${
