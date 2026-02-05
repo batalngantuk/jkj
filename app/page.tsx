@@ -28,6 +28,8 @@ import { MOCK_AR_INVOICES, MOCK_AP_INVOICES, getTotalAR, getTotalAP } from '@/li
 import { MOCK_SHIPMENTS } from '@/lib/mock-data/logistics'
 import { MOCK_BC23, MOCK_BC30, getBC23ByStatus, getBC30ByStatus } from '@/lib/mock-data/customs'
 import { MOCK_TRACEABILITY } from '@/lib/mock-data/traceability'
+import { LineChartComponent } from '@/components/charts/line-chart'
+import { BarChartComponent } from '@/components/charts/bar-chart'
 
 export default function Dashboard() {
   // 1. Calculate Metrics
@@ -230,6 +232,61 @@ export default function Dashboard() {
 
                 </CardContent>
               </Card>
+
+              {/* Charts Section */}
+              <Card className="col-span-3">
+                <CardHeader>
+                  <CardTitle>Revenue Trend (6 Months)</CardTitle>
+                  <CardDescription>Monthly revenue vs target</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <LineChartComponent
+                    data={[
+                      { month: 'Aug', revenue: 1.2, target: 1.5 },
+                      { month: 'Sep', revenue: 1.5, target: 1.5 },
+                      { month: 'Oct', revenue: 1.8, target: 1.6 },
+                      { month: 'Nov', revenue: 2.1, target: 1.7 },
+                      { month: 'Dec', revenue: 2.3, target: 1.8 },
+                      { month: 'Jan', revenue: 2.7, target: 2.0 },
+                    ]}
+                    xKey="month"
+                    lines={[
+                      { key: 'revenue', color: '#3b82f6', name: 'Actual Revenue (B)' },
+                      { key: 'target', color: '#94a3b8', name: 'Target (B)' }
+                    ]}
+                    height={250}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card className="col-span-3">
+                <CardHeader>
+                  <CardTitle>Production Efficiency</CardTitle>
+                  <CardDescription>Monthly yield performance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <BarChartComponent
+                    data={[
+                      { month: 'Aug', yield: 94.2, target: 96 },
+                      { month: 'Sep', yield: 95.1, target: 96 },
+                      { month: 'Oct', yield: 94.8, target: 96 },
+                      { month: 'Nov', yield: 95.5, target: 96 },
+                      { month: 'Dec', yield: 96.2, target: 96 },
+                      { month: 'Jan', yield: 95.8, target: 96 },
+                    ]}
+                    xKey="month"
+                    bars={[
+                      { key: 'yield', color: '#10b981', name: 'Actual Yield (%)' },
+                      { key: 'target', color: '#94a3b8', name: 'Target (%)' }
+                    ]}
+                    height={250}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="grid gap-6 md:grid-cols-1">
 
               {/* System Health / Quick Links */}
               <Card className="col-span-3">
