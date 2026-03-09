@@ -1,0 +1,575 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// BC 2.0 IMPORT MODULE
+// ========================================
+
+model BC20Document {
+  id                String   @id @default(cuid())
+  documentNumber    String   @unique // PIB number from customs
+  documentDate      DateTime
+  status            BC20Status @default(DRAFT)
+
+  // Supplier & Purchase Order
+  supplierId        String
+  supplier          Supplier @relation(fields: [supplierId], references: [id])
+  purchaseOrderId   String?
+  purchaseOrder     PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+
+  // Document Details
+  portOfEntry       String   // Pelabuhan Masuk
+  customsOffice     String   // Kantor Bea Cukai
+  estimatedArrival  DateTime
+  actualArrival     DateTime?
+
+  // Financial Summary
+  cifValue          Decimal  @db.Decimal(15, 2) // CIF (Cost + Insurance + Freight)
+  currency          String   @default("USD")
+  exchangeRate      Decimal  @db.Decimal(10, 4)
+  cifIdr            Decimal  @db.Decimal(15, 2) // CIF in IDR
+
+  // Duty & Tax Calculation
+  beaMasuk          Decimal  @db.Decimal(15, 2) // Import Duty
+  ppnImport         Decimal  @db.Decimal(15, 2) // PPN 11%
+  pph22             Decimal  @db.Decimal(15, 2) // PPh 22 (2.5% or other rate)
+  totalTax          Decimal  @db.Decimal(15, 2) // Bea Masuk + PPN + PPh22
+
+  // Landed Cost Components
+  freightCost       Decimal  @db.Decimal(15, 2)
+  insuranceCost     Decimal  @db.Decimal(15, 2)
+  handlingCost      Decimal  @db.Decimal(15, 2)
+  otherCosts        Decimal  @db.Decimal(15, 2) @default(0)
+  totalLandedCost   Decimal  @db.Decimal(15, 2) // CIF + Bea Masuk + Freight + Handling
+
+  // Dual Billing References
+  vendorBillId      String?  @unique // AP Bill for vendor (CIF payment)
+  vendorBill        APBill?  @relation("VendorBill", fields: [vendorBillId], references: [id])
+  taxBillId         String?  @unique // AP Bill for tax payment
+  taxBill           APBill?  @relation("TaxBill", fields: [taxBillId], references: [id])
+
+  // Tax Payment Status
+  taxPaymentStatus  TaxPaymentStatus @default(PENDING)
+  taxPaymentDate    DateTime?
+  taxPaymentRef     String?  // Payment reference number
+
+  // Customs Clearance
+  customsReleaseDate DateTime?
+  customsReleaseRef  String?
+
+  // Document Files
+  pibFile           String?  // PIB document
+  invoiceFile       String?  // Commercial Invoice
+  packingListFile   String?  // Packing List
+  blFile            String?  // Bill of Lading
+  coaFile           String?  // Certificate of Analysis
+
+  // Line Items
+  items             BC20Item[]
+
+  // Goods Receipt (after customs release)
+  goodsReceipts     GoodsReceipt[]
+
+  // Audit Fields
+  notes             String?
+  createdBy         String
+  createdAt         DateTime @default(now())
+  updatedBy         String?
+  updatedAt         DateTime @updatedAt
+  submittedAt       DateTime?
+  submittedBy       String?
+  approvedAt        DateTime?
+  approvedBy        String?
+
+  @@index([documentNumber])
+  @@index([supplierId])
+  @@index([status])
+  @@index([taxPaymentStatus])
+  @@index([documentDate])
+  @@map("bc20_documents")
+}
+
+model BC20Item {
+  id                String   @id @default(cuid())
+  bc20DocumentId    String
+  bc20Document      BC20Document @relation(fields: [bc20DocumentId], references: [id], onDelete: Cascade)
+
+  lineNumber        Int
+
+  // Material Information
+  materialId        String
+  material          Material @relation(fields: [materialId], references: [id])
+  hsCodeId          String
+  hsCode            HSCode   @relation(fields: [hsCodeId], references: [id])
+
+  description       String
+  quantity          Decimal  @db.Decimal(15, 3)
+  unit              String
+
+  // Pricing (per unit in foreign currency)
+  unitPriceForeign  Decimal  @db.Decimal(15, 4)
+  totalPriceForeign Decimal  @db.Decimal(15, 2)
+
+  // Pricing in IDR
+  unitPriceIdr      Decimal  @db.Decimal(15, 2)
+  totalPriceIdr     Decimal  @db.Decimal(15, 2)
+
+  // Duty Calculation
+  dutyRate          Decimal  @db.Decimal(5, 2) // Tarif Bea Masuk (%)
+  dutyAmount        Decimal  @db.Decimal(15, 2)
+
+  // Country of Origin
+  countryOfOrigin   String
+
+  // Optional Lot Tracking
+  lotNumber         String?
+  expiryDate        DateTime?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([bc20DocumentId, lineNumber])
+  @@index([materialId])
+  @@index([hsCodeId])
+  @@map("bc20_items")
+}
+
+// HS Code Master Data
+model HSCode {
+  id                String   @id @default(cuid())
+  code              String   @unique // 8-digit HS Code
+  description       String
+  dutyRate          Decimal  @db.Decimal(5, 2) // Default duty rate (%)
+  ppnRate           Decimal  @db.Decimal(5, 2) @default(11.00) // Default PPN 11%
+  pph22Rate         Decimal  @db.Decimal(5, 2) @default(2.50) // Default PPh22 2.5%
+
+  // Restrictions
+  isRestricted      Boolean  @default(false)
+  requiresLicense   Boolean  @default(false)
+  notes             String?
+
+  // Relations
+  bc20Items         BC20Item[]
+  materials         Material[]
+
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([code])
+  @@map("hs_codes")
+}
+
+// ========================================
+// MASTER DATA
+// ========================================
+
+model Supplier {
+  id                String   @id @default(cuid())
+  code              String   @unique
+  name              String
+  contactPerson     String?
+  email             String?
+  phone             String?
+  address           String?
+  country           String
+
+  // Tax Information
+  taxId             String?
+
+  // Payment Terms
+  paymentTerms      Int      @default(30) // Days
+  currency          String   @default("USD")
+
+  // Relations
+  purchaseOrders    PurchaseOrder[]
+  bc20Documents     BC20Document[]
+  apBills           APBill[]
+
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([code])
+  @@index([name])
+  @@map("suppliers")
+}
+
+model Material {
+  id                String   @id @default(cuid())
+  code              String   @unique
+  name              String
+  description       String?
+  category          MaterialCategory
+
+  // HS Code
+  hsCodeId          String?
+  hsCode            HSCode?  @relation(fields: [hsCodeId], references: [id])
+
+  // Unit of Measure
+  baseUnit          String   // kg, pcs, liter, etc.
+
+  // Inventory
+  minStock          Decimal? @db.Decimal(15, 3)
+  maxStock          Decimal? @db.Decimal(15, 3)
+  currentStock      Decimal  @db.Decimal(15, 3) @default(0)
+
+  // Costing
+  standardCost      Decimal? @db.Decimal(15, 2)
+  averageCost       Decimal? @db.Decimal(15, 2)
+
+  // Relations
+  purchaseOrderItems PurchaseOrderItem[]
+  bc20Items         BC20Item[]
+  goodsReceiptItems GoodsReceiptItem[]
+
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([code])
+  @@index([category])
+  @@map("materials")
+}
+
+// ========================================
+// PURCHASING MODULE
+// ========================================
+
+model PurchaseOrder {
+  id                String   @id @default(cuid())
+  poNumber          String   @unique
+  poDate            DateTime
+  status            POStatus @default(DRAFT)
+
+  supplierId        String
+  supplier          Supplier @relation(fields: [supplierId], references: [id])
+
+  // Delivery
+  deliveryDate      DateTime
+  deliveryAddress   String?
+
+  // Financial
+  currency          String   @default("USD")
+  exchangeRate      Decimal? @db.Decimal(10, 4)
+  subtotal          Decimal  @db.Decimal(15, 2)
+  tax               Decimal  @db.Decimal(15, 2) @default(0)
+  total             Decimal  @db.Decimal(15, 2)
+
+  // BC 2.0 Import
+  isImport          Boolean  @default(false)
+  bc20Documents     BC20Document[]
+
+  // Line Items
+  items             PurchaseOrderItem[]
+
+  // Goods Receipt
+  goodsReceipts     GoodsReceipt[]
+
+  notes             String?
+  createdBy         String
+  createdAt         DateTime @default(now())
+  updatedBy         String?
+  updatedAt         DateTime @updatedAt
+
+  @@index([poNumber])
+  @@index([supplierId])
+  @@index([status])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id                String   @id @default(cuid())
+  purchaseOrderId   String
+  purchaseOrder     PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  lineNumber        Int
+  materialId        String
+  material          Material @relation(fields: [materialId], references: [id])
+
+  description       String?
+  quantity          Decimal  @db.Decimal(15, 3)
+  unit              String
+  unitPrice         Decimal  @db.Decimal(15, 4)
+  totalPrice        Decimal  @db.Decimal(15, 2)
+
+  // GR Tracking
+  receivedQty       Decimal  @db.Decimal(15, 3) @default(0)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([purchaseOrderId, lineNumber])
+  @@index([materialId])
+  @@map("purchase_order_items")
+}
+
+// ========================================
+// WAREHOUSE MODULE
+// ========================================
+
+model GoodsReceipt {
+  id                String   @id @default(cuid())
+  grNumber          String   @unique
+  grDate            DateTime
+  status            GRStatus @default(PENDING)
+
+  // Source Document
+  purchaseOrderId   String?
+  purchaseOrder     PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  bc20DocumentId    String?
+  bc20Document      BC20Document? @relation(fields: [bc20DocumentId], references: [id])
+
+  // BC 2.0 Validation
+  requiresTaxPayment Boolean @default(false)
+  taxPaymentVerified Boolean @default(false)
+
+  // Landed Cost (for BC 2.0)
+  landedCostApplied Boolean  @default(false)
+  landedCostTotal   Decimal? @db.Decimal(15, 2)
+
+  // Line Items
+  items             GoodsReceiptItem[]
+
+  notes             String?
+  receivedBy        String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([grNumber])
+  @@index([purchaseOrderId])
+  @@index([bc20DocumentId])
+  @@index([status])
+  @@map("goods_receipts")
+}
+
+model GoodsReceiptItem {
+  id                String   @id @default(cuid())
+  goodsReceiptId    String
+  goodsReceipt      GoodsReceipt @relation(fields: [goodsReceiptId], references: [id], onDelete: Cascade)
+
+  lineNumber        Int
+  materialId        String
+  material          Material @relation(fields: [materialId], references: [id])
+
+  quantity          Decimal  @db.Decimal(15, 3)
+  unit              String
+
+  // Landed Cost Per Unit (for BC 2.0)
+  unitCost          Decimal  @db.Decimal(15, 2)
+  landedCostPerUnit Decimal? @db.Decimal(15, 2)
+  totalCost         Decimal  @db.Decimal(15, 2)
+
+  // Optional Lot Tracking
+  lotNumber         String?
+  expiryDate        DateTime?
+
+  // Storage Location
+  warehouse         String?
+  location          String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([goodsReceiptId, lineNumber])
+  @@index([materialId])
+  @@index([lotNumber])
+  @@map("goods_receipt_items")
+}
+
+// ========================================
+// FINANCE MODULE - ACCOUNTS PAYABLE
+// ========================================
+
+model APBill {
+  id                String   @id @default(cuid())
+  billNumber        String   @unique
+  billDate          DateTime
+  dueDate           DateTime
+  status            BillStatus @default(PENDING)
+
+  // Supplier
+  supplierId        String
+  supplier          Supplier @relation(fields: [supplierId], references: [id])
+
+  // Bill Type
+  billType          BillType
+  description       String
+
+  // BC 2.0 Reference (for dual billing)
+  bc20VendorBill    BC20Document? @relation("VendorBill")
+  bc20TaxBill       BC20Document? @relation("TaxBill")
+
+  // Financial
+  currency          String   @default("IDR")
+  amount            Decimal  @db.Decimal(15, 2)
+  paidAmount        Decimal  @db.Decimal(15, 2) @default(0)
+  remainingAmount   Decimal  @db.Decimal(15, 2)
+
+  // Tax Details (for tax bills)
+  taxType           String?  // "Bea Masuk", "PPN Import", "PPh 22"
+  taxReference      String?  // BC 2.0 document number
+
+  // Payment
+  payments          APPayment[]
+
+  notes             String?
+  createdBy         String
+  createdAt         DateTime @default(now())
+  updatedBy         String?
+  updatedAt         DateTime @updatedAt
+
+  @@index([billNumber])
+  @@index([supplierId])
+  @@index([status])
+  @@index([billType])
+  @@index([dueDate])
+  @@map("ap_bills")
+}
+
+model APPayment {
+  id                String   @id @default(cuid())
+  paymentNumber     String   @unique
+  paymentDate       DateTime
+
+  // Bill Reference
+  billId            String
+  bill              APBill   @relation(fields: [billId], references: [id])
+
+  // Payment Details
+  amount            Decimal  @db.Decimal(15, 2)
+  paymentMethod     String   // "Bank Transfer", "Cash", "Check", etc.
+  referenceNumber   String?
+
+  // Bank Account
+  bankAccount       String?
+
+  notes             String?
+  createdBy         String
+  createdAt         DateTime @default(now())
+
+  @@index([paymentNumber])
+  @@index([billId])
+  @@index([paymentDate])
+  @@map("ap_payments")
+}
+
+// ========================================
+// TAX ASSET MANAGEMENT
+// ========================================
+
+model TaxAsset {
+  id                String   @id @default(cuid())
+  assetNumber       String   @unique
+  assetDate         DateTime
+
+  // Tax Type
+  taxType           TaxAssetType
+  description       String
+
+  // BC 2.0 Reference
+  bc20DocumentId    String?
+
+  // Financial
+  amount            Decimal  @db.Decimal(15, 2)
+  usedAmount        Decimal  @db.Decimal(15, 2) @default(0)
+  remainingAmount   Decimal  @db.Decimal(15, 2)
+
+  // Status
+  status            TaxAssetStatus @default(AVAILABLE)
+
+  // Expiry (for PPh 22)
+  expiryDate        DateTime?
+
+  notes             String?
+  createdBy         String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([assetNumber])
+  @@index([taxType])
+  @@index([status])
+  @@map("tax_assets")
+}
+
+// ========================================
+// ENUMS
+// ========================================
+
+enum BC20Status {
+  DRAFT
+  SUBMITTED
+  CUSTOMS_PROCESSING
+  TAX_PAYMENT_PENDING
+  TAX_PAID
+  CUSTOMS_RELEASED
+  RECEIVED
+  COMPLETED
+  CANCELLED
+}
+
+enum TaxPaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+}
+
+enum POStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  PARTIAL_RECEIVED
+  RECEIVED
+  CLOSED
+  CANCELLED
+}
+
+enum GRStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum BillStatus {
+  PENDING
+  PARTIAL_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum BillType {
+  VENDOR_PAYMENT  // CIF payment to supplier
+  TAX_PAYMENT     // Tax payment to customs
+  REGULAR         // Regular AP bill
+}
+
+enum TaxAssetType {
+  PPN_IMPORT      // PPN from BC 2.0 (can offset output VAT)
+  PPH_22          // PPh 22 prepayment
+}
+
+enum TaxAssetStatus {
+  AVAILABLE
+  USED
+  EXPIRED
+}
+
+enum MaterialCategory {
+  RAW_MATERIAL
+  PACKAGING
+  FINISHED_GOODS
+  SPARE_PARTS
+  CONSUMABLES
+}
