@@ -5,7 +5,7 @@
 
 ## Overview
 
-This document captures the complete end-to-end workflow specifications for the ERP system, covering all modules from Sales Order to Finance, including customs compliance (BC 2.3 Import and BC 3.0 Export).
+This document captures the complete end-to-end workflow specifications for the ERP system, covering all modules from Sales Order to Finance, including customs compliance (BC 2.0 Regular Import and PEB Regular Export).
 
 ---
 
@@ -47,7 +47,7 @@ graph TD
 
 ---
 
-## B. Purchasing & BC 2.3 (Import) Workflow
+## B. Purchasing & BC 2.0 (Regular Import) Workflow
 
 ### Process Flow
 
@@ -59,19 +59,25 @@ graph TD
     D -->|Reject| B
     D -->|Approve| E[Send PO to Vendor]
     E --> F[Vendor Confirms]
-    F --> G[Prepare BC 2.3]
-    G --> H[Finance Verify BC 2.3]
-    H --> I[Submit to Customs]
-    I --> J{Customs Review}
-    J -->|Query/Reject| K[Fix & Resubmit]
-    J -->|Approve| L[Receive SPPB]
-    L --> M[Vendor Delivers]
-    M --> N[Warehouse GR]
+    F --> G[Prepare BC 2.0 PIB]
+    G --> H{System Auto-Creates}
+    H --> I[Billing 1: Vendor Payment]
+    H --> J[Billing 2: Tax Payment]
+    J --> K[Finance: Pay Taxes Upfront]
+    K --> L[Bea Masuk Paid]
+    K --> M[PPN Import → Prepaid Tax Asset]
+    K --> N[PPh 22 → Prepaid Tax Asset]
+    L --> O[Customs Issues SPPB]
+    O --> P[BC 2.0 Status: RELEASED]
+    P --> Q[Vendor Delivers]
+    Q --> R[Warehouse GR with Landed Cost]
+    R --> S[Update Inventory at Landed Cost]
+    I --> T[Pay Vendor per Payment Terms]
 ```
 
-### BC 2.3 Status Flow
+### BC 2.0 Status Flow
 
-`NOT REQUIRED` / `DRAFT` → `SUBMITTED` → `UNDER REVIEW` → `QUERY` → `APPROVED` → `CLOSED`
+`DRAFT` → `SUBMITTED` → `UNDER CUSTOMS REVIEW` → `TAX PAYMENT PENDING` → `TAX PAID` → `CUSTOMS RELEASED` → `GOODS RECEIVED` → `CLOSED`
 
 ### PO Status Flow
 
@@ -81,36 +87,44 @@ graph TD
 
 - Commercial Invoice, Packing List, B/L
 - HS Code, Origin, Value
-- Duties & Taxes calculation (Bea Masuk, PPN, PPh 22)
+- Duties & Taxes calculation (Bea Masuk, PPN Import, PPh 22)
 - SPPB (Surat Persetujuan Pengeluaran Barang)
 
 ### Implementation Features ✅
 
-**BC 2.3 Management** (`/purchasing/bc23`)
+**BC 2.0 Management** (`/purchasing/bc20`)
 
-- Dashboard with stats (Pending, Approved, Total Value)
+- Dashboard with stats (Pending, Tax Payment Pending, Total Value)
+- Dual billing status tracking
 - List view with status badges
 - Search and filter capabilities
 - Quick navigation to detail pages
 
-**BC 2.3 Detail Page** (`/purchasing/bc23/[id]`)
+**BC 2.0 Detail Page** (`/purchasing/bc20/[id]`)
 
 - Complete document information (BC number, PO reference, Supplier)
 - Goods details with HS Code
-- Duty calculations breakdown
+- **Dual Billing Display**: Vendor Payment + Tax Payment
+- Duty calculations breakdown (Bea Masuk, PPN, PPh 22)
+- **Landed Cost Calculation**: CIF + Bea Masuk + Freight
 - SPPB tracking
 - Document checklist (Invoice, Packing List, B/L, COO)
 - Status timeline visualization
 - Activity log with audit trail
-- **Lot Number Assignment** for material traceability
+- **Lot Number Assignment** for optional internal traceability
 
 ### Critical Data Points
 
-- **Lot Number**: Assigned at import for full traceability (e.g., `RM-2026-001`)
+- **Lot Number**: Assigned at import for optional internal traceability (e.g., `RM-2026-001`)
 - **HS Code**: Required for duty calculation
-- **CIF Value**: Basis for customs duties
-- **Duty Breakdown**: Bea Masuk + PPN + PPh 22 = Total Duties
+- **CIF Value**: FOB + Freight + Insurance (basis for customs duties)
+- **Duty Breakdown**:
+  - Bea Masuk (capitalized to inventory)
+  - PPN Import (prepaid tax asset, NOT inventory cost)
+  - PPh 22 (prepaid tax asset, NOT inventory cost)
+- **Landed Cost**: CIF + Bea Masuk + Freight + Handling (inventory value)
 - **SPPB Number**: Customs clearance approval reference
+- **Dual Billing**: Separate tracking for vendor payment and tax payment
 
 ---
 
@@ -142,9 +156,12 @@ graph TD
 
 - Physical count, quality check, weighing
 - Photo documentation
-- BC 2.3 verification (for imports)
+- BC 2.0 verification (for imports)
+- **Landed cost calculation**: System auto-calculates CIF + Bea Masuk + Freight
+- **Inventory valuation**: Update stock at landed cost (not just CIF)
+- **Tax asset recording**: PPN & PPh 22 as prepaid tax (NOT inventory cost)
 - 3-way matching trigger (PO-GR-Invoice)
-- Stock card update, Laporan Mutasi Stok
+- Stock card update with landed cost, Laporan Mutasi Stok
 
 ---
 
@@ -182,35 +199,41 @@ graph TD
    - Efficiency metrics
    - Quality metrics
 
-2. **Konversi Bahan Baku Report** ✅ (`/reports/production`)
-   - Raw material consumed (with BC 2.3 reference)
+2. **Konversi Bahan Baku Report** (`/reports/production`)
+   - Raw material consumed (with optional BC 2.0 reference)
    - Finished goods produced (with lot number)
    - Conversion ratio (actual vs standard)
    - Variance analysis (standard vs actual)
    - Waste/scrap tracking
-   - **Full Traceability**: BC 2.3 (import) → GR → WO → FG → BC 3.0 (export)
+   - **Optional Traceability**: BC 2.0 (import) → GR → WO → FG → PEB (export)
 
-### Material Traceability System ✅
+### Material Traceability System (Optional)
 
-**Traceability Chain** (`/reports/traceability`)
+**Note**: Unlike BC 2.3 bonded zone operations, BC 2.0 regular import does NOT require mandatory customs traceability. However, the system can optionally track material flow for:
+- Internal quality control
+- ISO certification requirements
+- Customer-specific documentation needs
+- Production efficiency analysis
 
-- Visual flow: BC 2.3 → Goods Receipt → Work Order → Finished Goods → BC 3.0
-- Lot/batch tracking throughout the chain
+**Optional Traceability Chain** (`/reports/traceability`)
+
+- Visual flow: BC 2.0 → Goods Receipt → Work Order → Finished Goods → PEB
+- Lot/batch tracking throughout the chain (if enabled)
 - Conversion analysis with variance
-- Material Traceability Certificate generation
-- Search by: Lot Number, BC 2.3, BC 3.0, WO, PO
+- Material Traceability Certificate generation (for customers)
+- Search by: Lot Number, BC 2.0, PEB, WO, PO
 
-**Key Traceability Data**:
+**Key Traceability Data** (if tracked):
 
-- RM Lot Number (from BC 2.3): `RM-2026-001`
+- RM Lot Number (from BC 2.0): `RM-2026-001`
 - FG Lot Number (from WO): `FG-2026-001`
 - Conversion Ratio: Actual vs Standard
 - Variance %: Performance indicator
-- Waste Quantity: For audit compliance
+- Waste Quantity: For internal control (not customs compliance)
 
 ---
 
-## E. Logistics & BC 3.0 (Export) Workflow
+## E. Logistics & PEB (Regular Export) Workflow
 
 ### Process Flow
 
@@ -219,28 +242,27 @@ graph TD
     A[FG Ready] --> B[Sales: Create SI]
     B --> C[Logistics: Process SI]
     C --> D[Book Vessel/Flight]
-    D --> E[Prepare BC 3.0]
-    E --> F[Finance Verify]
-    F --> G[Submit to Customs]
-    G --> H{Customs Review}
-    H -->|Query/Reject| I[Fix & Resubmit]
-    H -->|Approve| J[Receive PEB]
-    J --> K[Prepare Goods]
-    K --> L{Physical Inspection?}
-    L --> M[Load to Container]
-    M --> N[Generate Export Docs]
-    N --> O[Forwarder Collect]
-    O --> P[In Transit]
-    P --> Q[Delivered]
+    D --> E[Prepare PEB]
+    E --> F[Submit to Customs]
+    F --> G{Customs Review}
+    G -->|Query/Reject| H[Fix & Resubmit]
+    G -->|Approve| I[Receive PEB Approval]
+    I --> J[Prepare Goods]
+    J --> K{Physical Inspection?}
+    K --> L[Load to Container]
+    L --> M[Generate Export Docs]
+    M --> N[Forwarder Collect]
+    N --> O[In Transit]
+    O --> P[Delivered]
 ```
 
-### BC 3.0 Status Flow
+### PEB Status Flow
 
-`DRAFT` → `VERIFIED` → `SUBMITTED` → `UNDER REVIEW` → `APPROVED` → `EXPORTED` → `CLOSED`
+`DRAFT` → `SUBMITTED` → `UNDER REVIEW` → `APPROVED` → `EXPORTED` → `CLOSED`
 
 ### Shipment Status Flow
 
-`DRAFT SI` → `CONFIRMED` → `BC 3.0 SUBMITTED` → `BC 3.0 APPROVED` → `LOADED` → `IN TRANSIT` → `DELIVERED` → `COMPLETED`
+`DRAFT SI` → `CONFIRMED` → `PEB SUBMITTED` → `PEB APPROVED` → `LOADED` → `IN TRANSIT` → `DELIVERED` → `COMPLETED`
 
 ### Key Documents
 
@@ -254,84 +276,119 @@ graph TD
 
 ### Implementation Features ✅
 
-**BC 3.0 Management** (`/logistics/bc30`)
+**PEB Management** (`/logistics/peb`)
 
 - Dashboard with stats (Pending, Approved, Total Export Value)
 - List view with PEB tracking
 - Status badges and filters
 - Quick access to detail pages
 
-**BC 3.0 Detail Page** (`/logistics/bc30/[id]`)
+**PEB Detail Page** (`/logistics/peb/[id]`)
 
 - Complete export declaration information
 - PEB (Pemberitahuan Ekspor Barang) tracking
 - NPE (Nomor Pendaftaran Eksportir) display
-- **Full Traceability Chain**: Links back to BC 2.3 and WO
-- Conversion analysis display
+- **No mandatory BC 2.0 linkage required** (operational flexibility)
+- **Optional Traceability**: Can link to WO for internal tracking
 - Document checklist (Invoice, Packing List, COO, Health Cert, Form E)
 - Status timeline
 - Activity log
 
-### Material Traceability Integration
+### Key Differences from BC 3.0 (Bonded Zone Export)
 
-**BC 3.0 to BC 2.3 Linkage**:
+**BC 2.0 Regular Import System**:
 
-- Each BC 3.0 export is linked to source BC 2.3 import(s)
-- Traceability chain visible on BC 3.0 detail page
-- Shows: BC 2.3 → GR → WO → FG → BC 3.0
-- Conversion ratio and waste tracking
-- Compliance audit trail
+- ✅ Can sell domestic or export freely
+- ✅ No mandatory traceability BC 2.0 → PEB
+- ✅ Simple export process (PEB is just export declaration)
+- ✅ PEB is NOT linked to import documents
+- ✅ No conversion analysis required for customs
+- ✅ Optional internal traceability for quality/ISO purposes
 
 **Stock Movement Report** ✅ (`/reports/stock-movement`)
 
 - Period & material filters
 - Balance summary (Opening, In, Out, Closing)
 - Transaction breakdown by type:
-  - Import (BC 2.3 references)
+  - Import (BC 2.0 references)
   - Production (WO references)
-  - Export (BC 3.0 references)
+  - Export (PEB references)
+  - Domestic Sales
   - Waste/Scrap
-- Detailed transaction table with lot tracking
-- BC references for all movements
+- Detailed transaction table with optional lot tracking
+- BC 2.0/PEB references for all movements
 - Export to Excel functionality
 
 ---
 
 ## F. Finance Workflow
 
-### Accounts Payable (AP)
+### Accounts Payable (AP) - Dual Billing System
 
 ```mermaid
 graph TD
-    A[Vendor Invoice Received] --> B[Input Invoice]
-    B --> C[3-Way Matching]
-    C -->|Mismatch| D[Investigate]
-    C -->|Match| E[Verify Tax]
-    E --> F[Manager Approve]
-    F --> G[Schedule Payment]
-    G --> H[Execute Payment]
-    H --> I[Update GL & Close PO]
+    A[BC 2.0 Submitted] --> B{System Auto-Creates}
+    B --> C[Billing 1: Vendor Payment]
+    B --> D[Billing 2: Tax Payment]
+    D --> E[Finance: Pay Tax Upfront]
+    E --> F[Record PPN as Prepaid Tax Asset]
+    E --> G[Record PPh 22 as Prepaid Tax Asset]
+    E --> H[Record Bea Masuk Payment]
+    H --> I[Customs Releases Goods]
+    C --> J[Vendor Invoice Received]
+    J --> K[3-Way Matching]
+    K -->|Mismatch| L[Investigate]
+    K -->|Match| M[Manager Approve]
+    M --> N[Schedule Vendor Payment]
+    N --> O[Execute Payment per Terms]
+    O --> P[Update GL & Close PO]
 ```
 
 ### Accounts Receivable (AR)
 
 ```mermaid
 graph TD
-    A[Goods Shipped] --> B[Auto-generate Invoice]
-    B --> C[AR Verify]
-    C --> D[Generate Faktur Pajak]
-    D --> E[Manager Approve]
-    E --> F[Send to Customer]
-    F --> G[Upload to DJP e-Faktur]
-    G --> H[Payment Monitoring]
-    H --> I{Payment Received?}
-    I -->|Yes| J[Update AR & Close SO]
-    I -->|Overdue| K[Collection Actions]
+    A[Goods Shipped] --> B{Domestic or Export?}
+    B -->|Domestic| C[Auto-generate Invoice with PPN 11%]
+    B -->|Export| D[Auto-generate Invoice Zero-rated]
+    C --> E[AR Verify]
+    E --> F[Generate Faktur Pajak]
+    F --> G[Manager Approve]
+    D --> G
+    G --> H[Send to Customer]
+    F --> I[Upload to DJP e-Faktur]
+    H --> J[Payment Monitoring]
+    J --> K{Payment Received?}
+    K -->|Yes| L[Update AR & Close SO]
+    K -->|Overdue| M[Collection Actions]
 ```
 
 ### Invoice Status Flow
 
 `DRAFT` → `APPROVED` → `SENT` → `PARTIALLY PAID` → `PAID` / `OVERDUE`
+
+### Tax Accounting Features
+
+**PPN Import (Input Tax Credit)**:
+- Record as Prepaid Tax - PPN (Current Asset)
+- Credit against PPN Keluaran (Output VAT)
+- Track unused credit balance
+- Monthly PPN reconciliation report
+
+**PPh 22 Import (Prepaid Income Tax)**:
+- Record as Prepaid Tax - PPh (Current Asset)
+- Credit against annual corporate income tax
+- Year-to-date tracking
+- Tax credit utilization report
+
+**Journal Entries (Auto-generated on GR)**:
+```
+DR  Raw Material Inventory (Landed Cost)
+DR  PPN Prepaid (Tax Asset)
+DR  PPh 22 Prepaid (Tax Asset)
+    CR  Accounts Payable - Vendor (CIF)
+    CR  Accounts Payable - Customs (Duties)
+```
 
 ---
 
@@ -339,16 +396,18 @@ graph TD
 
 ### Cross-Module Triggers
 
-| Trigger Event       | Auto Actions                                                                                                               |
-| :------------------ | :------------------------------------------------------------------------------------------------------------------------- |
-| **SO APPROVED**     | Check FG Stock → Reserve or Create WO<br>Check Raw Material → Create PR if low<br>Update Sales Dashboard                   |
-| **PO APPROVED**     | Notify Warehouse for GR prep<br>Create BC 2.3 template (imports)<br>Update Purchasing Dashboard                            |
-| **BC 2.3 APPROVED** | Notify Warehouse: Ready to receive<br>Allow GR creation<br>Update Compliance Dashboard                                     |
-| **GR COMPLETED**    | Update Inventory<br>Notify Production: Material available<br>Trigger AP: Invoice matching<br>Generate Laporan Mutasi Stok  |
-| **WO COMPLETED**    | Update FG Inventory<br>Generate Production Reports<br>Generate Konversi Bahan Baku<br>Notify Logistics<br>Update SO status |
-| **BC 3.0 APPROVED** | Allow shipment<br>Generate export documents<br>Update Compliance Dashboard                                                 |
-| **GOODS SHIPPED**   | Update FG Stock<br>Auto-generate Sales Invoice<br>Update SO: SHIPPED<br>Start shipment tracking                            |
-| **INVOICE CREATED** | Generate Faktur Pajak<br>Schedule email to customer<br>Start payment monitoring<br>Update AR Dashboard                     |
+| Trigger Event       | Auto Actions                                                                                                                                            |
+| :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **SO APPROVED**     | Check FG Stock → Reserve or Create WO<br>Check Raw Material → Create PR if low<br>Update Sales Dashboard                                                |
+| **PO APPROVED**     | Notify Warehouse for GR prep<br>Create BC 2.0 template (imports)<br>Update Purchasing Dashboard                                                         |
+| **BC 2.0 SUBMITTED**| **Auto-create dual billing**: Vendor Payment + Tax Payment<br>Alert Finance: Upfront tax payment required<br>Block goods receipt until tax paid         |
+| **TAX PAID**        | Update BC 2.0 status to TAX PAID<br>Record PPN Import as prepaid tax asset<br>Record PPh 22 as prepaid tax asset<br>Wait for SPPB from customs          |
+| **BC 2.0 RELEASED** | Notify Warehouse: Ready to receive<br>Allow GR creation<br>Update Compliance Dashboard                                                                  |
+| **GR COMPLETED**    | **Capitalize landed cost to inventory** (CIF + Bea Masuk + Freight)<br>Update Inventory at landed cost<br>Notify Production: Material available<br>Trigger AP: Invoice matching<br>Generate Laporan Mutasi Stok |
+| **WO COMPLETED**    | Update FG Inventory<br>Generate Production Reports<br>Generate Konversi Bahan Baku (optional)<br>Notify Logistics<br>Update SO status                   |
+| **PEB APPROVED**    | Allow shipment<br>Generate export documents<br>Update Compliance Dashboard                                                                              |
+| **GOODS SHIPPED**   | Update FG Stock<br>Auto-generate Sales Invoice<br>Update SO: SHIPPED<br>Start shipment tracking                                                         |
+| **INVOICE CREATED** | Generate Faktur Pajak (domestic only)<br>Schedule email to customer<br>Start payment monitoring<br>Update AR Dashboard                                  |
 
 ---
 
@@ -361,8 +420,9 @@ graph TD
 | **Purchase Order**   | Purchasing Staff     | Purchasing Mgr (>50M) | Finance Mgr (>100M)           | Director (>500M) |
 | **Goods Receipt**    | Warehouse Staff      | Warehouse Supervisor  | Purchasing Mgr (variance >5%) | -                |
 | **Work Order**       | PPIC                 | Production Manager    | -                             | -                |
-| **BC 2.3**           | Purchasing           | Finance               | Customs (External)            | -                |
-| **BC 3.0**           | Logistics            | Finance               | Customs (External)            | -                |
+| **BC 2.0 (PIB)**     | EXIM Staff           | Finance               | Customs (External)            | -                |
+| **Tax Payment**      | Finance Staff        | Finance Manager       | -                             | -                |
+| **PEB (Export)**     | Logistics            | Finance (optional)    | Customs (External)            | -                |
 | **Payment Voucher**  | AP Staff             | Finance Mgr (>25M)    | Director (>250M)              | -                |
 | **Sales Invoice**    | AR Staff             | Finance Manager       | -                             | -                |
 
@@ -375,12 +435,15 @@ graph TD
 - SO Approved → Production (New WO needed)
 - Stock below reorder → Purchasing (Create PR)
 - PO Approved → Vendor (PO attached)
-- GR Completed → Purchasing + Finance
-- BC Submitted → Finance
-- BC Approved → Warehouse/Logistics
+- **BC 2.0 Submitted → Finance (Dual billing created, upfront tax payment required)**
+- **Tax Payment Pending → Finance Manager (Blocking goods receipt)**
+- **Tax Paid → EXIM Staff (Wait for customs SPPB)**
+- **BC 2.0 Released → Warehouse (Ready to receive goods)**
+- GR Completed → Purchasing + Finance (Inventory updated with landed cost)
 - WO Completed → QC + Logistics
+- **PEB Approved → Logistics (Goods ready to ship)**
 - Goods Shipped → Customer + Sales (tracking)
-- Invoice Sent → Customer (Invoice + Faktur)
+- Invoice Sent → Customer (Invoice + Faktur for domestic)
 - Payment Due (3 days before) → Customer
 - Payment Overdue → AR + Sales Manager
 
@@ -389,6 +452,7 @@ graph TD
 🔴 **Critical**
 
 - Stock critical level (<20% of reorder point)
+- **Tax payment pending (blocking goods receipt)**
 - BC document rejected
 - Payment overdue >30 days
 - Production WO delayed >24 hours
@@ -396,15 +460,20 @@ graph TD
 🟡 **Warning**
 
 - Stock below reorder point
-- BC pending >3 days
+- **BC 2.0 pending customs review >3 days**
+- **Dual billing payment pending**
+- **Landed cost variance >10%**
 - Payment due within 7 days
 - PO delivery overdue
 
 🟢 **Info**
 
 - New SO awaiting approval
-- GR completed
+- **BC 2.0 customs released**
+- **Tax asset recorded (PPN/PPh 22)**
+- GR completed with landed cost
 - WO completed
+- PEB approved
 - Shipment delivered
 
 ---
@@ -415,39 +484,48 @@ graph TD
 
 **Centralized Monitoring**:
 
-- Real-time BC 2.3 & BC 3.0 status tracking
+- Real-time BC 2.0 & PEB status tracking
+- **Dual billing monitoring** (Vendor + Tax payments)
+- **Tax asset tracking** (PPN & PPh 22 prepaid)
 - Compliance alerts and notifications
-- Traceability overview
+- Optional traceability overview (internal tracking)
 - Recent activity feed
 
 ### Key Metrics Displayed
 
-**BC 2.3 Import Status**:
+**BC 2.0 Import Status**:
+
+- Total active documents
+- Tax payment pending count
+- Customs released this month
+- Recent documents with quick links
+- **Dual billing status**: Vendor payment vs Tax payment
+
+**PEB Export Status**:
 
 - Total active documents
 - Pending review count
 - Approved this month
 - Recent documents with quick links
 
-**BC 3.0 Export Status**:
+**Tax Asset Tracking**:
 
-- Total active documents
-- Pending review count
-- Approved this month
-- Recent documents with quick links
+- **PPN Import prepaid balance** (input tax credit)
+- **PPh 22 prepaid balance** (income tax credit)
+- Monthly PPN reconciliation (Input vs Output)
+- Tax credit utilization tracking
 
-**Material Traceability**:
+**Landed Cost Monitoring**:
 
-- Total traceability records
-- Exported vs pending
-- Traceability gaps detection
-- Progress tracking
+- Average landed cost per material
+- Cost variance alerts
+- Duty cost trends
 
 **Compliance Alerts**:
 
-- BC 2.3 pending review
-- BC 3.0 pending review
-- Traceability gaps warning
+- BC 2.0 tax payment pending (blocking)
+- PEB pending review
+- Tax asset reconciliation issues
 - "All Clear" status when no issues
 
 ### Integration with Executive Dashboard
@@ -455,10 +533,11 @@ graph TD
 **Executive Dashboard Updates** (`/`)
 
 - Customs Compliance widget added
-- Shows total pending approvals (BC 2.3 + BC 3.0)
-- Color-coded alerts (Green = All Clear, Orange = Pending)
+- Shows total pending approvals (BC 2.0 + PEB)
+- **Tax payment alerts** (upfront payment required)
+- Color-coded alerts (Red = Tax Blocking, Orange = Pending, Green = All Clear)
 - Quick link to Compliance Dashboard
-- Recent activities include BC approvals and traceability completions
+- Recent activities include BC approvals and tax payments
 
 ---
 
@@ -467,8 +546,9 @@ graph TD
 ### Daily Reports (Auto 06:00)
 
 - Production Summary (yesterday)
-- **Stock Movement Report** ✅ (with BC references)
-- **BC Status Dashboard** ✅ (BC 2.3 & BC 3.0 pending)
+- **Stock Movement Report** ✅ (with BC 2.0/PEB references)
+- **BC Status Dashboard** ✅ (BC 2.0 & PEB pending)
+- **Tax Payment Status** (upfront tax tracking)
 - Cash Flow Daily
 
 ### Weekly Reports (Monday 08:00)
@@ -478,44 +558,78 @@ graph TD
 - Inventory Aging
 - AP/AR Aging
 - **Customs Compliance Summary** ✅
+- **Dual Billing Status** (Vendor + Tax)
 
 ### Monthly Reports (1st 08:00)
 
 - Financial Statement (P&L, Balance Sheet)
-- **BC 2.3 & BC 3.0 Summary** ✅
-- **Material Traceability Report** ✅
-- **Production Conversion Report** ✅ (with variance analysis)
-- SPT PPN (Tax report)
+- **BC 2.0 & PEB Summary** ✅
+- **Landed Cost Analysis** ✅ (material-wise breakdown)
+- **Tax Asset Report** ✅ (PPN & PPh 22 prepaid tracking)
+- **Dual Billing Summary** ✅ (payment status tracking)
+- **Material Traceability Report** (optional, for internal quality control)
+- **Production Conversion Report** (optional, for internal efficiency)
+- SPT PPN (Tax report with Import PPN credit)
 - Vendor Performance
 - Customer Sales Analysis
 
 ### On-Demand Reports
 
-- **Material Traceability Certificate** ✅ (customs audit)
+- **Landed Cost Breakdown** ✅ (CIF + Bea Masuk + Freight components)
+- **Tax Credit Tracking** ✅ (PPN & PPh 22 utilization)
 - **Stock Movement by Material** ✅ (period-based)
-- **Konversi Bahan Baku Analysis** ✅ (RM to FG conversion)
+- **Dual Billing Report** ✅ (outstanding vendor/tax payments)
+- **Material Traceability** (optional, for ISO/quality purposes)
+- **COGS Analysis** ✅ (with landed cost impact)
 - Production Cost Analysis
 - SO Fulfillment Report
 - Quality Metrics Report
 
-### Customs Audit Reports ✅
+### Tax & Financial Reports ✅
 
-**For Bea Cukai Compliance**:
+**For Tax Compliance & Financial Management**:
 
-1. **BC 2.3 to BC 3.0 Reconciliation**
-   - Import quantities vs Export quantities
-   - Conversion ratios and waste
-   - Full traceability chain
+1. **BC 2.0 Import Summary**
+   - Total CIF value
+   - Total duties paid (Bea Masuk)
+   - Total tax prepaid (PPN + PPh 22)
+   - Materials received with landed cost
 
-2. **Material Traceability Certificate**
-   - Lot-to-lot tracking
-   - BC 2.3 source → BC 3.0 destination
-   - Conversion analysis with variance
+2. **Landed Cost Analysis**
+   - Material-wise cost breakdown
+   - Components: FOB, Freight, Insurance, Bea Masuk, Other
+   - Cost per unit trend over time
+   - Variance analysis
 
-3. **Stock Movement Report**
-   - All transactions with BC references
+3. **Tax Payment Tracking**
+   - PPN Import paid and credited
+   - PPh 22 paid and credited
+   - Outstanding tax credits
+   - Monthly PPN reconciliation (Input vs Output)
+
+4. **Dual Billing Status**
+   - Vendor payment status
+   - Tax payment status
+   - Outstanding amounts by BC 2.0
+
+5. **Cash Flow Impact**
+   - Upcoming tax payments (BC 2.0 pending)
+   - Vendor payments due
+   - Total procurement cash outflow forecast
+
+6. **Stock Movement Report**
+   - All transactions with BC 2.0/PEB references
    - Opening/Closing balances
-   - Import, Production, Export breakdown
+   - Import, Production, Domestic Sales, Export breakdown
+
+### Optional Internal Tracking Reports
+
+**Note**: Material traceability is NOT mandatory for BC 2.0 customs compliance, but can be maintained for:
+
+- Internal quality control (ISO certification)
+- Customer requirements (specific buyers)
+- Production efficiency analysis
+- Internal audit purposes
 
 ---
 
