@@ -115,7 +115,7 @@ export async function POST(
 
       // 3. Update BC 2.0 tax payment status
       let bc20Status = bc20Doc.status;
-      let taxPaymentStatus = isFullyPaid ? 'PAID' : 'PARTIAL';
+      let taxPaymentStatus: 'PENDING' | 'PARTIAL' | 'PAID' | 'OVERDUE' = isFullyPaid ? 'PAID' : 'PARTIAL';
 
       if (isFullyPaid) {
         bc20Status = 'TAX_PAID';

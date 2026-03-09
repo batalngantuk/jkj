@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import AppLayout from '@/components/app-layout'
+import { HSCodeSelector, type HSCode } from '@/components/purchasing/hs-code-selector'
 
 export default function NewBC20Page() {
   const router = useRouter()
@@ -29,7 +30,7 @@ export default function NewBC20Page() {
 
   // Material & HS Code
   const [materialId, setMaterialId] = useState('')
-  const [hsCodeId, setHsCodeId] = useState('')
+  const [selectedHSCode, setSelectedHSCode] = useState<HSCode | null>(null)
   const [quantity, setQuantity] = useState('')
   const [unit, setUnit] = useState('kg')
   const [countryOfOrigin, setCountryOfOrigin] = useState('')
@@ -56,14 +57,6 @@ export default function NewBC20Page() {
   // Notes
   const [notes, setNotes] = useState('')
 
-  // HS Code rates (mock - akan di-fetch dari database)
-  const hsCodeRates: Record<string, { dutyRate: number; description: string }> = {
-    '72193200': { dutyRate: 5.0, description: 'Stainless Steel Coils' },
-    '39042200': { dutyRate: 7.5, description: 'PVC Resin' },
-    '84831000': { dutyRate: 5.0, description: 'Transmission Shafts' },
-    '72193100': { dutyRate: 5.0, description: 'Flat-rolled products of stainless steel' },
-  }
-
   // Auto-calculate duties and costs
   useEffect(() => {
     const cif = parseFloat(cifValue) || 0
@@ -78,10 +71,7 @@ export default function NewBC20Page() {
     setCifIdr(cifInIdr)
 
     // Get duty rate from HS Code
-    const selectedHsCode = hsCodeId
-    const dutyRate = selectedHsCode && hsCodeRates[selectedHsCode]
-      ? hsCodeRates[selectedHsCode].dutyRate
-      : 5.0 // default 5%
+    const dutyRate = selectedHSCode?.dutyRate || 5.0 // default 5%
 
     // BC 2.0 Tax Calculations
     // 1. Bea Masuk = CIF × Duty Rate
@@ -113,7 +103,7 @@ export default function NewBC20Page() {
     // Tax Bill = Bea Masuk + PPN + PPh22
     setTaxBillAmount(totalTaxAmount)
 
-  }, [cifValue, exchangeRate, hsCodeId, freightCost, insuranceCost, handlingCost, otherCosts])
+  }, [cifValue, exchangeRate, selectedHSCode, freightCost, insuranceCost, handlingCost, otherCosts])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -277,16 +267,18 @@ export default function NewBC20Page() {
 
                 <div className="space-y-2">
                   <Label htmlFor="hsCodeId">HS Code *</Label>
-                  <Select value={hsCodeId} onValueChange={setHsCodeId} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select HS Code" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="72193200">72193200 - Stainless Steel Coils (5%)</SelectItem>
-                      <SelectItem value="39042200">39042200 - PVC Resin (7.5%)</SelectItem>
-                      <SelectItem value="84831000">84831000 - Transmission Shafts (5%)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <HSCodeSelector
+                    value={selectedHSCode?.id}
+                    onValueChange={setSelectedHSCode}
+                    placeholder="Search and select HS Code..."
+                  />
+                  {selectedHSCode && (
+                    <p className="text-xs text-muted-foreground">
+                      Duty Rate: <span className="font-semibold text-blue-600">{selectedHSCode.dutyRate}%</span>
+                      {' • '}PPN: {selectedHSCode.ppnRate}%
+                      {' • '}PPh 22: {selectedHSCode.pph22Rate}%
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -443,7 +435,7 @@ export default function NewBC20Page() {
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <div className="p-4 bg-white rounded-lg border">
-                  <p className="text-sm text-muted-foreground">Bea Masuk ({hsCodeId && hsCodeRates[hsCodeId] ? hsCodeRates[hsCodeId].dutyRate : 5}%)</p>
+                  <p className="text-sm text-muted-foreground">Bea Masuk ({selectedHSCode?.dutyRate || 5}%)</p>
                   <p className="text-xl font-bold text-orange-600">{formatCurrency(beaMasuk)}</p>
                 </div>
 
