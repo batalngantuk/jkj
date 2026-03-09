@@ -12,6 +12,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import AppLayout from '@/components/app-layout'
 import { StatusTimeline } from '@/components/shared/status-timeline'
 
@@ -122,6 +135,15 @@ export default function BC20DetailPage() {
   const params = useParams()
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
 
+  // Tax payment form state
+  const [paymentAmount, setPaymentAmount] = useState('')
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0])
+  const [paymentMethod, setPaymentMethod] = useState('BANK_TRANSFER')
+  const [referenceNumber, setReferenceNumber] = useState('')
+  const [bankAccount, setBankAccount] = useState('')
+  const [paymentNotes, setPaymentNotes] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   // In real implementation, fetch data from API
   const bc20 = MOCK_BC20_DETAIL
 
@@ -145,6 +167,44 @@ export default function BC20DetailPage() {
         {status.replace(/_/g, ' ')}
       </Badge>
     )
+  }
+
+  // Handle tax payment submission
+  const handleTaxPayment = async () => {
+    setIsSubmitting(true)
+    try {
+      const response = await fetch(`/api/bc20/${params.id}/pay-tax`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: parseFloat(paymentAmount),
+          paymentDate,
+          paymentMethod,
+          referenceNumber,
+          bankAccount,
+          notes: paymentNotes,
+          createdBy: 'current-user', // Will be replaced with actual user
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert('Tax payment recorded successfully!')
+        setShowPaymentDialog(false)
+        // Refresh page data
+        window.location.reload()
+      } else {
+        alert(`Error: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('Error recording tax payment:', error)
+      alert('Failed to record tax payment')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const statusSteps = [
@@ -203,10 +263,181 @@ export default function BC20DetailPage() {
               </Button>
             )}
             {bc20.status === 'TAX_PAYMENT_PENDING' && (
-              <Button className="bg-orange-600 hover:bg-orange-700 text-white gap-2">
-                <CreditCard className="h-4 w-4" />
-                Pay Tax
-              </Button>
+              <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+                <DialogTrigger asChild>
+                  <Button className="bg-orange-600 hover:bg-orange-700 text-white gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    Pay Tax
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Record Tax Payment</DialogTitle>
+                    <DialogDescription>
+                      Record payment for import duties and taxes for BC 2.0 document {bc20.documentNumber}
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-6">
+                    {/* Tax Bill Summary */}
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold text-orange-900">Tax Bill Summary</h3>
+                        <Badge className="bg-orange-600 text-white">
+                          {bc20.taxBill.status}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Bea Masuk</p>
+                          <p className="font-semibold">Rp {bc20.taxBill.beaMasuk.toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">PPN Import (11%)</p>
+                          <p className="font-semibold">Rp {bc20.taxBill.ppnImport.toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">PPh 22 (2.5%)</p>
+                          <p className="font-semibold">Rp {bc20.taxBill.pph22.toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Total Tax Bill</p>
+                          <p className="font-bold text-lg text-orange-600">
+                            Rp {bc20.taxBill.totalAmount.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      <Separator className="my-3" />
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Paid Amount</p>
+                          <p className="font-semibold text-green-600">
+                            Rp {bc20.taxBill.paidAmount.toLocaleString()}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Remaining Amount</p>
+                          <p className="font-bold text-orange-600">
+                            Rp {bc20.taxBill.remainingAmount.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment Form */}
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="amount">Payment Amount *</Label>
+                        <Input
+                          id="amount"
+                          type="number"
+                          placeholder="Enter payment amount"
+                          value={paymentAmount}
+                          onChange={(e) => setPaymentAmount(e.target.value)}
+                          max={bc20.taxBill.remainingAmount}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Maximum: Rp {bc20.taxBill.remainingAmount.toLocaleString()}
+                        </p>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="paymentDate">Payment Date *</Label>
+                        <Input
+                          id="paymentDate"
+                          type="date"
+                          value={paymentDate}
+                          onChange={(e) => setPaymentDate(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="paymentMethod">Payment Method *</Label>
+                        <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
+                            <SelectItem value="VIRTUAL_ACCOUNT">Virtual Account</SelectItem>
+                            <SelectItem value="EDC">EDC / Card</SelectItem>
+                            <SelectItem value="CASH">Cash</SelectItem>
+                            <SelectItem value="CLEARING">Clearing</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="referenceNumber">Reference Number</Label>
+                        <Input
+                          id="referenceNumber"
+                          placeholder="e.g., NTPN, Transaction ID"
+                          value={referenceNumber}
+                          onChange={(e) => setReferenceNumber(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          NTPN (Nomor Transaksi Penerimaan Negara) or bank reference number
+                        </p>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="bankAccount">Bank Account</Label>
+                        <Input
+                          id="bankAccount"
+                          placeholder="e.g., BCA 1234567890"
+                          value={bankAccount}
+                          onChange={(e) => setBankAccount(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="notes">Notes</Label>
+                        <Textarea
+                          id="notes"
+                          placeholder="Additional payment notes"
+                          value={paymentNotes}
+                          onChange={(e) => setPaymentNotes(e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Important Notice */}
+                    <Alert className="border-blue-200 bg-blue-50">
+                      <AlertCircle className="h-4 w-4 text-blue-600" />
+                      <AlertTitle className="text-blue-900">Important</AlertTitle>
+                      <AlertDescription className="text-blue-700 text-sm">
+                        • Customs clearance will be allowed only after full tax payment<br/>
+                        • PPN Import and PPh 22 will be recorded as tax assets (prepaid tax)<br/>
+                        • Tax assets can be used to offset future tax liabilities
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowPaymentDialog(false)}
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleTaxPayment}
+                      disabled={
+                        !paymentAmount ||
+                        parseFloat(paymentAmount) <= 0 ||
+                        parseFloat(paymentAmount) > bc20.taxBill.remainingAmount ||
+                        !paymentDate ||
+                        isSubmitting
+                      }
+                      className="bg-orange-600 hover:bg-orange-700"
+                    >
+                      {isSubmitting ? 'Processing...' : 'Record Payment'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             )}
           </div>
         </div>
@@ -357,6 +588,7 @@ export default function BC20DetailPage() {
               <Button
                 className="w-full bg-orange-600 hover:bg-orange-700"
                 disabled={bc20.taxBill.status === 'PAID'}
+                onClick={() => setShowPaymentDialog(true)}
               >
                 <CreditCard className="h-4 w-4 mr-2" />
                 Pay Tax Bill Now
