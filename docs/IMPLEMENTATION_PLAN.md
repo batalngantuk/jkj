@@ -282,33 +282,93 @@ interface HSCode {
 }
 ```
 
-#### Week 2: BC 2.0 UI Components
+#### Week 2: BC 2.0 UI Components ✅ **COMPLETED**
+
+> **Status**: ✅ Completed on March 10, 2026
+> **Commits**:
+> - `03fdc43` - feat(bc20): add BC 2.0 creation form with auto-calculation
+> - `9501e57` - feat(bc20): add tax payment dialog for BC 2.0
+> - `e0d2fb0` - feat(bc20): add HS Code selector component with search
+> - `8d3263b` - feat(bc20): add document upload component and integrate with BC 2.0
 
 **Tasks**:
-1. Build BC 2.0 list page (`/purchasing/bc20`)
-2. Create BC 2.0 detail page (`/purchasing/bc20/[id]`)
-3. Implement BC 2.0 creation form (`/purchasing/bc20/new`)
-4. Build dual billing display component
-5. Create status timeline component
+1. ✅ Build BC 2.0 list page (`/purchasing/bc20`)
+2. ✅ Create BC 2.0 detail page (`/purchasing/bc20/[id]`)
+3. ✅ Implement BC 2.0 creation form (`/purchasing/bc20/new`)
+4. ✅ Build dual billing display component
+5. ✅ Create status timeline component
+6. ✅ Add tax payment dialog/modal
+7. ✅ Create HS Code selector with search
+8. ✅ Implement document upload component
 
 **Deliverables**:
-- BC 2.0 list with filters & search
-- BC 2.0 detail with dual billing display
-- BC 2.0 creation form with auto-calculations
-- Status badges & timeline
-- Document upload UI (mock)
+- ✅ BC 2.0 list with filters & search
+- ✅ BC 2.0 detail with dual billing display
+- ✅ BC 2.0 creation form with auto-calculations
+- ✅ Status badges & timeline
+- ✅ Tax payment dialog with validation
+- ✅ HS Code searchable combobox
+- ✅ Document upload UI with drag-and-drop
+- ✅ BC 2.0 card on purchasing dashboard
+
+**Implementation Notes**:
+- Built comprehensive BC 2.0 detail page with dual billing cards (Vendor Bill + Tax Bill)
+- Implemented real-time duty and tax auto-calculation in creation form
+- Created tax payment dialog integrated with `/api/bc20/[id]/pay-tax` endpoint
+- Developed searchable HS Code selector component with duty rate display
+- Built reusable document upload component with drag-and-drop, validation, and progress
+- Added BC 2.0 module card to purchasing dashboard for better visibility
+- All components use shadcn/ui with consistent design system
 
 **UI Components**:
 ```typescript
-// Key Components
-- BC20ListPage (table with status badges)
-- BC20DetailPage (full document view)
-- BC20CreateForm (step-by-step form)
-- DualBillingCard (vendor + tax billing side-by-side)
-- LandedCostPreview (cost breakdown)
-- StatusTimeline (visual progress)
-- DocumentChecklist (upload tracking)
-- TaxPaymentAlert (blocking warning)
+// Key Components Implemented
+✅ BC20ListPage - Table with status badges, search, filters
+✅ BC20DetailPage - Full document view with dual billing
+✅ BC20CreateForm - Multi-section form with auto-calculations
+✅ DualBillingCard - Vendor + tax billing side-by-side
+✅ LandedCostPreview - Cost breakdown with alerts
+✅ StatusTimeline - Visual progress indicator
+✅ TaxPaymentDialog - Payment recording with validation
+✅ HSCodeSelector - Searchable combobox with duty rates
+✅ DocumentUpload - Drag-and-drop with progress tracking
+✅ TaxPaymentAlert - Blocking warning for upfront tax payment
+```
+
+**Technical Specs**:
+```typescript
+// Auto-calculation Logic
+useEffect(() => {
+  // Get duty rate from selected HS Code
+  const dutyRate = selectedHSCode?.dutyRate || 5.0;
+
+  // BC 2.0 Tax Calculations
+  // 1. Bea Masuk = CIF × Duty Rate
+  const beaMasuk = cifInIdr * (dutyRate / 100);
+
+  // 2. PPN Import = (CIF + Bea Masuk) × 11%
+  const ppn = (cifInIdr + beaMasuk) * 0.11;
+
+  // 3. PPh 22 = (CIF + Bea Masuk) × 2.5%
+  const pph22 = (cifInIdr + beaMasuk) * 0.025;
+
+  // Landed Cost = CIF + Bea Masuk + Freight + Insurance + Handling
+  // Note: PPN & PPh22 NOT included (tax assets)
+  const landedCost = cifInIdr + beaMasuk + freight + insurance + handling;
+
+  // Dual Billing
+  setVendorBillAmount(cifInIdr); // Vendor payment
+  setTaxBillAmount(beaMasuk + ppn + pph22); // Tax payment
+}, [cifValue, exchangeRate, selectedHSCode, freightCost, insuranceCost, handlingCost]);
+
+// Document Upload Features
+- Drag-and-drop file upload with visual feedback
+- File validation (size: max 10MB, formats: .pdf, .jpg, .png)
+- Upload progress indicator with percentage
+- Error handling with retry option
+- Uploaded file card with metadata (size, date, uploader)
+- View, download, and delete actions
+- Status-based styling (green: uploaded, red: error, orange: pending)
 ```
 
 #### Week 3: Dual Billing & Tax Payment Logic
