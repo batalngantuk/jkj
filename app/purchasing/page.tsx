@@ -2,9 +2,10 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { ShoppingCart, Users, FileText, TrendingUp, AlertCircle, Plus, DollarSign } from 'lucide-react'
+import { ShoppingCart, Users, FileText, TrendingUp, AlertCircle, Plus, DollarSign, Ship, Package } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import AppLayout from '@/components/app-layout'
 
 import { MOCK_PURCHASE_ORDERS, MOCK_SUPPLIERS } from "@/lib/mock-data/purchasing"
@@ -83,6 +84,71 @@ export default function PurchasingDashboard() {
                        <ShoppingCart className="h-8 w-8 text-purple-500" />
                    </CardContent>
                </Card>
+            </div>
+
+            {/* Import & Compliance */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Link href="/purchasing/bc20">
+                <Card className="hover:shadow-lg transition-all cursor-pointer border-2 border-blue-200 bg-gradient-to-br from-white to-blue-50">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-3 bg-blue-600 rounded-lg">
+                          <Ship className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-xl">BC 2.0 - Regular Import</CardTitle>
+                          <p className="text-sm text-muted-foreground mt-1">Import declarations with dual billing</p>
+                        </div>
+                      </div>
+                      <Badge className="bg-blue-600 text-white">New!</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Tax Pending</p>
+                        <p className="text-2xl font-bold text-orange-600">1</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Cleared</p>
+                        <p className="text-2xl font-bold text-green-600">1</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-3">
+                      ✓ Dual Billing • ✓ Upfront Tax Payment • ✓ Landed Cost
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+
+              <Link href="/purchasing/po">
+                <Card className="hover:shadow-lg transition-all cursor-pointer border-2">
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-purple-600 rounded-lg">
+                        <Package className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl">Purchase Orders</CardTitle>
+                        <p className="text-sm text-muted-foreground mt-1">Manage all purchase orders</p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Pending</p>
+                        <p className="text-2xl font-bold text-orange-600">{pendingApproval}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Approved</p>
+                        <p className="text-2xl font-bold text-green-600">{MOCK_PURCHASE_ORDERS.filter(p => p.status === 'APPROVED').length}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             </div>
 
             {/* Quick Actions / Recent */}
