@@ -94,9 +94,10 @@
 ### Untuk Developer
 
 1. Review **PRD_BC20_System.md** untuk requirements lengkap
-2. Check **Detailed Workflow Specification** untuk technical details
-3. Review **Customs Walkthrough** untuk BC 2.0 implementation guide
-4. Refer to code implementation in `/app` directory
+2. Follow **IMPLEMENTATION_PLAN.md** untuk 12-week roadmap
+3. Check **Detailed Workflow Specification** untuk technical details
+4. Review **Customs Walkthrough** untuk BC 2.0 implementation guide
+5. Refer to code implementation in `/app` directory
 
 ### Untuk Training
 
@@ -112,6 +113,7 @@
 docs/
 ├── README.md                      (this file)
 ├── PRD_BC20_System.md             (Product Requirements Document)
+├── IMPLEMENTATION_PLAN.md         (12-week implementation plan)
 ├── platform_overview.md           (comprehensive guide)
 ├── quick_reference.md             (quick cheat sheet)
 ├── detailed_workflow_spec.md      (technical workflow)
@@ -178,7 +180,7 @@ docs/
 
 ---
 
-## 📋 New: Product Requirements Document
+## 📋 Product Requirements & Implementation
 
 ### 5. BC 2.0 System PRD
 
@@ -204,6 +206,45 @@ docs/
 - Implementation Timeline
 
 **Untuk**: Developers, product managers, technical reference
+
+---
+
+### 6. Implementation Plan
+
+📄 **File**: `IMPLEMENTATION_PLAN.md`
+
+**Isi**: 12-week step-by-step implementation plan:
+
+- **Phase 1 (Weeks 1-3)**: BC 2.0 Import Module
+  - Database schema & backend APIs
+  - UI components (list, detail, create)
+  - Dual billing & tax payment logic
+
+- **Phase 2 (Weeks 4-5)**: Landed Cost & Tax Accounting
+  - Landed cost calculation engine
+  - Tax asset recording (PPN & PPh 22)
+  - Automatic journal entries
+
+- **Phase 3 (Weeks 6-7)**: Finance Integration
+  - Dual billing in AP module
+  - Tax payment management
+  - Cash flow forecasting
+
+- **Phase 4 (Weeks 8-9)**: PEB Export Module
+  - PEB document management
+  - Zero-rated VAT logic
+  - Simple export workflow
+
+- **Phase 5 (Weeks 10-11)**: Reporting & Dashboard
+  - BC 2.0 & Tax Dashboard
+  - Stock movement reports
+  - Tax asset reports
+
+- **Phase 6 (Week 12)**: Optional Traceability
+  - Lot tracking system
+  - Traceability certificates
+
+**Untuk**: Developers, project managers, implementation team
 
 ---
 
