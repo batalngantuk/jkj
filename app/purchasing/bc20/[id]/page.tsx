@@ -1,27 +1,176 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { ArrowLeft, FileText, CheckCircle, Upload, Download, Calendar, User, Package } from 'lucide-react'
+import {
+  ArrowLeft, FileText, CheckCircle, Upload, Download, Calendar, User,
+  DollarSign, AlertCircle, Clock, Package, TrendingUp, Receipt, CreditCard
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import AppLayout from '@/components/app-layout'
 import { StatusTimeline } from '@/components/shared/status-timeline'
-import { MOCK_BC23, MOCK_HS_CODES } from '@/lib/mock-data/customs'
 
-export default function BC23DetailPage() {
+// BC 2.0 Status Types
+type BC20Status = 'DRAFT' | 'SUBMITTED' | 'CUSTOMS_PROCESSING' | 'TAX_PAYMENT_PENDING' | 'TAX_PAID' | 'CUSTOMS_RELEASED' | 'RECEIVED' | 'COMPLETED' | 'CANCELLED'
+type TaxPaymentStatus = 'PENDING' | 'PARTIAL' | 'PAID' | 'OVERDUE'
+
+// Mock data for BC 2.0 detail (will be replaced with API call)
+const MOCK_BC20_DETAIL = {
+  id: '1',
+  documentNumber: 'PIB-001234-2026',
+  documentDate: '2026-03-01',
+  status: 'TAX_PAYMENT_PENDING' as BC20Status,
+
+  // Supplier & PO
+  supplierId: 'SUP001',
+  supplierName: 'Global Metals Ltd',
+  supplierCountry: 'China',
+  poNumber: 'PO-2026-001',
+  poId: 'po1',
+
+  // Customs Details
+  portOfEntry: 'Tanjung Priok',
+  customsOffice: 'KPU Bea Cukai Tanjung Priok',
+  estimatedArrival: '2026-03-15',
+  actualArrival: null,
+
+  // Financial Summary
+  cifValue: 50000,
+  currency: 'USD',
+  exchangeRate: 15750,
+  cifIdr: 787500000,
+
+  // Duty & Tax
+  beaMasuk: 39375000,
+  ppnImport: 90956250,
+  pph22: 20668750,
+  totalTax: 151000000,
+
+  // Landed Cost
+  freightCost: 15000000,
+  insuranceCost: 5000000,
+  handlingCost: 10000000,
+  otherCosts: 2000000,
+  totalLandedCost: 858875000,
+
+  // Dual Billing
+  vendorBill: {
+    id: 'VB-001234',
+    billNumber: 'VB-PIB-001234-2026',
+    amount: 787500000,
+    dueDate: '2026-03-31',
+    status: 'PENDING' as const,
+    paidAmount: 0,
+    remainingAmount: 787500000,
+  },
+  taxBill: {
+    id: 'TB-001234',
+    billNumber: 'TB-PIB-001234-2026',
+    beaMasuk: 39375000,
+    ppnImport: 90956250,
+    pph22: 20668750,
+    totalAmount: 151000000,
+    dueDate: '2026-03-08',
+    status: 'PENDING' as const,
+    paidAmount: 0,
+    remainingAmount: 151000000,
+  },
+  taxPaymentStatus: 'PENDING' as TaxPaymentStatus,
+
+  // Items
+  items: [
+    {
+      lineNumber: 1,
+      materialCode: 'RM-SS-001',
+      materialName: 'Stainless Steel Coils 304',
+      hsCode: '72193200',
+      hsCodeDescription: 'Flat-rolled products of stainless steel',
+      quantity: 10000,
+      unit: 'kg',
+      unitPriceForeign: 5,
+      totalPriceForeign: 50000,
+      unitPriceIdr: 78750,
+      totalPriceIdr: 787500000,
+      dutyRate: 5,
+      dutyAmount: 39375000,
+      countryOfOrigin: 'China',
+    }
+  ],
+
+  // Documents
+  documents: {
+    pib: { uploaded: false },
+    invoice: { uploaded: false },
+    packingList: { uploaded: false },
+    bl: { uploaded: false },
+    coa: { uploaded: false },
+  },
+
+  // Audit
+  createdBy: 'john.doe',
+  createdAt: '2026-03-01T10:00:00',
+  submittedBy: null,
+  submittedAt: null,
+}
+
+export default function BC20DetailPage() {
   const params = useParams()
-  const bc23 = MOCK_BC23.find(bc => bc.id === params.id) || MOCK_BC23[0]
-  const hsCodeInfo = MOCK_HS_CODES.find(hs => hs.code === bc23.hsCode)
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false)
+
+  // In real implementation, fetch data from API
+  const bc20 = MOCK_BC20_DETAIL
+
+  const getStatusBadge = (status: BC20Status) => {
+    const variants: Record<BC20Status, { color: string; icon: React.ReactNode }> = {
+      'DRAFT': { color: 'bg-slate-100 text-slate-700', icon: <FileText className="h-3 w-3" /> },
+      'SUBMITTED': { color: 'bg-blue-100 text-blue-700', icon: <Clock className="h-3 w-3" /> },
+      'CUSTOMS_PROCESSING': { color: 'bg-purple-100 text-purple-700', icon: <AlertCircle className="h-3 w-3" /> },
+      'TAX_PAYMENT_PENDING': { color: 'bg-orange-100 text-orange-700', icon: <DollarSign className="h-3 w-3" /> },
+      'TAX_PAID': { color: 'bg-cyan-100 text-cyan-700', icon: <CheckCircle className="h-3 w-3" /> },
+      'CUSTOMS_RELEASED': { color: 'bg-green-100 text-green-700', icon: <CheckCircle className="h-3 w-3" /> },
+      'RECEIVED': { color: 'bg-teal-100 text-teal-700', icon: <CheckCircle className="h-3 w-3" /> },
+      'COMPLETED': { color: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle className="h-3 w-3" /> },
+      'CANCELLED': { color: 'bg-red-100 text-red-700', icon: <AlertCircle className="h-3 w-3" /> }
+    }
+
+    const variant = variants[status]
+    return (
+      <Badge className={`${variant.color} gap-1 font-medium`}>
+        {variant.icon}
+        {status.replace(/_/g, ' ')}
+      </Badge>
+    )
+  }
 
   const statusSteps = [
-    { label: 'Draft', status: 'complete' as const, date: bc23.createdAt },
-    { label: 'Submitted', status: bc23.submissionDate ? 'complete' as const : 'pending' as const, date: bc23.submissionDate },
-    { label: 'Under Review', status: bc23.status === 'UNDER REVIEW' || bc23.status === 'APPROVED' ? 'complete' as const : 'pending' as const },
-    { label: 'Approved', status: bc23.status === 'APPROVED' ? 'complete' as const : 'pending' as const, date: bc23.approvalDate }
+    {
+      label: 'Draft',
+      status: 'complete' as const,
+      date: new Date(bc20.createdAt).toLocaleDateString('id-ID')
+    },
+    {
+      label: 'Submitted',
+      status: bc20.submittedAt ? 'complete' as const : 'pending' as const,
+      date: bc20.submittedAt ? new Date(bc20.submittedAt).toLocaleDateString('id-ID') : undefined
+    },
+    {
+      label: 'Tax Payment',
+      status: bc20.taxPaymentStatus === 'PAID' ? 'complete' as const :
+              bc20.status === 'TAX_PAYMENT_PENDING' ? 'current' as const : 'pending' as const,
+    },
+    {
+      label: 'Customs Released',
+      status: bc20.status === 'CUSTOMS_RELEASED' || bc20.status === 'RECEIVED' || bc20.status === 'COMPLETED' ? 'complete' as const : 'pending' as const,
+    },
+    {
+      label: 'Goods Received',
+      status: bc20.status === 'RECEIVED' || bc20.status === 'COMPLETED' ? 'complete' as const : 'pending' as const,
+    }
   ]
 
   return (
@@ -30,14 +179,17 @@ export default function BC23DetailPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/purchasing/bc23">
+            <Link href="/purchasing/bc20">
               <Button variant="ghost" size="icon">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{bc23.bcNumber}</h1>
-              <p className="text-sm text-muted-foreground">Import Declaration Detail</p>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-foreground font-mono">{bc20.documentNumber}</h1>
+                {getStatusBadge(bc20.status)}
+              </div>
+              <p className="text-sm text-muted-foreground">BC 2.0 Regular Import Declaration (PIB)</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -45,209 +197,373 @@ export default function BC23DetailPage() {
               <Download className="h-4 w-4" />
               Export PDF
             </Button>
-            {bc23.status === 'DRAFT' && (
+            {bc20.status === 'DRAFT' && (
               <Button className="bg-primary hover:bg-primary/90">
                 Submit to Customs
+              </Button>
+            )}
+            {bc20.status === 'TAX_PAYMENT_PENDING' && (
+              <Button className="bg-orange-600 hover:bg-orange-700 text-white gap-2">
+                <CreditCard className="h-4 w-4" />
+                Pay Tax
               </Button>
             )}
           </div>
         </div>
 
+        {/* Tax Payment Alert */}
+        {bc20.taxPaymentStatus === 'PENDING' && bc20.status === 'TAX_PAYMENT_PENDING' && (
+          <Alert className="border-orange-200 bg-orange-50">
+            <AlertCircle className="h-4 w-4 text-orange-600" />
+            <AlertTitle className="text-orange-900">Tax Payment Required</AlertTitle>
+            <AlertDescription className="text-orange-700">
+              Import duties and taxes must be paid before customs clearance.
+              Payment due: <strong>{new Date(bc20.taxBill.dueDate).toLocaleDateString('id-ID')}</strong>
+              {' - '}Rp {bc20.totalTax.toLocaleString()}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Status Timeline */}
         <Card>
           <CardHeader>
             <CardTitle>Document Status</CardTitle>
+            <CardDescription>Track your BC 2.0 import declaration progress</CardDescription>
           </CardHeader>
           <CardContent>
             <StatusTimeline steps={statusSteps} />
-            {bc23.sppbNumber && (
-              <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <div>
-                    <p className="font-semibold text-green-900">SPPB Issued</p>
-                    <p className="text-sm text-green-700">Number: {bc23.sppbNumber}</p>
-                  </div>
+          </CardContent>
+        </Card>
+
+        {/* DUAL BILLING SECTION - Key Feature of BC 2.0 */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Vendor Bill (CIF Payment) */}
+          <Card className="border-blue-200">
+            <CardHeader className="bg-blue-50/50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Receipt className="h-5 w-5 text-blue-600" />
+                    Vendor Bill
+                  </CardTitle>
+                  <CardDescription>CIF Value Payment to Supplier</CardDescription>
+                </div>
+                <Badge className="bg-blue-100 text-blue-700">
+                  {bc20.vendorBill.status}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Bill Number</p>
+                <p className="font-mono font-semibold">{bc20.vendorBill.billNumber}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Amount (CIF Value in IDR)</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  Rp {bc20.vendorBill.amount.toLocaleString()}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {bc20.currency} {bc20.cifValue.toLocaleString()} × Rp {bc20.exchangeRate.toLocaleString()}
+                </p>
+              </div>
+              <Separator />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Paid Amount</p>
+                  <p className="font-semibold">Rp {bc20.vendorBill.paidAmount.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Remaining</p>
+                  <p className="font-semibold text-blue-600">
+                    Rp {bc20.vendorBill.remainingAmount.toLocaleString()}
+                  </p>
                 </div>
               </div>
-            )}
+              <div>
+                <p className="text-xs text-muted-foreground">Due Date</p>
+                <p className="font-medium">{new Date(bc20.vendorBill.dueDate).toLocaleDateString('id-ID')}</p>
+              </div>
+              <Button variant="outline" className="w-full" disabled={bc20.vendorBill.status === 'PAID'}>
+                <CreditCard className="h-4 w-4 mr-2" />
+                Pay Vendor Bill
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Tax Bill (Import Duties) */}
+          <Card className="border-orange-200">
+            <CardHeader className="bg-orange-50/50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-orange-600" />
+                    Tax Bill
+                  </CardTitle>
+                  <CardDescription>Import Duties & Taxes to Customs</CardDescription>
+                </div>
+                <Badge className="bg-orange-100 text-orange-700">
+                  {bc20.taxBill.status}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Bill Number</p>
+                <p className="font-mono font-semibold">{bc20.taxBill.billNumber}</p>
+              </div>
+
+              {/* Tax Breakdown */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Bea Masuk (5%)</span>
+                  <span className="font-medium">Rp {bc20.taxBill.beaMasuk.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">PPN Import (11%)</span>
+                  <span className="font-medium">Rp {bc20.taxBill.ppnImport.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">PPh 22 (2.5%)</span>
+                  <span className="font-medium">Rp {bc20.taxBill.pph22.toLocaleString()}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between">
+                  <span className="font-semibold">Total Tax Amount</span>
+                  <span className="text-2xl font-bold text-orange-600">
+                    Rp {bc20.taxBill.totalAmount.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <Separator />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Paid Amount</p>
+                  <p className="font-semibold">Rp {bc20.taxBill.paidAmount.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Remaining</p>
+                  <p className="font-semibold text-orange-600">
+                    Rp {bc20.taxBill.remainingAmount.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <p className="text-xs font-semibold text-orange-900">Payment Due Date</p>
+                <p className="font-bold text-orange-700">{new Date(bc20.taxBill.dueDate).toLocaleDateString('id-ID')}</p>
+                <p className="text-xs text-orange-600 mt-1">⚠️ Payment required for customs release</p>
+              </div>
+              <Button
+                className="w-full bg-orange-600 hover:bg-orange-700"
+                disabled={bc20.taxBill.status === 'PAID'}
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                Pay Tax Bill Now
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Landed Cost Breakdown */}
+        <Card className="border-green-200 bg-gradient-to-br from-card to-green-50/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-green-600" />
+              Landed Cost Calculation
+            </CardTitle>
+            <CardDescription>
+              Total inventory capitalization cost (excludes tax assets)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+              <div className="p-4 bg-white rounded-lg border">
+                <p className="text-sm text-muted-foreground">CIF Value</p>
+                <p className="text-lg font-bold">Rp {bc20.cifIdr.toLocaleString()}</p>
+              </div>
+              <div className="p-4 bg-white rounded-lg border">
+                <p className="text-sm text-muted-foreground">Bea Masuk</p>
+                <p className="text-lg font-bold text-orange-600">+ Rp {bc20.beaMasuk.toLocaleString()}</p>
+              </div>
+              <div className="p-4 bg-white rounded-lg border">
+                <p className="text-sm text-muted-foreground">Freight</p>
+                <p className="text-lg font-bold">+ Rp {bc20.freightCost.toLocaleString()}</p>
+              </div>
+              <div className="p-4 bg-white rounded-lg border">
+                <p className="text-sm text-muted-foreground">Insurance</p>
+                <p className="text-lg font-bold">+ Rp {bc20.insuranceCost.toLocaleString()}</p>
+              </div>
+              <div className="p-4 bg-white rounded-lg border">
+                <p className="text-sm text-muted-foreground">Handling</p>
+                <p className="text-lg font-bold">+ Rp {bc20.handlingCost.toLocaleString()}</p>
+              </div>
+              <div className="p-4 bg-green-50 rounded-lg border-2 border-green-600">
+                <p className="text-sm font-semibold text-green-900">Total Landed Cost</p>
+                <p className="text-xl font-bold text-green-600">Rp {bc20.totalLandedCost.toLocaleString()}</p>
+              </div>
+            </div>
+            <Alert className="mt-4 border-blue-200 bg-blue-50">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertTitle className="text-blue-900 text-sm">Note on Tax Assets</AlertTitle>
+              <AlertDescription className="text-blue-700 text-sm">
+                PPN Import (Rp {bc20.ppnImport.toLocaleString()}) and PPh 22 (Rp {bc20.pph22.toLocaleString()}) are recorded as prepaid tax assets, NOT included in inventory cost.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+
+        {/* Line Items */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Import Line Items</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Line</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Material</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">HS Code</th>
+                    <th className="text-right p-3 text-sm font-medium text-muted-foreground">Quantity</th>
+                    <th className="text-right p-3 text-sm font-medium text-muted-foreground">Unit Price</th>
+                    <th className="text-right p-3 text-sm font-medium text-muted-foreground">Total Value</th>
+                    <th className="text-right p-3 text-sm font-medium text-muted-foreground">Duty</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bc20.items.map((item) => (
+                    <tr key={item.lineNumber} className="border-b">
+                      <td className="p-3 text-sm">{item.lineNumber}</td>
+                      <td className="p-3">
+                        <p className="font-medium text-sm">{item.materialName}</p>
+                        <p className="text-xs text-muted-foreground">{item.materialCode}</p>
+                      </td>
+                      <td className="p-3">
+                        <p className="font-mono text-sm font-semibold">{item.hsCode}</p>
+                        <p className="text-xs text-muted-foreground">{item.hsCodeDescription}</p>
+                      </td>
+                      <td className="p-3 text-right font-medium">{item.quantity.toLocaleString()} {item.unit}</td>
+                      <td className="p-3 text-right">
+                        <p className="font-medium">{bc20.currency} {item.unitPriceForeign.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">Rp {item.unitPriceIdr.toLocaleString()}</p>
+                      </td>
+                      <td className="p-3 text-right">
+                        <p className="font-semibold">Rp {item.totalPriceIdr.toLocaleString()}</p>
+                      </td>
+                      <td className="p-3 text-right">
+                        <p className="font-medium text-orange-600">Rp {item.dutyAmount.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">{item.dutyRate}%</p>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
 
         {/* Reference Information */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Purchase Order Reference</CardTitle>
+              <CardTitle className="text-base">Purchase Order</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
                 <p className="text-sm text-muted-foreground">PO Number</p>
-                <Link href={`/purchasing/po/${bc23.poId}`} className="font-mono text-primary hover:underline">
-                  {bc23.poNumber}
+                <Link href={`/purchasing/po/${bc20.poId}`} className="font-mono text-primary hover:underline">
+                  {bc20.poNumber}
                 </Link>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Supplier</p>
-                <p className="font-medium">{bc23.supplierName}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Lot Number</p>
-                <p className="font-mono text-sm">{bc23.lotNumber || '-'}</p>
+                <p className="font-medium">{bc20.supplierName}</p>
+                <p className="text-xs text-muted-foreground">{bc20.supplierCountry}</p>
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Document Information</CardTitle>
+              <CardTitle className="text-base">Customs Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <p className="text-sm text-muted-foreground">Port of Entry</p>
+                <p className="font-medium">{bc20.portOfEntry}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Customs Office</p>
+                <p className="text-sm">{bc20.customsOffice}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Est. Arrival</p>
+                <p className="font-medium">{new Date(bc20.estimatedArrival).toLocaleDateString('id-ID')}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Document Info</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">Created</p>
-                  <p className="text-sm font-medium">{new Date(bc23.createdAt).toLocaleDateString('id-ID')}</p>
+                  <p className="text-sm font-medium">{new Date(bc20.createdAt).toLocaleDateString('id-ID')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">Created By</p>
-                  <p className="text-sm font-medium">{bc23.createdBy}</p>
+                  <p className="text-sm font-medium">{bc20.createdBy}</p>
                 </div>
               </div>
-              {bc23.submissionDate && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Submitted</p>
-                    <p className="text-sm font-medium">{new Date(bc23.submissionDate).toLocaleDateString('id-ID')}</p>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Goods Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Goods Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <p className="text-sm text-muted-foreground">HS Code</p>
-                <p className="font-mono text-lg font-semibold">{bc23.hsCode}</p>
-                {hsCodeInfo && (
-                  <p className="text-xs text-muted-foreground mt-1">{hsCodeInfo.description}</p>
-                )}
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Country of Origin</p>
-                <p className="font-medium">{bc23.countryOfOrigin}</p>
-              </div>
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <p className="text-sm text-muted-foreground">Description</p>
-              <p className="font-medium">{bc23.goodsDescription}</p>
-            </div>
-            
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <p className="text-sm text-muted-foreground">Quantity</p>
-                <p className="text-xl font-semibold">{bc23.quantity.toLocaleString()} {bc23.unit}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">CIF Value</p>
-                <p className="text-xl font-semibold text-primary">{bc23.currency} {bc23.cifValue.toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Duty Calculations */}
-        <Card className="border-green-200 bg-gradient-to-br from-card to-green-50/20">
-          <CardHeader>
-            <CardTitle>Customs Duties Calculation</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div className="p-4 bg-white rounded-lg border">
-                <p className="text-sm text-muted-foreground">Bea Masuk ({hsCodeInfo?.dutyRate}%)</p>
-                <p className="text-xl font-bold text-orange-600">Rp {bc23.dutyAmount.toLocaleString()}</p>
-              </div>
-              <div className="p-4 bg-white rounded-lg border">
-                <p className="text-sm text-muted-foreground">PPN ({hsCodeInfo?.ppnRate}%)</p>
-                <p className="text-xl font-bold text-blue-600">Rp {bc23.ppnAmount.toLocaleString()}</p>
-              </div>
-              <div className="p-4 bg-white rounded-lg border">
-                <p className="text-sm text-muted-foreground">PPh 22 ({hsCodeInfo?.pph22Rate}%)</p>
-                <p className="text-xl font-bold text-purple-600">Rp {bc23.pph22Amount.toLocaleString()}</p>
-              </div>
-              <div className="p-4 bg-green-50 rounded-lg border-2 border-green-600">
-                <p className="text-sm font-semibold text-green-900">Total Duties</p>
-                <p className="text-2xl font-bold text-green-600">Rp {bc23.totalDuties.toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Documents */}
+        {/* Required Documents */}
         <Card>
           <CardHeader>
             <CardTitle>Required Documents</CardTitle>
+            <CardDescription>Upload supporting documents for customs clearance</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 md:grid-cols-2">
               {[
-                { key: 'commercialInvoice', label: 'Commercial Invoice', required: true },
+                { key: 'pib', label: 'PIB Document', required: true },
+                { key: 'invoice', label: 'Commercial Invoice', required: true },
                 { key: 'packingList', label: 'Packing List', required: true },
-                { key: 'billOfLading', label: 'Bill of Lading', required: true },
-                { key: 'certificateOfOrigin', label: 'Certificate of Origin', required: false }
+                { key: 'bl', label: 'Bill of Lading', required: true },
+                { key: 'coa', label: 'Certificate of Analysis', required: false }
               ].map((doc) => (
-                <div key={doc.key} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={doc.key} className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors">
                   <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-primary" />
                     <div>
                       <p className="font-medium">{doc.label}</p>
-                      <p className="text-xs text-muted-foreground">{doc.required ? 'Required' : 'Optional'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {doc.required ? '• Required' : '• Optional'}
+                      </p>
                     </div>
                   </div>
-                  {bc23.documents[doc.key as keyof typeof bc23.documents] ? (
-                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  {bc20.documents[doc.key as keyof typeof bc20.documents].uploaded ? (
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <Button variant="ghost" size="sm">View</Button>
+                    </div>
                   ) : (
-                    <Upload className="h-5 w-5 text-muted-foreground" />
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Upload className="h-4 w-4" />
+                      Upload
+                    </Button>
                   )}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Activity Log */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Activity Log</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {bc23.activities.map((activity, index) => (
-                <div key={index} className="flex gap-3 pb-3 border-b last:border-0">
-                  <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-primary"></div>
-                  <div className="flex-1">
-                    <p className="font-medium">{activity.action}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {activity.user} • {new Date(activity.date).toLocaleString('id-ID')}
-                    </p>
-                    {activity.notes && (
-                      <p className="text-sm text-muted-foreground mt-1">{activity.notes}</p>
-                    )}
-                  </div>
                 </div>
               ))}
             </div>
