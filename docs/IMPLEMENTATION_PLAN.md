@@ -122,21 +122,33 @@ Implement a comprehensive BC 2.0 Regular Import system for JKJ Manufacturing ERP
 
 ### Phase 1: BC 2.0 Import Module (Weeks 1-3)
 
-#### Week 1: Database & Backend Setup
+#### Week 1: Database & Backend Setup ✅ **COMPLETED**
+
+> **Status**: ✅ Completed on March 10, 2026
+> **Commit**: `aefdf91` - feat(bc20): Implement BC 2.0 Regular Import Module - Phase 1 Week 1
 
 **Tasks**:
-1. Design database schema for BC 2.0 documents
-2. Create HS Code master data tables
-3. Implement duty calculation algorithms
-4. Build BC 2.0 CRUD APIs
-5. Implement dual billing generation logic
+1. ✅ Design database schema for BC 2.0 documents
+2. ✅ Create HS Code master data tables
+3. ✅ Implement duty calculation algorithms
+4. ✅ Build BC 2.0 CRUD APIs
+5. ✅ Implement dual billing generation logic
 
 **Deliverables**:
-- `bc20_documents` table schema
-- `hs_codes` master data table
-- `bc20_billings` table (vendor + tax)
-- API endpoints: `/api/bc20/*`
-- Duty calculation service
+- ✅ `bc20_documents` table schema (Prisma)
+- ✅ `hs_codes` master data table
+- ✅ `bc20_billings` via APBill with dual billing type
+- ✅ API endpoints: `/api/bc20/*` (7 endpoints)
+- ✅ Duty calculation service (`lib/bc20/calculations.ts`)
+
+**Implementation Notes**:
+- Used Prisma ORM v5.22.0 with PostgreSQL
+- Created comprehensive schema with 15+ models
+- Implemented transaction-based dual billing generation
+- Added tax asset models (PPN Import & PPh 22)
+- Built landed cost calculation engine
+- All API endpoints with proper validation & error handling
+- Frontend: Renamed bc23 → bc20, updated list page
 
 **Technical Specs**:
 ```typescript
@@ -1413,8 +1425,8 @@ If critical issues detected:
 
 | Week | Phase | Deliverables | Status |
 |------|-------|--------------|--------|
-| **1** | BC 2.0 Backend | Database, APIs, Duty Calculation | 🔵 Pending |
-| **2** | BC 2.0 UI | List, Detail, Create pages | 🔵 Pending |
+| **1** | BC 2.0 Backend | Database, APIs, Duty Calculation | ✅ **Completed** (Mar 10, 2026) |
+| **2** | BC 2.0 UI | List, Detail, Create pages | 🟡 In Progress |
 | **3** | Dual Billing | Auto-generation, Tax blocking | 🔵 Pending |
 | **4** | Landed Cost | Calculation engine, GR integration | 🔵 Pending |
 | **5** | Tax Assets | PPN & PPh tracking, Reconciliation | 🔵 Pending |
@@ -1500,5 +1512,7 @@ If critical issues detected:
 **© 2026 JKJ Manufacturing ERP**
 _Implementation Plan v1.0 - BC 2.0 Regular Import System_
 
-**Status**: 🔵 Ready for Implementation
-**Next Step**: Kick-off meeting & resource allocation
+**Status**: 🟡 **IN PROGRESS** - Week 1 Completed, Week 2 Started
+**Progress**: 8.3% (1/12 weeks completed)
+**Last Updated**: March 10, 2026
+**Next Milestone**: Week 3 - BC 2.0 module functional
