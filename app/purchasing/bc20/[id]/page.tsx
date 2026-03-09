@@ -27,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import AppLayout from '@/components/app-layout'
 import { StatusTimeline } from '@/components/shared/status-timeline'
+import { DocumentUpload, type Document } from '@/components/purchasing/document-upload'
 
 // BC 2.0 Status Types
 type BC20Status = 'DRAFT' | 'SUBMITTED' | 'CUSTOMS_PROCESSING' | 'TAX_PAYMENT_PENDING' | 'TAX_PAID' | 'CUSTOMS_RELEASED' | 'RECEIVED' | 'COMPLETED' | 'CANCELLED'
@@ -763,41 +764,107 @@ export default function BC20DetailPage() {
         {/* Required Documents */}
         <Card>
           <CardHeader>
-            <CardTitle>Required Documents</CardTitle>
-            <CardDescription>Upload supporting documents for customs clearance</CardDescription>
+            <CardTitle>Supporting Documents</CardTitle>
+            <CardDescription>Upload supporting documents for customs clearance and import verification</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-3 md:grid-cols-2">
-              {[
-                { key: 'pib', label: 'PIB Document', required: true },
-                { key: 'invoice', label: 'Commercial Invoice', required: true },
-                { key: 'packingList', label: 'Packing List', required: true },
-                { key: 'bl', label: 'Bill of Lading', required: true },
-                { key: 'coa', label: 'Certificate of Analysis', required: false }
-              ].map((doc) => (
-                <div key={doc.key} className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-medium">{doc.label}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {doc.required ? '• Required' : '• Optional'}
-                      </p>
-                    </div>
-                  </div>
-                  {bc20.documents[doc.key as keyof typeof bc20.documents].uploaded ? (
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      <Button variant="ghost" size="sm">View</Button>
-                    </div>
-                  ) : (
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Upload className="h-4 w-4" />
-                      Upload
-                    </Button>
-                  )}
-                </div>
-              ))}
+            <div className="grid gap-4 md:grid-cols-2">
+              <DocumentUpload
+                documentType="PIB"
+                label="PIB Document"
+                description="Pemberitahuan Impor Barang (Import Declaration)"
+                required
+                acceptedFormats={['.pdf']}
+                maxSizeMB={10}
+                existingDocument={null}
+                onUpload={async (file) => {
+                  console.log('Uploading PIB:', file.name)
+                  // API call will be implemented
+                }}
+                onDelete={async () => {
+                  console.log('Deleting PIB')
+                }}
+              />
+
+              <DocumentUpload
+                documentType="INVOICE"
+                label="Commercial Invoice"
+                description="Original invoice from supplier"
+                required
+                acceptedFormats={['.pdf', '.jpg', '.jpeg', '.png']}
+                maxSizeMB={10}
+                existingDocument={null}
+                onUpload={async (file) => {
+                  console.log('Uploading Invoice:', file.name)
+                }}
+                onDelete={async () => {
+                  console.log('Deleting Invoice')
+                }}
+              />
+
+              <DocumentUpload
+                documentType="PACKING_LIST"
+                label="Packing List"
+                description="Detailed packing list from supplier"
+                required
+                acceptedFormats={['.pdf', '.jpg', '.jpeg', '.png']}
+                maxSizeMB={10}
+                existingDocument={null}
+                onUpload={async (file) => {
+                  console.log('Uploading Packing List:', file.name)
+                }}
+                onDelete={async () => {
+                  console.log('Deleting Packing List')
+                }}
+              />
+
+              <DocumentUpload
+                documentType="BILL_OF_LADING"
+                label="Bill of Lading"
+                description="B/L from shipping company"
+                required
+                acceptedFormats={['.pdf', '.jpg', '.jpeg', '.png']}
+                maxSizeMB={10}
+                existingDocument={null}
+                onUpload={async (file) => {
+                  console.log('Uploading B/L:', file.name)
+                }}
+                onDelete={async () => {
+                  console.log('Deleting B/L')
+                }}
+              />
+
+              <DocumentUpload
+                documentType="COA"
+                label="Certificate of Analysis"
+                description="Quality certificate (if applicable)"
+                required={false}
+                acceptedFormats={['.pdf', '.jpg', '.jpeg', '.png']}
+                maxSizeMB={10}
+                existingDocument={null}
+                onUpload={async (file) => {
+                  console.log('Uploading CoA:', file.name)
+                }}
+                onDelete={async () => {
+                  console.log('Deleting CoA')
+                }}
+              />
+
+              <DocumentUpload
+                documentType="SPPB"
+                label="SPPB (Customs Release)"
+                description="Surat Persetujuan Pengeluaran Barang"
+                required={false}
+                acceptedFormats={['.pdf']}
+                maxSizeMB={10}
+                existingDocument={null}
+                onUpload={async (file) => {
+                  console.log('Uploading SPPB:', file.name)
+                }}
+                onDelete={async () => {
+                  console.log('Deleting SPPB')
+                }}
+              />
             </div>
           </CardContent>
         </Card>
