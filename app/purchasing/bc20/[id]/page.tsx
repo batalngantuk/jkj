@@ -135,6 +135,7 @@ const MOCK_BC20_DETAIL = {
 export default function BC20DetailPage() {
   const params = useParams()
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
+  const [showSppbDialog, setShowSppbDialog] = useState(false)
 
   // Tax payment form state
   const [paymentAmount, setPaymentAmount] = useState('')
@@ -144,6 +145,12 @@ export default function BC20DetailPage() {
   const [bankAccount, setBankAccount] = useState('')
   const [paymentNotes, setPaymentNotes] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // SPPB form state
+  const [sppbNumber, setSppbNumber] = useState('')
+  const [sppbDate, setSppbDate] = useState(new Date().toISOString().split('T')[0])
+  const [customsOfficer, setCustomsOfficer] = useState('')
+  const [sppbNotes, setSppbNotes] = useState('')
 
   // In real implementation, fetch data from API
   const bc20 = MOCK_BC20_DETAIL
@@ -168,6 +175,41 @@ export default function BC20DetailPage() {
         {status.replace(/_/g, ' ')}
       </Badge>
     )
+  }
+
+  // Handle BC 2.0 submission
+  const handleSubmitToCustoms = async () => {
+    if (!confirm('Submit this BC 2.0 document to customs? This will generate dual billing (Vendor + Tax).')) {
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const response = await fetch(`/api/bc20/${params.id}/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documentNumber: bc20.documentNumber,
+          submittedBy: 'current-user',
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert('BC 2.0 submitted successfully! Dual billing has been generated.')
+        window.location.reload()
+      } else {
+        alert(`Error: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('Error submitting BC 2.0:', error)
+      alert('Failed to submit BC 2.0 document')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   // Handle tax payment submission
@@ -203,6 +245,41 @@ export default function BC20DetailPage() {
     } catch (error) {
       console.error('Error recording tax payment:', error)
       alert('Failed to record tax payment')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Handle SPPB recording
+  const handleRecordSppb = async () => {
+    setIsSubmitting(true)
+    try {
+      const response = await fetch(`/api/bc20/${params.id}/record-sppb`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sppbNumber,
+          sppbDate,
+          customsOfficer,
+          notes: sppbNotes,
+          recordedBy: 'current-user',
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert('SPPB recorded successfully! Goods receipt is now allowed.')
+        setShowSppbDialog(false)
+        window.location.reload()
+      } else {
+        alert(`Error: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('Error recording SPPB:', error)
+      alert('Failed to record SPPB')
     } finally {
       setIsSubmitting(false)
     }
@@ -259,8 +336,21 @@ export default function BC20DetailPage() {
               Export PDF
             </Button>
             {bc20.status === 'DRAFT' && (
-              <Button className="bg-primary hover:bg-primary/90">
-                Submit to Customs
+              <Button
+                className="bg-primary hover:bg-primary/90"
+                onClick={handleSubmitToCustoms}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit to Customs'}
+              </Button>
+            )}
+            {bc20.status === 'TAX_PAID' && !bc20.sppbNumber && (
+              <Button
+                className="bg-green-600 hover:bg-green-700 text-white gap-2"
+                onClick={() => setShowSppbDialog(true)}
+              >
+                <CheckCircle className="h-4 w-4" />
+                Record SPPB
               </Button>
             )}
             {bc20.status === 'TAX_PAYMENT_PENDING' && (
@@ -869,6 +959,103 @@ export default function BC20DetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* SPPB Recording Dialog */}
+      <Dialog open={showSppbDialog} onOpenChange={setShowSppbDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Record SPPB (Customs Release)</DialogTitle>
+            <DialogDescription>
+              Record SPPB approval from customs for BC 2.0 document {bc20.documentNumber}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Info Alert */}
+            <Alert className="border-green-200 bg-green-50">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertTitle className="text-green-900">Tax Payment Completed</AlertTitle>
+              <AlertDescription className="text-green-700 text-sm">
+                Tax payment has been verified. Recording SPPB will release the goods for receipt.
+              </AlertDescription>
+            </Alert>
+
+            {/* SPPB Form */}
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="sppbNumber">SPPB Number *</Label>
+                <Input
+                  id="sppbNumber"
+                  placeholder="e.g., SPPB-001234-2026"
+                  value={sppbNumber}
+                  onChange={(e) => setSppbNumber(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="sppbDate">SPPB Date *</Label>
+                <Input
+                  id="sppbDate"
+                  type="date"
+                  value={sppbDate}
+                  onChange={(e) => setSppbDate(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="customsOfficer">Customs Officer</Label>
+                <Input
+                  id="customsOfficer"
+                  placeholder="Name of customs officer"
+                  value={customsOfficer}
+                  onChange={(e) => setCustomsOfficer(e.target.value)}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="sppbNotes">Notes</Label>
+                <Textarea
+                  id="sppbNotes"
+                  placeholder="Additional notes or instructions"
+                  value={sppbNotes}
+                  onChange={(e) => setSppbNotes(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            {/* Important Notice */}
+            <Alert className="border-blue-200 bg-blue-50">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertTitle className="text-blue-900">Important</AlertTitle>
+              <AlertDescription className="text-blue-700 text-sm">
+                • Recording SPPB will update BC 2.0 status to CUSTOMS_RELEASED<br/>
+                • Goods receipt will be automatically unblocked<br/>
+                • This action cannot be undone
+              </AlertDescription>
+            </Alert>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowSppbDialog(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRecordSppb}
+              disabled={!sppbNumber || !sppbDate || isSubmitting}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isSubmitting ? 'Recording...' : 'Record SPPB'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   )
 }
