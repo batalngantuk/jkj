@@ -84,15 +84,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Outbound / Shipping', href: '/warehouse/outbound' },
       ]
     },
-    { 
-      icon: FileText, 
-      label: 'Purchasing', 
+    {
+      icon: FileText,
+      label: 'Purchasing',
       href: '/purchasing',
       subItems: [
         { label: 'Dashboard', href: '/purchasing' },
         { label: 'Suppliers', href: '/purchasing/suppliers' },
         { label: 'Purchase Orders', href: '/purchasing/po' },
-        { label: 'BC 2.3 (Import)', href: '/purchasing/bc23' },
+        { label: 'BC 2.0 (Regular Import)', href: '/purchasing/bc20' },
+        { label: 'BC 2.3 (Bonded Import)', href: '/purchasing/bc23' },
       ]
     },
     { 
@@ -106,12 +107,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'BC 3.0 (Export)', href: '/logistics/bc30' },
       ]
     },
-    { 
-      icon: DollarSign, 
-      label: 'Finance', 
+    {
+      icon: DollarSign,
+      label: 'Finance',
       href: '/finance',
       subItems: [
         { label: 'Dashboard', href: '/finance' },
+        { label: 'Dual Billing (BC 2.0)', href: '/finance/ap/dual-billing' },
+        { label: 'Tax Assets', href: '/finance/tax-assets' },
         { label: 'Invoices & Bills', href: '/finance/invoices' },
         { label: 'Financial Reports', href: '/finance/reports' },
       ]
