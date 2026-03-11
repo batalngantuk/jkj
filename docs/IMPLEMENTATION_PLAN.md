@@ -371,21 +371,46 @@ useEffect(() => {
 - Status-based styling (green: uploaded, red: error, orange: pending)
 ```
 
-#### Week 3: Dual Billing & Tax Payment Logic
+#### Week 3: Dual Billing & Tax Payment Logic ✅ **COMPLETED**
+
+> **Status**: ✅ Completed on March 11, 2026
+> **Commits**:
+> - `91b23c9` - feat(bc20): add dual billing auto-generation and tax payment blocking
+> - `a0db80b` - feat(bc20): integrate dual billing and SPPB workflow in detail page
 
 **Tasks**:
-1. Implement auto-billing generation on BC 2.0 submit
-2. Build tax payment blocking mechanism
-3. Create tax payment workflow
-4. Integrate with Finance AP module
-5. Implement SPPB tracking
+1. ✅ Implement auto-billing generation on BC 2.0 submit
+2. ✅ Build tax payment blocking mechanism
+3. ✅ Create tax payment workflow (from Week 2)
+4. ✅ Integrate with Finance AP module (via APBill)
+5. ✅ Implement SPPB tracking
 
 **Deliverables**:
-- Auto-generate 2 billings on BC 2.0 submission
-- GR blocked until status = "CUSTOMS_RELEASED"
-- Tax payment recording system
-- SPPB auto-update BC 2.0 status
-- Email alerts for tax payment pending
+- ✅ Auto-generate 2 billings on BC 2.0 submission
+- ✅ GR blocked until status = "CUSTOMS_RELEASED"
+- ✅ Tax payment recording system (from Week 2)
+- ✅ SPPB auto-update BC 2.0 status
+- ⏳ Email alerts for tax payment pending (TODO: future enhancement)
+
+**Implementation Notes**:
+- Created POST /api/bc20/[id]/submit for dual billing auto-generation
+- Created GET /api/bc20/[id]/check-gr-eligibility for tax payment blocking
+- Created POST /api/bc20/[id]/record-sppb for SPPB tracking
+- Integrated submit and SPPB workflows into BC 2.0 detail page
+- Submit button generates Vendor Bill (30 days) + Tax Bill (3 days URGENT)
+- GR eligibility check validates tax payment and SPPB before allowing receipt
+- SPPB recording auto-updates status to CUSTOMS_RELEASED and unblocks GR
+
+**API Endpoints Created**:
+```typescript
+// Week 3 New Endpoints
+POST   /api/bc20/[id]/submit              // Submit BC 2.0 + generate dual billing
+GET    /api/bc20/[id]/check-gr-eligibility // Check if GR is allowed (blocking)
+POST   /api/bc20/[id]/record-sppb         // Record SPPB (customs release)
+
+// From Week 2 (tax payment)
+POST   /api/bc20/[id]/pay-tax             // Record tax payment
+```
 
 **Business Logic**:
 ```typescript
@@ -1486,8 +1511,8 @@ If critical issues detected:
 | Week | Phase | Deliverables | Status |
 |------|-------|--------------|--------|
 | **1** | BC 2.0 Backend | Database, APIs, Duty Calculation | ✅ **Completed** (Mar 10, 2026) |
-| **2** | BC 2.0 UI | List, Detail, Create pages | 🟡 In Progress |
-| **3** | Dual Billing | Auto-generation, Tax blocking | 🔵 Pending |
+| **2** | BC 2.0 UI | List, Detail, Create pages | ✅ **Completed** (Mar 10, 2026) |
+| **3** | Dual Billing | Auto-generation, Tax blocking | ✅ **Completed** (Mar 11, 2026) |
 | **4** | Landed Cost | Calculation engine, GR integration | 🔵 Pending |
 | **5** | Tax Assets | PPN & PPh tracking, Reconciliation | 🔵 Pending |
 | **6** | Finance Integration | Dual billing AP, Payments | 🔵 Pending |
@@ -1572,7 +1597,7 @@ If critical issues detected:
 **© 2026 JKJ Manufacturing ERP**
 _Implementation Plan v1.0 - BC 2.0 Regular Import System_
 
-**Status**: 🟡 **IN PROGRESS** - Week 1 Completed, Week 2 Started
-**Progress**: 8.3% (1/12 weeks completed)
-**Last Updated**: March 10, 2026
-**Next Milestone**: Week 3 - BC 2.0 module functional
+**Status**: 🟢 **ON TRACK** - Weeks 1-3 Completed (Phase 1 Complete!)
+**Progress**: 25% (3/12 weeks completed)
+**Last Updated**: March 11, 2026
+**Next Milestone**: Week 5 - Landed cost & tax accounting complete
