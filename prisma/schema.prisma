@@ -232,6 +232,9 @@ model Material {
   purchaseOrderItems PurchaseOrderItem[]
   bc20Items         BC20Item[]
   goodsReceiptItems GoodsReceiptItem[]
+  salesOrderItems   SalesOrderItem[]
+  pebItems          PEBItem[]
+  workOrders        WorkOrder[]
 
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
@@ -572,4 +575,325 @@ enum MaterialCategory {
   FINISHED_GOODS
   SPARE_PARTS
   CONSUMABLES
+}
+
+// ========================================
+// SALES & CUSTOMER MODULE
+// ========================================
+
+model Customer {
+  id                String   @id @default(cuid())
+  customerCode      String   @unique
+  customerName      String
+  customerType      String   // Domestic, Export
+
+  // Contact Info
+  email             String?
+  phone             String?
+  address           String?
+  city              String?
+  country           String   @default("Indonesia")
+
+  // Tax Info
+  npwp              String?  // Tax ID
+  pkpStatus         Boolean  @default(false) // PKP (VAT registered)
+
+  // Business Info
+  industry          String?
+  paymentTerms      String   @default("NET 30")
+  creditLimit       Decimal? @db.Decimal(15, 2)
+
+  // Relations
+  salesOrders       SalesOrder[]
+  pebDocuments      PEBDocument[]
+
+  // Status
+  isActive          Boolean  @default(true)
+
+  // Audit
+  createdBy         String
+  createdAt         DateTime @default(now())
+  updatedBy         String?
+  updatedAt         DateTime @updatedAt
+
+  @@index([customerCode])
+  @@index([customerName])
+  @@index([country])
+  @@map("customers")
+}
+
+model SalesOrder {
+  id                String   @id @default(cuid())
+  soNumber          String   @unique
+  soDate            DateTime
+  status            SOStatus @default(DRAFT)
+
+  // Customer
+  customerId        String
+  customer          Customer @relation(fields: [customerId], references: [id])
+
+  // Order Details
+  orderType         String   // Domestic, Export
+  deliveryDate      DateTime?
+  paymentTerms      String
+
+  // Financial
+  subtotal          Decimal  @db.Decimal(15, 2)
+  vatRate           Decimal  @db.Decimal(5, 4) @default(0.11) // 11% for domestic, 0% for export
+  vatAmount         Decimal  @db.Decimal(15, 2)
+  totalAmount       Decimal  @db.Decimal(15, 2)
+  currency          String   @default("IDR")
+
+  // Relations
+  items             SalesOrderItem[]
+  pebDocuments      PEBDocument[]
+
+  // Audit
+  notes             String?
+  createdBy         String
+  createdAt         DateTime @default(now())
+  updatedBy         String?
+  updatedAt         DateTime @updatedAt
+
+  @@index([soNumber])
+  @@index([customerId])
+  @@index([status])
+  @@map("sales_orders")
+}
+
+model SalesOrderItem {
+  id                String   @id @default(cuid())
+  salesOrderId      String
+  salesOrder        SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+
+  // Material
+  materialId        String
+  material          Material @relation(fields: [materialId], references: [id])
+  materialCode      String
+  materialName      String
+
+  // Quantity
+  quantity          Decimal  @db.Decimal(15, 3)
+  uom               String
+
+  // Price
+  unitPrice         Decimal  @db.Decimal(15, 4)
+  totalPrice        Decimal  @db.Decimal(15, 2)
+
+  // Delivery
+  deliveryDate      DateTime?
+  deliveredQty      Decimal  @db.Decimal(15, 3) @default(0)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([salesOrderId])
+  @@index([materialId])
+  @@map("sales_order_items")
+}
+
+model WorkOrder {
+  id                String   @id @default(cuid())
+  woNumber          String   @unique
+  woDate            DateTime
+  status            WOStatus @default(DRAFT)
+
+  // Production Details
+  materialId        String   // Finished Goods
+  material          Material @relation(fields: [materialId], references: [id])
+  targetQty         Decimal  @db.Decimal(15, 3)
+  actualQty         Decimal  @db.Decimal(15, 3) @default(0)
+  uom               String
+
+  // Schedule
+  plannedStartDate  DateTime
+  plannedEndDate    DateTime
+  actualStartDate   DateTime?
+  actualEndDate     DateTime?
+
+  // Optional Traceability
+  lotNumber         String?  // FG lot number
+  batchNumber       String?
+
+  // Relations
+  pebDocuments      PEBDocument[]
+
+  // Audit
+  notes             String?
+  createdBy         String
+  createdAt         DateTime @default(now())
+  updatedBy         String?
+  updatedAt         DateTime @updatedAt
+
+  @@index([woNumber])
+  @@index([materialId])
+  @@index([status])
+  @@map("work_orders")
+}
+
+enum SOStatus {
+  DRAFT
+  CONFIRMED
+  IN_PRODUCTION
+  READY_TO_SHIP
+  SHIPPED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+enum WOStatus {
+  DRAFT
+  RELEASED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// ========================================
+// PEB EXPORT MODULE (BC 2.0 Regular Export)
+// ========================================
+
+model PEBDocument {
+  id                String   @id @default(cuid())
+  pebNumber         String   @unique // PEB-2026-001
+  npeNumber         String?  // Nomor Pendaftaran Eksportir
+  documentDate      DateTime
+  status            PEBStatus @default(DRAFT)
+
+  // Sales Order Link (optional - can export without BC 2.0 linkage)
+  salesOrderId      String?
+  salesOrder        SalesOrder? @relation(fields: [salesOrderId], references: [id])
+
+  // Customer
+  customerId        String
+  customer          Customer @relation(fields: [customerId], references: [id])
+  customerName      String
+
+  // Export Details
+  destinationCountry String
+  destinationPort    String
+  portOfLoading      String   // Pelabuhan Muat
+  customsOffice      String   // Kantor Bea Cukai Ekspor
+  exportDate         DateTime
+  estimatedDeparture DateTime
+  actualDeparture    DateTime?
+
+  // Shipping Details
+  vesselName         String?
+  voyageNumber       String?
+  containerNumber    String?
+  blNumber           String?  // Bill of Lading
+  sealNumber         String?
+
+  // Financial Summary (FOB - Free on Board)
+  fobValue           Decimal  @db.Decimal(15, 2)
+  currency           String   @default("USD")
+  exchangeRate       Decimal  @db.Decimal(10, 4)
+  fobIdr             Decimal  @db.Decimal(15, 2) // FOB in IDR
+
+  // VAT (Zero-rated for exports)
+  vatRate            Decimal  @db.Decimal(5, 4) @default(0) // 0% for exports
+  vatAmount          Decimal  @db.Decimal(15, 2) @default(0)
+
+  // Export Incentives (optional)
+  exportIncentive    Decimal  @db.Decimal(15, 2) @default(0)
+  incentiveType      String?  // e.g., "KITE", "Drawback"
+
+  // Optional Internal Traceability (NOT mandatory for customs)
+  workOrderId        String?
+  workOrder          WorkOrder? @relation(fields: [workOrderId], references: [id])
+  fgLotNumber        String?  // Finished Goods lot (internal tracking)
+  bc20Reference      String?  // Optional link to BC 2.0 import (for conversion tracking)
+
+  // Customs Clearance
+  customsReleaseDate DateTime?
+  customsReleaseRef  String?
+  exportPermitNumber String?
+
+  // Document Files
+  pebFile            String?  // PEB document
+  invoiceFile        String?  // Commercial Invoice
+  packingListFile    String?  // Packing List
+  blFile             String?  // Bill of Lading
+  coaFile            String?  // Certificate of Origin
+  formEFile          String?  // Form E (ASEAN)
+  healthCertFile     String?  // Health Certificate
+  otherCertFiles     String?  // Other certificates (JSON array)
+
+  // Line Items
+  items              PEBItem[]
+
+  // Shipment (after export)
+  shipmentId         String?
+
+  // Audit Fields
+  notes              String?
+  createdBy          String
+  createdAt          DateTime @default(now())
+  updatedBy          String?
+  updatedAt          DateTime @updatedAt
+  submittedAt        DateTime?
+  submittedBy        String?
+  approvedAt         DateTime?
+  approvedBy         String?
+  verifiedAt         DateTime?
+  verifiedBy         String?
+
+  @@index([pebNumber])
+  @@index([customerId])
+  @@index([status])
+  @@index([exportDate])
+  @@index([destinationCountry])
+  @@map("peb_documents")
+}
+
+model PEBItem {
+  id                 String   @id @default(cuid())
+  pebDocumentId      String
+  pebDocument        PEBDocument @relation(fields: [pebDocumentId], references: [id], onDelete: Cascade)
+
+  // Material Details
+  materialId         String
+  material           Material @relation(fields: [materialId], references: [id])
+  materialCode       String
+  materialName       String
+  hsCode             String   // Export HS Code
+  hsDescription      String?
+
+  // Quantity
+  quantity           Decimal  @db.Decimal(15, 3)
+  uom                String
+
+  // Unit Price (FOB)
+  unitPrice          Decimal  @db.Decimal(15, 4)
+  totalPrice         Decimal  @db.Decimal(15, 2)
+
+  // Optional Traceability (internal)
+  lotNumber          String?
+  batchNumber        String?
+
+  // Packaging
+  packagingType      String?  // Carton, Pallet, etc.
+  numberOfPackages   Int?
+  grossWeight        Decimal? @db.Decimal(15, 3) // in kg
+  netWeight          Decimal? @db.Decimal(15, 3) // in kg
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([pebDocumentId])
+  @@index([materialId])
+  @@map("peb_items")
+}
+
+enum PEBStatus {
+  DRAFT              // Initial creation
+  VERIFIED           // Internal verification complete
+  SUBMITTED          // Submitted to customs
+  UNDER_REVIEW       // Under customs review
+  APPROVED           // Customs approved
+  EXPORTED           // Goods exported (shipped)
+  COMPLETED          // Export process complete
+  CANCELLED          // Cancelled
 }
