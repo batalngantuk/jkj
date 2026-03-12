@@ -843,21 +843,37 @@ interface PPNReconciliation {
 
 ### Phase 4: PEB Export Module (Weeks 8-9)
 
-#### Week 8: PEB Document Management
+#### Week 8: PEB Document Management ✅ **COMPLETED**
+
+> **Status**: ✅ Completed on March 12, 2026
+> **Commits**:
+> - `0ed4814` - feat(peb): add PEB export module database schema and API endpoints
+> - `7b7b587` - feat(peb): add PEB list and creation form pages
+> - `0315f9d` - feat(navigation): add PEB Export to Logistics submenu
 
 **Tasks**:
-1. Create PEB database schema
-2. Build PEB CRUD APIs
-3. Implement PEB creation form
-4. Build PEB detail page
-5. Implement zero-rated VAT logic
+1. ✅ Create PEB database schema
+2. ✅ Build PEB CRUD APIs
+3. ✅ Implement PEB creation form
+4. ✅ Build PEB list page
+5. ✅ Implement zero-rated VAT logic
 
 **Deliverables**:
-- `peb_documents` table
-- PEB API endpoints
-- PEB creation form (`/logistics/peb/new`)
-- PEB detail page (`/logistics/peb/[id]`)
-- VAT zero-rating on export sales
+- ✅ `peb_documents` table + `peb_items` + Customer, SalesOrder, WorkOrder models
+- ✅ PEB API endpoints (8 endpoints)
+- ✅ PEB creation form (`/logistics/peb/new`) with zero-rated VAT
+- ✅ PEB list page (`/logistics/peb`) with filters
+- ✅ VAT zero-rating (0% PPN for exports)
+
+**Implementation Notes**:
+- Created comprehensive PEB schema with optional BC 2.0 linkage
+- 8 API endpoints: CRUD + submit + approve + export
+- Zero-rated VAT (0% PPN) for all exports
+- Optional internal traceability (BC 2.0 ref, WO, FG lot)
+- FOB (Free on Board) pricing calculation
+- Status workflow: DRAFT → VERIFIED → SUBMITTED → UNDER_REVIEW → APPROVED → EXPORTED → COMPLETED
+- Multi-item form with auto-calculation
+- Navigation added to Logistics submenu
 
 **Database Schema**:
 ```typescript
@@ -1655,7 +1671,7 @@ If critical issues detected:
 **© 2026 JKJ Manufacturing ERP**
 _Implementation Plan v1.0 - BC 2.0 Regular Import System_
 
-**Status**: 🟢 **ON TRACK** - Weeks 1-7 Completed (Phase 3 Complete!)
-**Progress**: 58.3% (7/12 weeks completed)
-**Last Updated**: March 11, 2026
-**Next Milestone**: Week 9 - PEB Export Module complete
+**Status**: 🟢 **ON TRACK** - Week 8 Completed (PEB Export Backend & UI!)
+**Progress**: 66.7% (8/12 weeks completed)
+**Last Updated**: March 12, 2026
+**Next Milestone**: Week 9 - PEB Integration & Reports complete
