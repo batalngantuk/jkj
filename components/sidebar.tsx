@@ -96,15 +96,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'BC 2.3 (Bonded Import)', href: '/purchasing/bc23' },
       ]
     },
-    { 
-      icon: Truck, 
-      label: 'Logistics', 
+    {
+      icon: Truck,
+      label: 'Logistics',
       href: '/logistics',
       subItems: [
         { label: 'Dashboard', href: '/logistics' },
+        { label: 'PEB (Export)', href: '/logistics/peb' },
         { label: 'Fleet Management', href: '/logistics/fleet' },
         { label: 'Shipments', href: '/logistics/shipments' },
-        { label: 'BC 3.0 (Export)', href: '/logistics/bc30' },
+        { label: 'BC 3.0 (Bonded Export)', href: '/logistics/bc30' },
       ]
     },
     {
