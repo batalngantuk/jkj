@@ -94,7 +94,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Purchase Orders', href: '/purchasing/po' },
         { label: 'BC 2.0 (Regular Import)', href: '/purchasing/bc20' },
         { label: 'BC 2.0 Dashboard', href: '/purchasing/bc20/dashboard' },
-        { label: 'BC 2.3 (Bonded Import)', href: '/purchasing/bc23' },
       ]
     },
     {
@@ -106,7 +105,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'PEB (Export)', href: '/logistics/peb' },
         { label: 'Fleet Management', href: '/logistics/fleet' },
         { label: 'Shipments', href: '/logistics/shipments' },
-        { label: 'BC 3.0 (Bonded Export)', href: '/logistics/bc30' },
       ]
     },
     {

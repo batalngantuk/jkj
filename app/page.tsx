@@ -26,8 +26,6 @@ import { MOCK_PRODUCTION_YIELD } from '@/lib/mock-data/reports'
 import { MOCK_INVENTORY_VALUE } from '@/lib/mock-data/reports'
 import { MOCK_AR_INVOICES, MOCK_AP_INVOICES, getTotalAR, getTotalAP } from '@/lib/mock-data/finance'
 import { MOCK_SHIPMENTS } from '@/lib/mock-data/logistics'
-import { MOCK_BC23, MOCK_BC30, getBC23ByStatus, getBC30ByStatus } from '@/lib/mock-data/customs'
-import { MOCK_TRACEABILITY } from '@/lib/mock-data/traceability'
 import { LineChartComponent } from '@/components/charts/line-chart'
 import { BarChartComponent } from '@/components/charts/bar-chart'
 
@@ -43,14 +41,6 @@ export default function Dashboard() {
 
 
   const activeShipments = MOCK_SHIPMENTS.filter(s => s.status === 'In Transit').length
-
-  // Customs Compliance Metrics
-  const bc23Pending = getBC23ByStatus('SUBMITTED').length + getBC23ByStatus('UNDER REVIEW').length
-  const bc30Pending = getBC30ByStatus('SUBMITTED').length + getBC30ByStatus('UNDER REVIEW').length
-  const totalComplianceAlerts = bc23Pending + bc30Pending
-  const traceabilityRecords = MOCK_TRACEABILITY.length
-  const exportedRecords = MOCK_TRACEABILITY.filter(t => t.bc30Id).length
-  const traceabilityGaps = traceabilityRecords - exportedRecords
 
   return (
     <AppLayout>
@@ -207,23 +197,17 @@ export default function Dashboard() {
                   </div>
 
                   {/* Customs Compliance */}
-                  <div className={`flex items-center justify-between p-3 rounded-lg border ${
-                    totalComplianceAlerts > 0 ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200'
-                  }`}>
+                  <div className="flex items-center justify-between p-3 rounded-lg border bg-green-50 border-green-200">
                       <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-full ${
-                            totalComplianceAlerts > 0 ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'
-                          }`}>
+                          <div className="p-2 rounded-full bg-green-100 text-green-600">
                               <Shield className="h-4 w-4" />
                           </div>
                           <div>
-                              <p className="font-semibold">Customs Compliance</p>
-                              <p className="text-xs text-muted-foreground">
-                                {totalComplianceAlerts > 0 ? `${totalComplianceAlerts} Pending Approvals` : 'All Clear'}
-                              </p>
+                              <p className="font-semibold">Customs Compliance (BC 2.0)</p>
+                              <p className="text-xs text-muted-foreground">All Clear</p>
                           </div>
                       </div>
-                      <Link href="/compliance">
+                      <Link href="/purchasing/bc20/dashboard">
                         <Button variant="outline" size="sm" className="gap-2">
                             Monitor <ArrowRight className="h-4 w-4" />
                         </Button>
@@ -299,8 +283,8 @@ export default function Dashboard() {
                       <div className="flex gap-3 text-sm">
                           <Activity className="h-4 w-4 text-muted-foreground mt-0.5" />
                           <div>
-                              <p className="font-medium">BC 2.3 Approved</p>
-                              <p className="text-xs text-muted-foreground">5 mins ago • Import clearance received</p>
+                              <p className="font-medium">BC 2.0 Tax Payment Recorded</p>
+                              <p className="text-xs text-muted-foreground">5 mins ago • PIB-2026-002 duties paid</p>
                           </div>
                       </div>
                       <div className="flex gap-3 text-sm">
@@ -320,8 +304,8 @@ export default function Dashboard() {
                       <div className="flex gap-3 text-sm">
                           <Activity className="h-4 w-4 text-muted-foreground mt-0.5" />
                           <div>
-                              <p className="font-medium">Material Traceability Completed</p>
-                              <p className="text-xs text-muted-foreground">2 hours ago • WO-2026-001 linked to BC 3.0</p>
+                              <p className="font-medium">PEB Export Approved</p>
+                              <p className="text-xs text-muted-foreground">2 hours ago • PEB-2026-001 customs cleared</p>
                           </div>
                       </div>
                   </div>

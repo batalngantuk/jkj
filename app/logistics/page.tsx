@@ -93,8 +93,8 @@ export default function LogisticsDashboard() {
                <Card>
                    <CardContent className="p-6 flex items-center justify-between">
                        <div className="space-y-1">
-                           <p className="text-sm text-muted-foreground">Export Docs (BC 3.0)</p>
-                           <p className="text-2xl font-bold">12 Pending</p>
+                           <p className="text-sm text-muted-foreground">Export Docs (PEB)</p>
+                           <p className="text-2xl font-bold">4 Pending</p>
                        </div>
                        <Anchor className="h-8 w-8 text-orange-500" />
                    </CardContent>

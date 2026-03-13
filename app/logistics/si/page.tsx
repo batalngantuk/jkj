@@ -259,12 +259,12 @@ export default function ShippingInstructionForm() {
                 </div>
               </div>
 
-              {/* RIGHT COLUMN - BC 3.0 Export Declaration */}
+              {/* RIGHT COLUMN - PEB Export Declaration */}
               <div className="space-y-6">
                 {/* Header */}
                 <div>
-                  <h1 className="text-2xl font-bold text-foreground">BC 3.0 - Export Declaration</h1>
-                  <p className="mt-1 text-sm text-muted-foreground">BC-3.0-2026-001</p>
+                  <h1 className="text-2xl font-bold text-foreground">PEB - Export Declaration</h1>
+                  <p className="mt-1 text-sm text-muted-foreground">PEB-2026-001</p>
                   <div className="mt-2 inline-block rounded bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
                     Draft
                   </div>
@@ -316,13 +316,13 @@ export default function ShippingInstructionForm() {
 
                 {/* Material Traceability */}
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-foreground">Material Traceability (BC 2.3)</h3>
+                  <h3 className="font-semibold text-foreground">Material Traceability (BC 2.0)</h3>
                   <Card className="space-y-3 p-4">
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="text-xs text-muted-foreground">Raw Material Source</p>
                         <Link href="#" className="mt-1 text-primary hover:underline">
-                          <p className="font-medium">BC-2.3-2026-001</p>
+                          <p className="font-medium">PIB-2026-001</p>
                         </Link>
                         <p className="text-xs text-muted-foreground">Latex from Thailand</p>
                       </div>
@@ -403,8 +403,8 @@ export default function ShippingInstructionForm() {
                 <div className="flex flex-col gap-2">
                   <Button variant="outline">Save SI Draft</Button>
                   <Button variant="outline">Generate DO & BL</Button>
-                  <Button variant="outline">Save BC 3.0 Draft</Button>
-                  <Button className="bg-primary hover:bg-primary/90">Submit BC 3.0 to Customs</Button>
+                  <Button variant="outline">Save PEB Draft</Button>
+                  <Button className="bg-primary hover:bg-primary/90">Submit PEB to Customs</Button>
                 </div>
               </div>
             </div>

@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 
 export interface TraceabilityStep {
-  type: 'BC23' | 'GR' | 'WO' | 'FG' | 'BC30'
+  type: 'BC20' | 'GR' | 'WO' | 'FG' | 'PEB'
   id: string
   number: string
   description: string
@@ -33,33 +33,33 @@ interface TraceabilityChainProps {
 export function TraceabilityChain({ steps, showConversion, conversionData }: TraceabilityChainProps) {
   const getIcon = (type: string) => {
     switch (type) {
-      case 'BC23': return <FileText className="h-6 w-6 text-blue-600" />
+      case 'BC20': return <FileText className="h-6 w-6 text-blue-600" />
       case 'GR': return <Package className="h-6 w-6 text-green-600" />
       case 'WO': return <Factory className="h-6 w-6 text-orange-600" />
       case 'FG': return <CheckCircle className="h-6 w-6 text-purple-600" />
-      case 'BC30': return <Truck className="h-6 w-6 text-indigo-600" />
+      case 'PEB': return <Truck className="h-6 w-6 text-indigo-600" />
       default: return null
     }
   }
 
   const getColor = (type: string) => {
     switch (type) {
-      case 'BC23': return 'border-blue-200 bg-blue-50'
+      case 'BC20': return 'border-blue-200 bg-blue-50'
       case 'GR': return 'border-green-200 bg-green-50'
       case 'WO': return 'border-orange-200 bg-orange-50'
       case 'FG': return 'border-purple-200 bg-purple-50'
-      case 'BC30': return 'border-indigo-200 bg-indigo-50'
+      case 'PEB': return 'border-indigo-200 bg-indigo-50'
       default: return 'border-gray-200 bg-gray-50'
     }
   }
 
   const getLabel = (type: string) => {
     switch (type) {
-      case 'BC23': return 'Import (BC 2.3)'
+      case 'BC20': return 'Import (BC 2.0)'
       case 'GR': return 'Goods Receipt'
       case 'WO': return 'Production'
       case 'FG': return 'Finished Goods'
-      case 'BC30': return 'Export (BC 3.0)'
+      case 'PEB': return 'Export (PEB)'
       default: return type
     }
   }

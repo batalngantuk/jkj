@@ -26,13 +26,6 @@ export default function AlertsSection() {
       icon: Clock,
     },
     {
-      id: 4,
-      title: 'BC 2.3 pending submission',
-      count: 4,
-      severity: 'critical',
-      icon: AlertCircle,
-    },
-    {
       id: 5,
       title: 'Invoices due this week',
       count: 5,

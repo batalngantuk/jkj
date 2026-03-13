@@ -168,7 +168,7 @@ export default function StockMovementReportPage() {
               {/* Breakdown */}
               <div className="grid gap-3 md:grid-cols-3 mb-6 p-4 bg-secondary/20 rounded-lg">
                 <div>
-                  <p className="text-xs text-muted-foreground">Import (BC 2.3)</p>
+                  <p className="text-xs text-muted-foreground">Import (BC 2.0)</p>
                   <p className="font-semibold text-blue-600">{summary.importQty.toLocaleString()}</p>
                 </div>
                 <div>
@@ -176,7 +176,7 @@ export default function StockMovementReportPage() {
                   <p className="font-semibold text-orange-600">{summary.productionOutQty.toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Export (BC 3.0)</p>
+                  <p className="text-xs text-muted-foreground">Export (PEB)</p>
                   <p className="font-semibold text-green-600">{summary.exportQty.toLocaleString()}</p>
                 </div>
                 <div>
@@ -266,7 +266,7 @@ export default function StockMovementReportPage() {
               <div>
                 <p className="font-semibold text-green-900">Customs Compliance Note</p>
                 <p className="text-sm text-green-800 mt-1">
-                  This report tracks all stock movements with references to BC 2.3 (Import), BC 3.0 (Export), and Work Orders for complete material traceability as required by Bea Cukai regulations.
+                  This report tracks all stock movements with references to BC 2.0 (Import), PEB (Export), and Work Orders for complete material traceability as required by Bea Cukai regulations.
                 </p>
               </div>
             </div>

@@ -161,8 +161,8 @@ export default function ProductionReportPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Link href={`/purchasing/bc23/${record.bc23Id}`} className="font-mono text-xs text-blue-600 hover:underline">
-                          {record.bc23Number}
+                        <Link href={`/purchasing/bc20/${record.bc20Id}`} className="font-mono text-xs text-blue-600 hover:underline">
+                          {record.bc20Number}
                         </Link>
                         <p className="text-xs text-muted-foreground">Lot: {record.rmLotNumber}</p>
                       </TableCell>
@@ -206,9 +206,9 @@ export default function ProductionReportPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {record.bc30Id ? (
-                          <Link href={`/logistics/bc30/${record.bc30Id}`} className="font-mono text-xs text-green-600 hover:underline">
-                            {record.bc30Number}
+                        {record.pebId ? (
+                          <Link href={`/logistics/peb/${record.pebId}`} className="font-mono text-xs text-green-600 hover:underline">
+                            {record.pebNumber}
                           </Link>
                         ) : (
                           <Badge variant="outline" className="text-xs">Pending</Badge>
@@ -237,7 +237,7 @@ export default function ProductionReportPage() {
                 {Array.from(new Set(filteredRecords.map(r => r.rmDescription))).map((material, idx) => {
                   const records = filteredRecords.filter(r => r.rmDescription === material)
                   const totalQty = records.reduce((sum, r) => sum + r.rmQuantity, 0)
-                  const bc23Refs = Array.from(new Set(records.map(r => r.bc23Number)))
+                  const bc20Refs = Array.from(new Set(records.map(r => r.bc20Number)))
                   
                   return (
                     <div key={idx} className="p-3 border rounded-lg">
@@ -247,9 +247,9 @@ export default function ProductionReportPage() {
                         <span className="font-bold text-blue-600">{totalQty.toLocaleString()} {records[0].rmUnit}</span>
                       </div>
                       <div className="mt-2 pt-2 border-t">
-                        <p className="text-xs text-muted-foreground">BC 2.3 References:</p>
+                        <p className="text-xs text-muted-foreground">BC 2.0 References:</p>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {bc23Refs.map(bc => (
+                          {bc20Refs.map((bc: string) => (
                             <Badge key={bc} variant="outline" className="text-xs font-mono">
                               {bc}
                             </Badge>
@@ -276,7 +276,7 @@ export default function ProductionReportPage() {
                 {Array.from(new Set(filteredRecords.map(r => r.productName))).map((product, idx) => {
                   const records = filteredRecords.filter(r => r.productName === product)
                   const totalQty = records.reduce((sum, r) => sum + r.fgQuantity, 0)
-                  const exported = records.filter(r => r.bc30Id).length
+                  const exported = records.filter(r => r.pebId).length
                   const pending = records.length - exported
                   
                   return (

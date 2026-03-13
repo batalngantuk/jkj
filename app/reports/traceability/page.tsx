@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Search, Download, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -23,14 +23,14 @@ export default function TraceabilityReportPage() {
 
   const traceabilitySteps: TraceabilityStep[] = [
     {
-      type: 'BC23',
-      id: selectedRecord.bc23Id,
-      number: selectedRecord.bc23Number,
+      type: 'BC20',
+      id: selectedRecord.bc20Id,
+      number: selectedRecord.bc20Number,
       description: selectedRecord.rmDescription,
       date: selectedRecord.grDate,
       quantity: `${selectedRecord.rmQuantity.toLocaleString()} ${selectedRecord.rmUnit}`,
       lotNumber: selectedRecord.rmLotNumber,
-      href: `/purchasing/bc23/${selectedRecord.bc23Id}`
+      href: `/purchasing/bc20/${selectedRecord.bc20Id}`
     },
     {
       type: 'GR',
@@ -62,17 +62,17 @@ export default function TraceabilityReportPage() {
     }
   ]
 
-  // Add BC 3.0 if exported
-  if (selectedRecord.bc30Id) {
+  // Add PEB if exported
+  if (selectedRecord.pebId) {
     traceabilitySteps.push({
-      type: 'BC30',
-      id: selectedRecord.bc30Id,
-      number: selectedRecord.bc30Number!,
+      type: 'PEB',
+      id: selectedRecord.pebId,
+      number: selectedRecord.pebNumber!,
       description: `Export to customer`,
       date: selectedRecord.exportDate!,
       quantity: `${selectedRecord.exportQuantity!.toLocaleString()} ${selectedRecord.fgUnit}`,
       lotNumber: selectedRecord.fgLotNumber,
-      href: `/logistics/bc30/${selectedRecord.bc30Id}`
+      href: `/logistics/peb/${selectedRecord.pebId}`
     })
   }
 
@@ -111,15 +111,15 @@ export default function TraceabilityReportPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="lot">Lot Number</SelectItem>
-                  <SelectItem value="bc23">BC 2.3 Number</SelectItem>
-                  <SelectItem value="bc30">BC 3.0 Number</SelectItem>
+                  <SelectItem value="bc20">BC 2.0 Number (PIB)</SelectItem>
+                  <SelectItem value="peb">PEB Number</SelectItem>
                   <SelectItem value="wo">Work Order</SelectItem>
                   <SelectItem value="po">PO Number</SelectItem>
                 </SelectContent>
               </Select>
               <div className="flex-1 relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input 
+                <Input
                   placeholder={`Enter ${searchType}...`}
                   className="pl-8"
                   value={searchValue}
@@ -137,7 +137,7 @@ export default function TraceabilityReportPage() {
             <CardTitle>Traceability Chain</CardTitle>
           </CardHeader>
           <CardContent>
-            <TraceabilityChain 
+            <TraceabilityChain
               steps={traceabilitySteps}
               showConversion={true}
               conversionData={{
@@ -171,7 +171,7 @@ export default function TraceabilityReportPage() {
                 <div>
                   <h3 className="font-semibold mb-2">Raw Material (Import)</h3>
                   <div className="space-y-1 text-sm">
-                    <p><span className="text-muted-foreground">BC 2.3:</span> <span className="font-mono">{selectedRecord.bc23Number}</span></p>
+                    <p><span className="text-muted-foreground">BC 2.0 (PIB):</span> <span className="font-mono">{selectedRecord.bc20Number}</span></p>
                     <p><span className="text-muted-foreground">Description:</span> {selectedRecord.rmDescription}</p>
                     <p><span className="text-muted-foreground">Lot Number:</span> <span className="font-mono text-primary">{selectedRecord.rmLotNumber}</span></p>
                     <p><span className="text-muted-foreground">Quantity:</span> {selectedRecord.rmQuantity.toLocaleString()} {selectedRecord.rmUnit}</p>
@@ -182,9 +182,9 @@ export default function TraceabilityReportPage() {
                 <div>
                   <h3 className="font-semibold mb-2">Finished Goods (Export)</h3>
                   <div className="space-y-1 text-sm">
-                    {selectedRecord.bc30Number ? (
+                    {selectedRecord.pebNumber ? (
                       <>
-                        <p><span className="text-muted-foreground">BC 3.0:</span> <span className="font-mono">{selectedRecord.bc30Number}</span></p>
+                        <p><span className="text-muted-foreground">PEB:</span> <span className="font-mono">{selectedRecord.pebNumber}</span></p>
                         <p><span className="text-muted-foreground">Product:</span> {selectedRecord.productName}</p>
                         <p><span className="text-muted-foreground">Lot Number:</span> <span className="font-mono text-primary">{selectedRecord.fgLotNumber}</span></p>
                         <p><span className="text-muted-foreground">Quantity:</span> {selectedRecord.fgQuantity.toLocaleString()} {selectedRecord.fgUnit}</p>
@@ -216,7 +216,7 @@ export default function TraceabilityReportPage() {
               </div>
 
               <div className="border-t pt-4 text-xs text-muted-foreground">
-                <p>This certificate confirms the traceability of materials from import (BC 2.3) through production to export (BC 3.0).</p>
+                <p>This certificate confirms the traceability of materials from import (BC 2.0) through production to export (PEB).</p>
                 <p className="mt-2">Generated on: {new Date().toLocaleDateString('id-ID')} | System: JKJ Manufacturing ERP</p>
               </div>
             </div>
@@ -231,7 +231,7 @@ export default function TraceabilityReportPage() {
           <CardContent>
             <div className="space-y-2">
               {MOCK_TRACEABILITY.map((record) => (
-                <div 
+                <div
                   key={record.id}
                   className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                     selectedRecord.id === record.id ? 'border-primary bg-primary/5' : 'hover:bg-secondary/50'
@@ -243,11 +243,11 @@ export default function TraceabilityReportPage() {
                       <p className="font-semibold">{record.productName}</p>
                       <p className="text-sm text-muted-foreground">
                         {record.rmLotNumber} → {record.fgLotNumber}
-                        {record.bc30Number && ` → ${record.bc30Number}`}
+                        {record.pebNumber && ` → ${record.pebNumber}`}
                       </p>
                     </div>
                     <div className="text-right text-sm">
-                      <p className="font-mono text-primary">{record.bc23Number}</p>
+                      <p className="font-mono text-primary">{record.bc20Number}</p>
                       <p className="text-muted-foreground">{new Date(record.productionDate).toLocaleDateString('id-ID')}</p>
                     </div>
                   </div>

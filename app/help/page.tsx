@@ -45,7 +45,7 @@ export default function HelpPage() {
     {
       id: 'customs',
       title: 'Customs Walkthrough',
-      description: 'BC 2.3 and BC 3.0 implementation guide',
+      description: 'BC 2.0 and PEB implementation guide',
       icon: HelpCircle,
       file: '/docs/customs_walkthrough.md',
       color: 'text-orange-600',

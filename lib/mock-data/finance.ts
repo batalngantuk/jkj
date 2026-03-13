@@ -56,8 +56,8 @@ export interface APInvoice {
   paidAmount: number
   balance: number
   status: 'DRAFT' | 'VERIFIED' | 'APPROVED' | 'SCHEDULED' | 'PAID'
-  bc23Id?: string
-  bc23Number?: string
+  bc20Id?: string
+  bc20Number?: string
   lineItems: InvoiceLineItem[]
   paymentIds: string[]
   notes?: string
@@ -196,8 +196,8 @@ export const MOCK_AP_INVOICES: APInvoice[] = [
     paidAmount: 75000000,
     balance: 0,
     status: 'PAID',
-    bc23Id: 'bc23-001',
-    bc23Number: 'BC23-2026-001',
+    bc20Id: 'bc23-001',
+    bc20Number: 'BC23-2026-001',
     lineItems: [
       {
         id: 'li-ap-001',
@@ -254,8 +254,8 @@ export const MOCK_AP_INVOICES: APInvoice[] = [
     paidAmount: 0,
     balance: 85000000,
     status: 'VERIFIED',
-    bc23Id: 'bc23-002',
-    bc23Number: 'BC23-2026-002',
+    bc20Id: 'bc23-002',
+    bc20Number: 'BC23-2026-002',
     lineItems: [
       {
         id: 'li-ap-003',

@@ -16,17 +16,17 @@ import AppLayout from '@/components/app-layout'
 
 // Mock Purchase Orders for selection
 const MOCK_PURCHASE_ORDERS = [
-  { id: 'po-001', poNumber: 'PO-2026-001', vendorName: 'PT. Supplier Material Utama', hasBC23: true, bc23Number: 'BC23-2026-001' },
-  { id: 'po-002', poNumber: 'PO-2026-002', vendorName: 'CV. Packaging Solutions', hasBC23: false },
-  { id: 'po-003', poNumber: 'PO-2026-003', vendorName: 'PT. Supplier Material Utama', hasBC23: true, bc23Number: 'BC23-2026-002' },
-  { id: 'po-004', poNumber: 'PO-2026-004', vendorName: 'PT. Chemical Indo', hasBC23: false },
+  { id: 'po-001', poNumber: 'PO-2026-001', vendorName: 'PT. Supplier Material Utama', hasBC20: true, bc20Number: 'PIB-2026-001' },
+  { id: 'po-002', poNumber: 'PO-2026-002', vendorName: 'CV. Packaging Solutions', hasBC20: false },
+  { id: 'po-003', poNumber: 'PO-2026-003', vendorName: 'PT. Supplier Material Utama', hasBC20: true, bc20Number: 'PIB-2026-002' },
+  { id: 'po-004', poNumber: 'PO-2026-004', vendorName: 'PT. Chemical Indo', hasBC20: false },
 ]
 
-// Mock BC 2.3 Documents
-const MOCK_BC23_DOCUMENTS = [
-  { id: 'bc23-001', bcNumber: 'BC23-2026-001', poNumber: 'PO-2026-001' },
-  { id: 'bc23-002', bcNumber: 'BC23-2026-002', poNumber: 'PO-2026-003' },
-  { id: 'bc23-003', bcNumber: 'BC23-2026-003', poNumber: 'PO-2026-005' },
+// Mock BC 2.0 Documents
+const MOCK_BC20_DOCUMENTS = [
+  { id: 'bc20-001', bcNumber: 'PIB-2026-001', poNumber: 'PO-2026-001' },
+  { id: 'bc20-002', bcNumber: 'PIB-2026-002', poNumber: 'PO-2026-003' },
+  { id: 'bc20-003', bcNumber: 'PIB-2026-003', poNumber: 'PO-2026-005' },
 ]
 
 interface LineItem {
@@ -48,8 +48,8 @@ export default function NewAPBillPage() {
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0])
   const [dueDate, setDueDate] = useState('')
   const [paymentTerms, setPaymentTerms] = useState('30')
-  const [selectedBC23, setSelectedBC23] = useState('')
-  const [showBC23, setShowBC23] = useState(false)
+  const [selectedBC20, setSelectedBC20] = useState('')
+  const [showBC20, setShowBC20] = useState(false)
   const [notes, setNotes] = useState('')
   
   const [lineItems, setLineItems] = useState<LineItem[]>([
@@ -64,14 +64,14 @@ export default function NewAPBillPage() {
     const po = MOCK_PURCHASE_ORDERS.find(p => p.id === poId)
     if (po) {
       setVendorName(po.vendorName)
-      setShowBC23(po.hasBC23)
-      if (po.hasBC23 && po.bc23Number) {
-        const bc23 = MOCK_BC23_DOCUMENTS.find(bc => bc.bcNumber === po.bc23Number)
+      setShowBC20(po.hasBC20)
+      if (po.hasBC20 && po.bc20Number) {
+        const bc23 = MOCK_BC20_DOCUMENTS.find(bc => bc.bcNumber === po.bc20Number)
         if (bc23) {
-          setSelectedBC23(bc23.id)
+          setSelectedBC20(bc23.id)
         }
       } else {
-        setSelectedBC23('')
+        setSelectedBC20('')
       }
       // Auto-calculate due date based on payment terms
       updateDueDate(invoiceDate, paymentTerms)
@@ -262,15 +262,15 @@ export default function NewAPBillPage() {
                   />
                 </div>
 
-                {showBC23 && (
+                {showBC20 && (
                   <div className="space-y-2 col-span-2">
-                    <Label>BC 2.3 Reference (Import) <span className="text-blue-600 text-xs">Optional</span></Label>
-                    <Select value={selectedBC23} onValueChange={setSelectedBC23}>
+                    <Label>BC 2.0 Reference (Import) <span className="text-blue-600 text-xs">Optional</span></Label>
+                    <Select value={selectedBC20} onValueChange={setSelectedBC20}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select BC 2.3 Document (if applicable)" />
+                        <SelectValue placeholder="Select BC 2.0 Document (if applicable)" />
                       </SelectTrigger>
                       <SelectContent>
-                        {MOCK_BC23_DOCUMENTS.map(bc => (
+                        {MOCK_BC20_DOCUMENTS.map(bc => (
                           <SelectItem key={bc.id} value={bc.id}>
                             {bc.bcNumber} - {bc.poNumber}
                           </SelectItem>

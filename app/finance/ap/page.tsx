@@ -202,9 +202,9 @@ export default function APPage() {
                       <TableCell className="text-sm font-medium">{formatCurrency(invoice.totalAmount)}</TableCell>
                       <TableCell className="text-sm font-semibold">{formatCurrency(invoice.balance)}</TableCell>
                       <TableCell>
-                        {invoice.bc23Number ? (
-                          <Link href={`/purchasing/bc23/${invoice.bc23Id}`} className="font-mono text-xs text-blue-600 hover:underline">
-                            {invoice.bc23Number}
+                        {invoice.bc20Number ? (
+                          <Link href={`/purchasing/bc20/${invoice.bc20Id}`} className="font-mono text-xs text-blue-600 hover:underline">
+                            {invoice.bc20Number}
                           </Link>
                         ) : (
                           <span className="text-xs text-muted-foreground">-</span>
