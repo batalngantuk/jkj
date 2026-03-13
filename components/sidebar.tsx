@@ -131,6 +131,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Production Yield', href: '/reports/production' },
         { label: 'Inventory Value', href: '/reports/inventory' },
         { label: 'Material Traceability', href: '/reports/traceability' },
+        { label: 'Traceability BC 2.0', href: '/reports/traceability-bc20' },
+        { label: 'Conversion Analysis', href: '/reports/conversion-analysis' },
         { label: 'Stock Movement', href: '/reports/stock-movement' },
         { label: 'Dual Billing (BC 2.0)', href: '/reports/dual-billing' },
         { label: 'Tax Assets', href: '/reports/tax-assets' },
