@@ -93,6 +93,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Suppliers', href: '/purchasing/suppliers' },
         { label: 'Purchase Orders', href: '/purchasing/po' },
         { label: 'BC 2.0 (Regular Import)', href: '/purchasing/bc20' },
+        { label: 'BC 2.0 Dashboard', href: '/purchasing/bc20/dashboard' },
         { label: 'BC 2.3 (Bonded Import)', href: '/purchasing/bc23' },
       ]
     },
@@ -131,6 +132,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Inventory Value', href: '/reports/inventory' },
         { label: 'Material Traceability', href: '/reports/traceability' },
         { label: 'Stock Movement', href: '/reports/stock-movement' },
+        { label: 'Dual Billing (BC 2.0)', href: '/reports/dual-billing' },
+        { label: 'Tax Assets', href: '/reports/tax-assets' },
+        { label: 'Landed Cost Analysis', href: '/reports/landed-cost-analysis' },
       ]
     },
   ]
