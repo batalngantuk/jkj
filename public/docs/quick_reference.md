@@ -11,8 +11,8 @@
    └─ Overview bisnis & metrics dengan charts
 
 🛡️ Compliance (/compliance)
-   ├─ BC 2.3 Status
-   ├─ BC 3.0 Status
+   ├─ BC 2.0 Status
+   ├─ PEB Status
    ├─ Traceability Overview
    └─ Compliance Alerts
 
@@ -37,15 +37,15 @@
    ├─ Suppliers (/purchasing/suppliers)
    ├─ Purchase Orders (/purchasing/po)
    ├─ New PO (/purchasing/po/new)
-   └─ BC 2.3 Import (/purchasing/bc23) ✅
-      └─ New BC 2.3 (/purchasing/bc23/new) ✅
+   └─ BC 2.0 Import (/purchasing/bc20) ✅
+      └─ New BC 2.0 (/purchasing/bc20/new) ✅
 
 🚚 Logistics (/logistics)
    ├─ Dashboard (with charts) ✅
    ├─ Fleet Management (/logistics/fleet) ✅
    ├─ Shipments Tracking (/logistics/shipments) ✅
-   └─ BC 3.0 Export (/logistics/bc30) ✅
-      └─ New BC 3.0 (/logistics/bc30/new) ✅
+   └─ PEB Export (/logistics/peb) ✅
+      └─ New PEB (/logistics/peb/new) ✅
 
 💰 Finance (/finance) ✅
    ├─ Dashboard ✅
@@ -77,12 +77,12 @@
 
 ### Purchasing Staff
 
-**Create PO + BC 2.3**:
+**Create PO + BC 2.0**:
 
 1. Purchasing → PO → New PO
 2. Fill supplier & material
 3. Submit for approval
-4. After approved: BC 2.3 → New BC 2.3
+4. After approved: BC 2.0 → New BC 2.0
 5. Link to PO, fill HS Code & CIF Value
 6. Submit to customs
 
@@ -91,7 +91,7 @@
 **Goods Receipt (Import)**:
 
 1. Warehouse → Inbound → New GR
-2. Link to PO & BC 2.3
+2. Link to PO & BC 2.0
 3. Input lot number (e.g., RM-2026-001)
 4. Verify quantity
 5. Complete GR
@@ -108,19 +108,19 @@
 
 ### Logistics Staff
 
-**Create BC 3.0 Export**:
+**Create PEB Export**:
 
-1. Logistics → BC 3.0 → New BC 3.0
+1. Logistics → PEB → New PEB
 2. Link to SO
 3. Select FG with lot number
-4. System auto-shows traceability chain
-5. Fill PEB details
+4. System auto-shows traceability chain (optional BC 2.0 link)
+5. Fill PEB details (FOB value, 0% PPN)
 6. Submit for verification
 
 **Create Shipment**:
 
 1. Logistics → Shipments → New Shipment
-2. Link to SO and BC 3.0
+2. Link to SO and PEB
 3. Assign vehicle and driver
 4. Schedule delivery
 5. Track status and update POD
@@ -166,30 +166,30 @@
 ```
 Import → Receipt → Production → Export
 
-BC 2.3          →  GR          →  WO         →  FG         →  BC 3.0
+BC 2.0          →  GR          →  WO         →  FG         →  PEB
 (Lot: RM-xxx)      (Stock In)     (Convert)     (Lot: FG-xxx)  (Export)
 ```
 
 **Key Points**:
 
-- ✅ Lot number assigned di BC 2.3 (import)
+- ✅ Lot number assigned di BC 2.0 (import)
 - ✅ Lot number tracked di GR (receipt)
 - ✅ Conversion tracked di WO (production)
 - ✅ FG lot number assigned di WO
-- ✅ Full chain visible di BC 3.0 (export)
+- ✅ Full chain visible di PEB (export)
 
 ---
 
 ## 📋 Document Checklist
 
-### BC 2.3 Import
+### BC 2.0 Import (PIB)
 
 - [ ] Commercial Invoice
 - [ ] Packing List
 - [ ] Bill of Lading (B/L)
 - [ ] Certificate of Origin (COO)
 
-### BC 3.0 Export
+### PEB Export
 
 - [ ] Commercial Invoice
 - [ ] Packing List
@@ -261,7 +261,7 @@ BC 2.3          →  GR          →  WO         →  FG         →  BC 3.0
 
 ### Traceability chain kosong?
 
-→ Verify lot number di BC 2.3 dan WO
+→ Verify lot number di BC 2.0 dan WO
 
 ### Conversion ratio salah?
 
@@ -285,7 +285,7 @@ BC 2.3          →  GR          →  WO         →  FG         →  BC 3.0
 
 - Platform Overview (comprehensive guide)
 - Detailed Workflow Spec (technical details)
-- Customs Walkthrough (BC 2.3 & BC 3.0)
+- Customs Walkthrough (BC 2.0 & PEB)
 
 ---
 
@@ -294,16 +294,16 @@ BC 2.3          →  GR          →  WO         →  FG         →  BC 3.0
 ### By Role
 
 - **Sales**: Sales Order workflow
-- **Purchasing**: PO & BC 2.3 management
+- **Purchasing**: PO & BC 2.0 management
 - **Warehouse**: GR & stock management
 - **Production**: WO & BOM management
-- **Logistics**: Shipment & BC 3.0
+- **Logistics**: Shipment & PEB
 - **Finance**: Invoice & payment
 - **Compliance**: BC monitoring & reports
 
 ### By Module
 
-- Customs Compliance (BC 2.3 & BC 3.0)
+- Customs Compliance (BC 2.0 & PEB)
 - Material Traceability
 - Stock Movement
 - Production Conversion
@@ -322,8 +322,8 @@ BC 2.3          →  GR          →  WO         →  FG         →  BC 3.0
 
 ### Compliance Dashboard
 
-- 📋 BC 2.3 Active / Pending
-- 📋 BC 3.0 Active / Pending
+- 📋 BC 2.0 Active / Pending
+- 📋 PEB Active / Pending
 - 🔗 Traceability Records
 - ⚠️ Compliance Alerts
 
@@ -333,9 +333,8 @@ BC 2.3          →  GR          →  WO         →  FG         →  BC 3.0
 
 | Term    | Meaning                              |
 | ------- | ------------------------------------ |
-| BC 2.3  | Import Declaration                   |
-| BC 3.0  | Export Declaration                   |
-| PEB     | Pemberitahuan Ekspor Barang          |
+| BC 2.0  | PIB Regular Import Declaration       |
+| PEB     | Pemberitahuan Ekspor Barang (Regular Export Declaration) |
 | SPPB    | Surat Persetujuan Pengeluaran Barang |
 | NPE     | Nomor Pendaftaran Eksportir          |
 | HS Code | Harmonized System Code               |

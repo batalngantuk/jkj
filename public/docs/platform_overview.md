@@ -27,7 +27,7 @@ JKJ Manufacturing ERP adalah sistem manajemen terintegrasi yang dirancang khusus
 - ✅ **Production Planning** - Work order dan BOM management
 - ✅ **Warehouse Management** - Inbound, outbound, dan stock tracking
 - ✅ **Purchasing** - PO management dan supplier tracking
-- ✅ **Customs Compliance** - BC 2.3 (Import) dan BC 3.0 (Export)
+- ✅ **Customs Compliance** - BC 2.0 (PIB - Regular Import) dan PEB (Export)
 - ✅ **Material Traceability** - Pelacakan material dari import hingga export
 - ✅ **Finance** - Invoice, payment, dan tax management
 - ✅ **Logistics** - Shipment tracking dan delivery management
@@ -36,7 +36,7 @@ JKJ Manufacturing ERP adalah sistem manajemen terintegrasi yang dirancang khusus
 ### Keunggulan Platform
 
 🔹 **Terintegrasi Penuh** - Semua modul terhubung secara real-time  
-🔹 **Customs Compliance** - Built-in BC 2.3 dan BC 3.0 management  
+🔹 **Customs Compliance** - Built-in BC 2.0 (PIB) dan PEB management
 🔹 **Material Traceability** - Tracking lot-to-lot dari import ke export  
 🔹 **User-Friendly** - Interface modern dan mudah digunakan  
 🔹 **Real-time Dashboard** - Monitoring bisnis secara live  
@@ -130,8 +130,8 @@ graph TB
 
 **Fitur**:
 
-- BC 2.3 Import status (Active, Pending, Approved)
-- BC 3.0 Export status (Active, Pending, Approved)
+- BC 2.0 Import status (Active, Pending, Approved)
+- PEB Export status (Active, Pending, Approved)
 - Material Traceability overview
 - Compliance alerts & notifications
 - Recent BC activities
@@ -205,9 +205,9 @@ graph TB
 
 **Integration**:
 
-- Link to BC 2.3 (import receipt)
+- Link to BC 2.0 (import receipt)
 - Link to WO (production consumption)
-- Link to BC 3.0 (export shipment)
+- Link to PEB (export shipment)
 
 ---
 
@@ -219,21 +219,24 @@ graph TB
 
 - Supplier management (add, edit, view)
 - Purchase Order (PO) creation & tracking
-- **BC 2.3 Import Declaration** 🆕
+- **BC 2.0 Import Declaration (PIB - Regular Import)** 🆕
 - Approval workflow
 - Vendor performance tracking
 
 **User**: Purchasing Staff, Purchasing Manager
 
-#### 📋 BC 2.3 Import Module (`/purchasing/bc23`)
+#### 📋 BC 2.0 Import Module (`/purchasing/bc20`)
 
-**Fungsi**: Manajemen dokumen import customs
+**Fungsi**: Manajemen dokumen import customs (PIB - Regular Import)
 
 **Fitur**:
 
-- BC 2.3 document creation & tracking
+- BC 2.0 document creation & tracking
 - HS Code management
 - Duty calculations (Bea Masuk, PPN, PPh 22)
+- **Dual billing**: vendor CIF payment + tax payment (Bea Masuk/PPN/PPh 22) separately
+- **Landed cost calculation**
+- **Tax assets**: PPN credit & PPh 22 prepaid tracking
 - SPPB tracking
 - Document checklist (Invoice, Packing List, B/L, COO)
 - **Lot number assignment** untuk RM
@@ -252,22 +255,23 @@ graph TB
 **Fitur**:
 
 - Shipment tracking
-- **BC 3.0 Export Declaration** 🆕
+- **PEB Export Declaration (Pemberitahuan Ekspor Barang)** 🆕
 - Delivery scheduling
 - POD (Proof of Delivery) management
 
 **User**: Logistics Staff, Logistics Manager
 
-#### 📋 BC 3.0 Export Module (`/logistics/bc30`)
+#### 📋 PEB Export Module (`/logistics/peb`)
 
-**Fungsi**: Manajemen dokumen export customs
+**Fungsi**: Manajemen dokumen export customs (Pemberitahuan Ekspor Barang)
 
 **Fitur**:
 
-- BC 3.0 document creation & tracking
-- PEB (Pemberitahuan Ekspor Barang) tracking
+- PEB document creation & tracking
 - NPE (Nomor Pendaftaran Eksportir)
-- **Full traceability chain** (link to BC 2.3)
+- **Zero-rated VAT (0% PPN)** for export
+- **FOB value** calculation
+- **Optional traceability** back to BC 2.0 source import
 - Document checklist (Invoice, Packing List, COO, Health Cert, Form E)
 - Conversion analysis display
 - Status timeline
@@ -300,7 +304,7 @@ graph TB
 - Tax verification
 - Payment scheduling
 - Approval workflow
-- Link to BC 2.3 for duty payments
+- Link to BC 2.0 for duty payments
 
 #### Payment Management (`/finance/payments`)
 
@@ -317,7 +321,7 @@ graph TB
 
 - Auto-generate AR invoice from SO
 - Link AP invoice to PO + GR
-- Link to BC 2.3 for import duty payments
+- Link to BC 2.0 for import duty payments
 - Update SO/PO status when paid
 
 ---
@@ -334,7 +338,7 @@ graph TB
 - Fleet utilization chart (PieChart)
 - Shipment trend chart (LineChart)
 - Delivery performance metrics
-- BC 3.0 status overview
+- PEB status overview
 
 #### Fleet Management (`/logistics/fleet`)
 
@@ -348,23 +352,24 @@ graph TB
 
 - Shipment list with tracking
 - Create shipment from SO
-- Link to BC 3.0 export
+- Link to PEB export
 - Driver & vehicle assignment
 - Real-time status updates
 - POD (Proof of Delivery) management
 
 **User**: Logistics Staff, Logistics Manager
 
-#### 📋 BC 3.0 Export Module (`/logistics/bc30`)
+#### 📋 PEB Export Module (`/logistics/peb`)
 
-**Fungsi**: Manajemen dokumen export customs
+**Fungsi**: Manajemen dokumen export customs (Pemberitahuan Ekspor Barang)
 
 **Fitur**:
 
-- BC 3.0 document creation & tracking
-- PEB (Pemberitahuan Ekspor Barang) tracking
+- PEB document creation & tracking
 - NPE (Nomor Pendaftaran Eksportir)
-- **Full traceability chain** (link to BC 2.3)
+- **Zero-rated VAT (0% PPN)** for export
+- **FOB value** calculation
+- **Optional traceability** back to BC 2.0 source import
 - Document checklist (Invoice, Packing List, COO, Health Cert, Form E)
 - Conversion analysis display
 - Status timeline
@@ -405,8 +410,8 @@ graph TB
 
 #### 📈 Material Traceability (`/reports/traceability`)
 
-- Visual traceability chain: BC 2.3 → GR → WO → FG → BC 3.0
-- Search by: Lot Number, BC 2.3, BC 3.0, WO, PO
+- Visual traceability chain: BC 2.0 → GR → WO → FG → PEB
+- Search by: Lot Number, BC 2.0, PEB, WO, PO
 - Conversion analysis
 - Material Traceability Certificate
 - Variance tracking
@@ -416,9 +421,9 @@ graph TB
 - Period & material filters
 - Balance summary (Opening, In, Out, Closing)
 - Transaction breakdown:
-  - Import (BC 2.3 references)
+  - Import (BC 2.0 references)
   - Production (WO references)
-  - Export (BC 3.0 references)
+  - Export (PEB references)
   - Waste/Scrap
 - Detailed transaction table with lot tracking
 - Export to Excel
@@ -428,7 +433,7 @@ graph TB
 - Conversion ratio analysis (actual vs standard)
 - Variance tracking per work order
 - Waste/scrap monitoring
-- BC 2.3 to BC 3.0 linkage
+- BC 2.0 to PEB linkage
 - Material breakdown (Input/Output)
 
 **User**: Management, Compliance Officer, Auditor
@@ -448,14 +453,14 @@ graph LR
     E --> F{RM Available?}
     F -->|No| G[Create PR]
     G --> H[Create PO]
-    H --> I[BC 2.3 Import]
+    H --> I[BC 2.0 Import]
     I --> J[Goods Receipt]
     J --> K[Lot: RM-2026-001]
     K --> E
     F -->|Yes| E
     E --> L[Production]
     L --> M[Lot: FG-2026-001]
-    M --> N[BC 3.0 Export]
+    M --> N[PEB Export]
     N --> O[Shipment]
     O --> P[Delivery]
     P --> Q[Invoice]
@@ -470,7 +475,7 @@ graph LR
 ### Traceability Chain
 
 ```
-BC 2.3 (Import)
+BC 2.0 (PIB - Regular Import)
     ↓ Lot: RM-2026-001
 Goods Receipt (GR)
     ↓
@@ -478,7 +483,7 @@ Work Order (WO)
     ↓ Conversion: 90%
 Finished Goods (FG)
     ↓ Lot: FG-2026-001
-BC 3.0 (Export)
+PEB (Export)
 ```
 
 ### Status Progression
@@ -489,13 +494,13 @@ BC 3.0 (Export)
 **Purchase Order**:
 `DRAFT` → `PENDING APPROVAL` → `APPROVED` → `SENT TO VENDOR` → `PARTIALLY RECEIVED` → `COMPLETED`
 
-**BC 2.3 Import**:
+**BC 2.0 Import (PIB)**:
 `DRAFT` → `SUBMITTED` → `UNDER REVIEW` → `APPROVED` → `CLOSED`
 
 **Work Order**:
 `DRAFT` → `SCHEDULED` → `IN PROGRESS` → `COMPLETED` → `CLOSED`
 
-**BC 3.0 Export**:
+**PEB Export**:
 `DRAFT` → `VERIFIED` → `SUBMITTED` → `UNDER REVIEW` → `APPROVED` → `EXPORTED` → `CLOSED`
 
 ---
@@ -514,14 +519,14 @@ BC 3.0 (Export)
 **Finance Manager**
 
 - ✅ Finance module (full access)
-- ✅ BC 2.3 & BC 3.0 verification
+- ✅ BC 2.0 & PEB verification
 - ✅ Invoice & payment management
 - ✅ Tax reports
 
 **Compliance Officer**
 
 - ✅ Compliance Dashboard (full access)
-- ✅ BC 2.3 & BC 3.0 management
+- ✅ BC 2.0 & PEB management
 - ✅ Material Traceability reports
 - ✅ Audit trail access
 
@@ -556,13 +561,13 @@ BC 3.0 (Export)
 
 - ✅ Purchase Orders (approve/reject)
 - ✅ Supplier management
-- ✅ BC 2.3 approval
+- ✅ BC 2.0 approval
 
 **Purchasing Staff**
 
 - ✅ Purchase Orders (create/edit)
 - ✅ Supplier management
-- ✅ BC 2.3 creation
+- ✅ BC 2.0 creation
 
 **Warehouse Manager**
 
@@ -579,13 +584,13 @@ BC 3.0 (Export)
 **Logistics Manager**
 
 - ✅ Shipment management
-- ✅ BC 3.0 approval
+- ✅ PEB approval
 - ✅ Delivery tracking
 
 **Logistics Staff**
 
 - ✅ Shipment creation
-- ✅ BC 3.0 creation
+- ✅ PEB creation
 - ✅ Delivery updates
 
 ---
@@ -606,19 +611,19 @@ BC 3.0 (Export)
 
 ### Untuk Purchasing Staff
 
-**Membuat Purchase Order dengan BC 2.3**:
+**Membuat Purchase Order dengan BC 2.0**:
 
 1. Klik menu **Purchasing** → **Purchase Orders**
 2. Klik **"New PO"**
 3. Pilih supplier dan material
 4. Isi quantity dan delivery date
 5. Submit untuk approval
-6. Setelah PO approved, buat **BC 2.3**:
-   - Klik menu **BC 2.3 (Import)**
-   - Klik **"New BC 2.3"**
+6. Setelah PO approved, buat **BC 2.0**:
+   - Klik menu **BC 2.0 (Import)**
+   - Klik **"New BC 2.0"**
    - Link ke PO yang sudah dibuat
    - Isi HS Code, CIF Value
-   - Sistem auto-calculate duties
+   - Sistem auto-calculate duties (Bea Masuk, PPN, PPh 22)
    - Submit ke customs
 
 ### Untuk Production Planner
@@ -640,7 +645,7 @@ BC 3.0 (Export)
 
 1. Klik menu **Warehouse** → **Inbound**
 2. Klik **"New Goods Receipt"**
-3. Link ke PO dan BC 2.3
+3. Link ke PO dan BC 2.0
 4. Scan/input lot number (e.g., RM-2026-001)
 5. Verify quantity vs PO
 6. Complete GR
@@ -648,14 +653,14 @@ BC 3.0 (Export)
 
 ### Untuk Logistics Staff
 
-**Membuat BC 3.0 Export**:
+**Membuat PEB Export**:
 
-1. Klik menu **Logistics** → **BC 3.0 (Export)**
-2. Klik **"New BC 3.0"**
+1. Klik menu **Logistics** → **PEB (Export)**
+2. Klik **"New PEB"**
 3. Link ke Sales Order
 4. Pilih finished goods (dengan lot number)
-5. Sistem akan auto-show traceability chain
-6. Isi PEB details
+5. Sistem akan auto-show traceability chain (optional link to BC 2.0)
+6. Isi PEB details (FOB value, 0% PPN)
 7. Submit untuk verification
 8. Setelah approved, proceed dengan shipment
 
@@ -665,8 +670,8 @@ BC 3.0 (Export)
 
 1. Klik menu **Compliance** di sidebar
 2. Dashboard akan show:
-   - BC 2.3 pending review
-   - BC 3.0 pending review
+   - BC 2.0 pending review
+   - PEB pending review
    - Traceability gaps
    - Recent activities
 3. Klik alert untuk detail
@@ -682,7 +687,7 @@ BC 3.0 (Export)
 **Full Chain Tracking**:
 
 - Setiap material import mendapat **lot number** unik
-- Tracking dari BC 2.3 → GR → WO → FG → BC 3.0
+- Tracking dari BC 2.0 → GR → WO → FG → PEB
 - Visual traceability chain di setiap detail page
 - Material Traceability Certificate untuk audit
 
@@ -711,19 +716,23 @@ BC 3.0 (Export)
 
 ### 3. 🛡️ Customs Compliance
 
-**BC 2.3 Import**:
+**BC 2.0 Import (PIB - Regular Import)**:
 
 - HS Code management
-- Duty auto-calculation
+- Duty auto-calculation (Bea Masuk, PPN, PPh 22)
+- Dual billing: vendor CIF payment + tax payment separately
+- Landed cost calculation
+- Tax assets: PPN credit & PPh 22 prepaid
 - SPPB tracking
 - Document checklist
 - Status timeline
 
-**BC 3.0 Export**:
+**PEB Export (Pemberitahuan Ekspor Barang)**:
 
-- PEB tracking
+- Zero-rated VAT (0% PPN)
+- FOB value calculation
 - NPE management
-- Link to source BC 2.3
+- Optional traceability back to BC 2.0
 - Export certificate
 - Compliance alerts
 
@@ -774,14 +783,14 @@ BC 3.0 (Export)
 
 **Monthly Reports**:
 
-- BC 2.3 & BC 3.0 summary
+- BC 2.0 & PEB summary
 - Material Traceability Report
 - Production Conversion Report
 - Financial statements
 
 **Audit Reports**:
 
-- BC 2.3 to BC 3.0 Reconciliation
+- BC 2.0 to PEB Reconciliation
 - Material Traceability Certificate
 - Stock Movement by Material
 - Conversion Analysis
@@ -833,8 +842,8 @@ BC 3.0 (Export)
 
 ❌ **DON'T**:
 
-- Skip BC 2.3 for imports
-- Skip BC 3.0 for exports
+- Skip BC 2.0 for imports
+- Skip PEB for exports
 - Break traceability chain
 - Ignore compliance alerts
 
@@ -867,11 +876,11 @@ BC 3.0 (Export)
 **Q: Stock tidak update setelah GR?**  
 A: Pastikan GR sudah di-complete, bukan masih draft.
 
-**Q: BC 2.3 tidak bisa submit?**  
+**Q: BC 2.0 tidak bisa submit?**
 A: Check apakah semua required fields sudah diisi (HS Code, CIF Value, Documents).
 
-**Q: Traceability chain tidak muncul?**  
-A: Pastikan lot number sudah di-assign di BC 2.3 dan WO.
+**Q: Traceability chain tidak muncul?**
+A: Pastikan lot number sudah di-assign di BC 2.0 dan WO.
 
 **Q: Conversion ratio salah?**  
 A: Verify BOM standard ratio dan actual quantity di WO.
@@ -883,7 +892,7 @@ A: Verify BOM standard ratio dan actual quantity di WO.
 ### Phase 1 ✅ (Completed)
 
 - Core modules (Sales, Production, Warehouse, Purchasing)
-- BC 2.3 & BC 3.0 management with auto-calculations
+- BC 2.0 & PEB management with auto-calculations
 - Material Traceability System
 - Compliance Dashboard
 - Executive Dashboard with charts
@@ -919,9 +928,8 @@ _Platform Overview v2.0 - All Core Modules Complete_
 
 ### Glossary
 
-- **BC 2.3**: Dokumen Pemberitahuan Impor Barang (Import Declaration)
-- **BC 3.0**: Dokumen Pemberitahuan Ekspor Barang (Export Declaration)
-- **PEB**: Pemberitahuan Ekspor Barang
+- **BC 2.0**: Dokumen PIB (Pemberitahuan Impor Barang) - Regular Import Declaration
+- **PEB**: Pemberitahuan Ekspor Barang (Regular Export Declaration)
 - **SPPB**: Surat Persetujuan Pengeluaran Barang
 - **NPE**: Nomor Pendaftaran Eksportir
 - **HS Code**: Harmonized System Code (kode tarif barang)
@@ -935,14 +943,14 @@ _Platform Overview v2.0 - All Core Modules Complete_
 
 ### Document Checklist
 
-**BC 2.3 Import**:
+**BC 2.0 Import (PIB)**:
 
 - ✅ Commercial Invoice
 - ✅ Packing List
 - ✅ Bill of Lading (B/L)
 - ✅ Certificate of Origin (COO)
 
-**BC 3.0 Export**:
+**PEB Export**:
 
 - ✅ Commercial Invoice
 - ✅ Packing List

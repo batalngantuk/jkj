@@ -5,7 +5,7 @@
 
 ## Overview
 
-This document captures the complete end-to-end workflow specifications for the ERP system, covering all modules from Sales Order to Finance, including customs compliance (BC 2.3 Import and BC 3.0 Export).
+This document captures the complete end-to-end workflow specifications for the ERP system, covering all modules from Sales Order to Finance, including customs compliance (BC 2.0 PIB Regular Import and PEB Export).
 
 ---
 
@@ -47,7 +47,7 @@ graph TD
 
 ---
 
-## B. Purchasing & BC 2.3 (Import) Workflow
+## B. Purchasing & BC 2.0 (PIB - Regular Import) Workflow
 
 ### Process Flow
 
@@ -59,8 +59,8 @@ graph TD
     D -->|Reject| B
     D -->|Approve| E[Send PO to Vendor]
     E --> F[Vendor Confirms]
-    F --> G[Prepare BC 2.3]
-    G --> H[Finance Verify BC 2.3]
+    F --> G[Prepare BC 2.0]
+    G --> H[Finance Verify BC 2.0]
     H --> I[Submit to Customs]
     I --> J{Customs Review}
     J -->|Query/Reject| K[Fix & Resubmit]
@@ -69,7 +69,7 @@ graph TD
     M --> N[Warehouse GR]
 ```
 
-### BC 2.3 Status Flow
+### BC 2.0 Status Flow
 
 `NOT REQUIRED` / `DRAFT` → `SUBMITTED` → `UNDER REVIEW` → `QUERY` → `APPROVED` → `CLOSED`
 
@@ -86,18 +86,21 @@ graph TD
 
 ### Implementation Features ✅
 
-**BC 2.3 Management** (`/purchasing/bc23`)
+**BC 2.0 Management** (`/purchasing/bc20`)
 
 - Dashboard with stats (Pending, Approved, Total Value)
 - List view with status badges
 - Search and filter capabilities
 - Quick navigation to detail pages
 
-**BC 2.3 Detail Page** (`/purchasing/bc23/[id]`)
+**BC 2.0 Detail Page** (`/purchasing/bc20/[id]`)
 
 - Complete document information (BC number, PO reference, Supplier)
 - Goods details with HS Code
-- Duty calculations breakdown
+- Duty calculations breakdown (Bea Masuk, PPN, PPh 22)
+- **Dual billing**: vendor CIF payment + tax payment separately
+- **Landed cost calculation**
+- **Tax assets**: PPN credit & PPh 22 prepaid tracking
 - SPPB tracking
 - Document checklist (Invoice, Packing List, B/L, COO)
 - Status timeline visualization
@@ -142,7 +145,7 @@ graph TD
 
 - Physical count, quality check, weighing
 - Photo documentation
-- BC 2.3 verification (for imports)
+- BC 2.0 verification (for imports)
 - 3-way matching trigger (PO-GR-Invoice)
 - Stock card update, Laporan Mutasi Stok
 
@@ -183,26 +186,26 @@ graph TD
    - Quality metrics
 
 2. **Konversi Bahan Baku Report** ✅ (`/reports/production`)
-   - Raw material consumed (with BC 2.3 reference)
+   - Raw material consumed (with BC 2.0 reference)
    - Finished goods produced (with lot number)
    - Conversion ratio (actual vs standard)
    - Variance analysis (standard vs actual)
    - Waste/scrap tracking
-   - **Full Traceability**: BC 2.3 (import) → GR → WO → FG → BC 3.0 (export)
+   - **Full Traceability**: BC 2.0 (import) → GR → WO → FG → PEB (export)
 
 ### Material Traceability System ✅
 
 **Traceability Chain** (`/reports/traceability`)
 
-- Visual flow: BC 2.3 → Goods Receipt → Work Order → Finished Goods → BC 3.0
+- Visual flow: BC 2.0 → Goods Receipt → Work Order → Finished Goods → PEB
 - Lot/batch tracking throughout the chain
 - Conversion analysis with variance
 - Material Traceability Certificate generation
-- Search by: Lot Number, BC 2.3, BC 3.0, WO, PO
+- Search by: Lot Number, BC 2.0, PEB, WO, PO
 
 **Key Traceability Data**:
 
-- RM Lot Number (from BC 2.3): `RM-2026-001`
+- RM Lot Number (from BC 2.0): `RM-2026-001`
 - FG Lot Number (from WO): `FG-2026-001`
 - Conversion Ratio: Actual vs Standard
 - Variance %: Performance indicator
@@ -210,7 +213,7 @@ graph TD
 
 ---
 
-## E. Logistics & BC 3.0 (Export) Workflow
+## E. Logistics & PEB (Export) Workflow
 
 ### Process Flow
 
@@ -219,7 +222,7 @@ graph TD
     A[FG Ready] --> B[Sales: Create SI]
     B --> C[Logistics: Process SI]
     C --> D[Book Vessel/Flight]
-    D --> E[Prepare BC 3.0]
+    D --> E[Prepare PEB]
     E --> F[Finance Verify]
     F --> G[Submit to Customs]
     G --> H{Customs Review}
@@ -234,13 +237,13 @@ graph TD
     P --> Q[Delivered]
 ```
 
-### BC 3.0 Status Flow
+### PEB Status Flow
 
 `DRAFT` → `VERIFIED` → `SUBMITTED` → `UNDER REVIEW` → `APPROVED` → `EXPORTED` → `CLOSED`
 
 ### Shipment Status Flow
 
-`DRAFT SI` → `CONFIRMED` → `BC 3.0 SUBMITTED` → `BC 3.0 APPROVED` → `LOADED` → `IN TRANSIT` → `DELIVERED` → `COMPLETED`
+`DRAFT SI` → `CONFIRMED` → `PEB SUBMITTED` → `PEB APPROVED` → `LOADED` → `IN TRANSIT` → `DELIVERED` → `COMPLETED`
 
 ### Key Documents
 
@@ -254,19 +257,21 @@ graph TD
 
 ### Implementation Features ✅
 
-**BC 3.0 Management** (`/logistics/bc30`)
+**PEB Management** (`/logistics/peb`)
 
 - Dashboard with stats (Pending, Approved, Total Export Value)
 - List view with PEB tracking
 - Status badges and filters
 - Quick access to detail pages
 
-**BC 3.0 Detail Page** (`/logistics/bc30/[id]`)
+**PEB Detail Page** (`/logistics/peb/[id]`)
 
 - Complete export declaration information
 - PEB (Pemberitahuan Ekspor Barang) tracking
 - NPE (Nomor Pendaftaran Eksportir) display
-- **Full Traceability Chain**: Links back to BC 2.3 and WO
+- **Zero-rated VAT (0% PPN)** for export
+- **FOB value** calculation
+- **Optional Traceability Chain**: Links back to BC 2.0 and WO
 - Conversion analysis display
 - Document checklist (Invoice, Packing List, COO, Health Cert, Form E)
 - Status timeline
@@ -274,11 +279,11 @@ graph TD
 
 ### Material Traceability Integration
 
-**BC 3.0 to BC 2.3 Linkage**:
+**PEB to BC 2.0 Linkage**:
 
-- Each BC 3.0 export is linked to source BC 2.3 import(s)
-- Traceability chain visible on BC 3.0 detail page
-- Shows: BC 2.3 → GR → WO → FG → BC 3.0
+- Each PEB export optionally links to source BC 2.0 import(s)
+- Traceability chain visible on PEB detail page
+- Shows: BC 2.0 → GR → WO → FG → PEB
 - Conversion ratio and waste tracking
 - Compliance audit trail
 
@@ -287,9 +292,9 @@ graph TD
 - Period & material filters
 - Balance summary (Opening, In, Out, Closing)
 - Transaction breakdown by type:
-  - Import (BC 2.3 references)
+  - Import (BC 2.0 references)
   - Production (WO references)
-  - Export (BC 3.0 references)
+  - Export (PEB references)
   - Waste/Scrap
 - Detailed transaction table with lot tracking
 - BC references for all movements
@@ -342,11 +347,11 @@ graph TD
 | Trigger Event       | Auto Actions                                                                                                               |
 | :------------------ | :------------------------------------------------------------------------------------------------------------------------- |
 | **SO APPROVED**     | Check FG Stock → Reserve or Create WO<br>Check Raw Material → Create PR if low<br>Update Sales Dashboard                   |
-| **PO APPROVED**     | Notify Warehouse for GR prep<br>Create BC 2.3 template (imports)<br>Update Purchasing Dashboard                            |
-| **BC 2.3 APPROVED** | Notify Warehouse: Ready to receive<br>Allow GR creation<br>Update Compliance Dashboard                                     |
+| **PO APPROVED**     | Notify Warehouse for GR prep<br>Create BC 2.0 template (imports)<br>Update Purchasing Dashboard                            |
+| **BC 2.0 APPROVED** | Notify Warehouse: Ready to receive<br>Allow GR creation<br>Update Compliance Dashboard                                     |
 | **GR COMPLETED**    | Update Inventory<br>Notify Production: Material available<br>Trigger AP: Invoice matching<br>Generate Laporan Mutasi Stok  |
 | **WO COMPLETED**    | Update FG Inventory<br>Generate Production Reports<br>Generate Konversi Bahan Baku<br>Notify Logistics<br>Update SO status |
-| **BC 3.0 APPROVED** | Allow shipment<br>Generate export documents<br>Update Compliance Dashboard                                                 |
+| **PEB APPROVED**    | Allow shipment<br>Generate export documents<br>Update Compliance Dashboard                                                  |
 | **GOODS SHIPPED**   | Update FG Stock<br>Auto-generate Sales Invoice<br>Update SO: SHIPPED<br>Start shipment tracking                            |
 | **INVOICE CREATED** | Generate Faktur Pajak<br>Schedule email to customer<br>Start payment monitoring<br>Update AR Dashboard                     |
 
@@ -361,8 +366,8 @@ graph TD
 | **Purchase Order**   | Purchasing Staff     | Purchasing Mgr (>50M) | Finance Mgr (>100M)           | Director (>500M) |
 | **Goods Receipt**    | Warehouse Staff      | Warehouse Supervisor  | Purchasing Mgr (variance >5%) | -                |
 | **Work Order**       | PPIC                 | Production Manager    | -                             | -                |
-| **BC 2.3**           | Purchasing           | Finance               | Customs (External)            | -                |
-| **BC 3.0**           | Logistics            | Finance               | Customs (External)            | -                |
+| **BC 2.0**           | Purchasing           | Finance               | Customs (External)            | -                |
+| **PEB**              | Logistics            | Finance               | Customs (External)            | -                |
 | **Payment Voucher**  | AP Staff             | Finance Mgr (>25M)    | Director (>250M)              | -                |
 | **Sales Invoice**    | AR Staff             | Finance Manager       | -                             | -                |
 
@@ -415,21 +420,21 @@ graph TD
 
 **Centralized Monitoring**:
 
-- Real-time BC 2.3 & BC 3.0 status tracking
+- Real-time BC 2.0 & PEB status tracking
 - Compliance alerts and notifications
 - Traceability overview
 - Recent activity feed
 
 ### Key Metrics Displayed
 
-**BC 2.3 Import Status**:
+**BC 2.0 Import Status**:
 
 - Total active documents
 - Pending review count
 - Approved this month
 - Recent documents with quick links
 
-**BC 3.0 Export Status**:
+**PEB Export Status**:
 
 - Total active documents
 - Pending review count
@@ -445,8 +450,8 @@ graph TD
 
 **Compliance Alerts**:
 
-- BC 2.3 pending review
-- BC 3.0 pending review
+- BC 2.0 pending review
+- PEB pending review
 - Traceability gaps warning
 - "All Clear" status when no issues
 
@@ -455,7 +460,7 @@ graph TD
 **Executive Dashboard Updates** (`/`)
 
 - Customs Compliance widget added
-- Shows total pending approvals (BC 2.3 + BC 3.0)
+- Shows total pending approvals (BC 2.0 + PEB)
 - Color-coded alerts (Green = All Clear, Orange = Pending)
 - Quick link to Compliance Dashboard
 - Recent activities include BC approvals and traceability completions
@@ -468,7 +473,7 @@ graph TD
 
 - Production Summary (yesterday)
 - **Stock Movement Report** ✅ (with BC references)
-- **BC Status Dashboard** ✅ (BC 2.3 & BC 3.0 pending)
+- **BC Status Dashboard** ✅ (BC 2.0 & PEB pending)
 - Cash Flow Daily
 
 ### Weekly Reports (Monday 08:00)
@@ -482,7 +487,7 @@ graph TD
 ### Monthly Reports (1st 08:00)
 
 - Financial Statement (P&L, Balance Sheet)
-- **BC 2.3 & BC 3.0 Summary** ✅
+- **BC 2.0 & PEB Summary** ✅
 - **Material Traceability Report** ✅
 - **Production Conversion Report** ✅ (with variance analysis)
 - SPT PPN (Tax report)
@@ -502,14 +507,14 @@ graph TD
 
 **For Bea Cukai Compliance**:
 
-1. **BC 2.3 to BC 3.0 Reconciliation**
+1. **BC 2.0 to PEB Reconciliation**
    - Import quantities vs Export quantities
    - Conversion ratios and waste
    - Full traceability chain
 
 2. **Material Traceability Certificate**
    - Lot-to-lot tracking
-   - BC 2.3 source → BC 3.0 destination
+   - BC 2.0 source → PEB destination
    - Conversion analysis with variance
 
 3. **Stock Movement Report**
