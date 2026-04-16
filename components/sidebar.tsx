@@ -135,6 +135,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Dual Billing (BC 2.0)', href: '/reports/dual-billing' },
         { label: 'Tax Assets', href: '/reports/tax-assets' },
         { label: 'Landed Cost Analysis', href: '/reports/landed-cost-analysis' },
+        { label: 'KITE IT Inventory', href: '/reports/kite-inventory' },
       ]
     },
   ]

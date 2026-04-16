@@ -107,7 +107,7 @@ Implement a comprehensive BC 2.0 Regular Import system for JKJ Manufacturing ERP
 - Material traceability certificates
 - Conversion analysis (internal use)
 
-### Out of Scope
+### Out of Scope (Phase 1–6)
 
 - ❌ CEISA 4.0 API integration (future phase)
 - ❌ Mobile app (future phase)
@@ -115,6 +115,8 @@ Implement a comprehensive BC 2.0 Regular Import system for JKJ Manufacturing ERP
 - ❌ BC 2.3 bonded zone functionality
 - ❌ BC 3.0 bonded export functionality
 - ❌ Mandatory customs traceability
+
+> **Note**: KITE compliance features (laporan IT Inventory, waste management, subkontrak) ditambahkan sebagai Client Revisions — lihat section "🔄 Client Revisions - KITE Compliance Features" di bagian bawah.
 
 ---
 
@@ -1635,7 +1637,129 @@ If critical issues detected:
 
 ---
 
-## 📚 Appendix
+## 🔄 Client Revisions - KITE Compliance Features
+
+> **Status**: 📋 Planned — belum dikerjakan
+> **Requested**: April 2026
+> **Priority**: High — diperlukan untuk kepatuhan regulasi PER-5/BC/2023
+
+Setelah Phase 1–6 selesai, klien meminta 3 fitur tambahan terkait fasilitas KITE (Kemudahan Impor Tujuan Ekspor).
+
+### Urutan Implementasi
+
+| # | Fitur | Prioritas | Status |
+|---|-------|-----------|--------|
+| R1 | Laporan Wajib KITE (8 Laporan IT Inventory) | Tinggi | ⏳ Pending |
+| R2 | Waste Management (BC 2.4) | Sedang | ⏳ Pending |
+| R3 | Subkontrak KITE | Sedang | ⏳ Pending |
+
+---
+
+### R1: Laporan Wajib KITE (8 Laporan IT Inventory)
+
+**Referensi regulasi**: Lampiran XXII PER-5/BC/2023 DJBC
+
+**Halaman**: `/reports/kite-inventory`
+**Sidebar**: Reports → "KITE IT Inventory"
+
+**Konteks**:
+- Real-time (bukan periodik) — data otomatis dari transaksi di modul lain
+- Kanwil/DJBC memiliki hak akses baca ke sistem (e-Monitoring via SKP)
+- Format kolom wajib sesuai Lampiran XXII
+
+**8 Laporan (tabs)**:
+
+| No | Nama Laporan | Fields Utama |
+|----|-------------|-------------|
+| 1 | Pemasukan Bahan Baku | Tgl Rekam, Jenis Dok (BC 2.0/2.4/2.5/2.8), No Dokumen, Tgl, Kode HS, No Seri, Bukti Penerimaan, Kode BB, Nama, Satuan, Jumlah, Mata Uang, Nilai, Gudang, Penerima Subkon, Negara Asal |
+| 2 | Pemakaian Bahan Baku | Bukti Pengeluaran, Kode, Nama, Satuan, Jml Digunakan, Jml Disubkonkan, Penerima Subkon |
+| 3 | Pemakaian BB Subkontrak | Bukti Pengeluaran, Kode, Nama, Satuan, Jml Disubkonkan, Penerima Subkon |
+| 4 | Pemasukan Hasil Produksi | Dok Nomor/Tgl, Kode, Nama, Satuan, Jml dari Produksi, Jml dari Subkon, Gudang |
+| 5 | Pengeluaran Hasil Produksi | PEB Nomor/Tgl, Bukti Pengeluaran, Pembeli, Negara Tujuan, Kode, Nama, Satuan, Jml, Mata Uang, Nilai |
+| 6 | Mutasi Bahan Baku | Kode, Nama, Satuan, Saldo Awal, Pemasukan, Pengeluaran, Saldo Akhir, Gudang |
+| 7 | Mutasi Hasil Produksi | Kode, Nama, Satuan, Saldo Awal, Pemasukan, Pengeluaran, Saldo Akhir, Gudang |
+| 8 | Waste/Scrap | BC 2.4 Nomor/Tgl, Kode, Nama, Satuan, Jumlah, Nilai |
+
+**UI Requirements**:
+- Filter date range (untuk keperluan audit)
+- Export per laporan (PDF/Excel)
+- Badge "DJBC Read Access" sebagai indikator akses Kanwil
+
+---
+
+### R2: Waste Management (BC 2.4)
+
+**Halaman**: `/warehouse/waste` atau `/production/waste`
+
+**Konteks**:
+- Waste = sisa bahan baku (bukan reject produk jadi)
+- Bisa dijual (scrap sale) atau dimusnahkan
+- Wajib verifikasi Bea Cukai via BC 2.4 sebelum keluar kawasan
+- Standar waste ratio mengacu BCLKT yang ditetapkan saat pengajuan fasilitas KITE
+
+**Alur proses**:
+```
+Produksi selesai
+  → Sisa BB otomatis tercatat sebagai waste (selisih BB masuk vs terpakai)
+  → Pengajuan BC 2.4 ke Bea Cukai
+  → Verifikasi & persetujuan BC
+  → Waste keluar: Jual (catat pembeli + nilai) atau Musnahkan
+  → Laporan 8 IT Inventory otomatis terupdate
+```
+
+**Status tracking**: Draft → Diajukan BC 2.4 → Diverifikasi BC → Selesai
+
+**Fitur**:
+- Form pencatatan waste per Work Order
+- Field: jenis penyelesaian (Jual/Musnahkan), pembeli (jika jual), nilai
+- Validasi: jumlah waste tidak boleh melebihi waste ratio BCLKT
+- Integrasi otomatis ke Laporan 8 IT Inventory
+
+---
+
+### R3: Subkontrak KITE
+
+**Halaman**: `/subkontrak`
+
+**Konteks**:
+- JKJ mengirim mix material KITE + non-KITE ke subkontraktor
+- Single level only — JKJ tidak bertanggung jawab atas sub-subkon
+- Dokumen: surat jalan + SUBK KITE (format sesuai regulasi)
+- Subkontraktor menginvoice fee jasa ke JKJ
+
+**Dokumen SUBK KITE**:
+| Dokumen | Fungsi |
+|---------|--------|
+| SUBK KITE 1.1 | Pemberitahuan pengeluaran BB ke subkon (Fasilitas Pembebasan) |
+| SUBK KITE 1.2 | Pemberitahuan pemasukan hasil dari subkon (Fasilitas Pembebasan) |
+| SUBK KITE 2.1 | Pemberitahuan pengeluaran BB ke subkon (Fasilitas Pengembalian) |
+| SUBK KITE 2.2 | Pemberitahuan pemasukan hasil dari subkon (Fasilitas Pengembalian) |
+
+**Fitur**:
+- Form pengiriman BB ke subkon (generate SUBK KITE + surat jalan)
+- Form penerimaan hasil dari subkon
+- Tracking status per subkon job
+- Pencatatan fee jasa subkon (link ke modul Finance/Invoices)
+- Laporan 3 IT Inventory otomatis terisi dari transaksi subkon
+
+---
+
+### Ketergantungan Antar Modul (KITE)
+
+```
+BC 2.0 (Pemasukan BB) ──→ GR ──→ [Stock BB]
+                                    ↓           ↓
+                               Produksi    Subkontrak
+                                    ↓           ↓
+                                [Stock FG] ←──────
+                                    ↓
+                              PEB (Ekspor)
+                            + Waste → BC 2.4
+
+IT Inventory mengambil data real-time dari semua alur di atas
+```
+
+---
 
 ### Glossary
 
@@ -1667,7 +1791,7 @@ If critical issues detected:
 **© 2026 JKJ Manufacturing ERP**
 _Implementation Plan v1.0 - BC 2.0 Regular Import System_
 
-**Status**: 🎉 **COMPLETE** - All 6 Phases Done! (12/12 weeks)
-**Progress**: 100% (12/12 weeks completed)
-**Last Updated**: March 13, 2026
+**Status**: 🎉 Phase 1–6 COMPLETE — Client Revisions (KITE) In Planning
+**Progress**: Phase 1–6 100% (12/12 weeks) | KITE Revisions: R1 ⏳ R2 ⏳ R3 ⏳
+**Last Updated**: April 15, 2026
 **Next Milestone**: UAT, production deployment, and CEISA 4.0 integration (future)
