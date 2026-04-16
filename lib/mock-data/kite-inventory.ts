@@ -13,7 +13,7 @@ export interface PemasukanBB {
   kodeHS: string
   noSeriBarang: string
   buktiPenerimaanNo: string
-  buktIPenerimaanTgl: string
+  buktiPenerimaanTgl: string
   kodeBB: string
   namaBarang: string
   satuan: string
@@ -34,8 +34,8 @@ export const MOCK_PEMASUKAN_BB: PemasukanBB[] = [
     tglDokumen: '2026-01-18',
     kodeHS: '7208.10.00',
     noSeriBarang: '001',
-    buktIPenerimaanNo: 'GR-2026-001',
-    buktIPenerimaanTgl: '2026-01-20',
+    buktiPenerimaanNo: 'GR-2026-001',
+    buktiPenerimaanTgl: '2026-01-20',
     kodeBB: 'BB-HRC-001',
     namaBarang: 'Hot Rolled Coil (HRC)',
     satuan: 'KG',
@@ -54,8 +54,8 @@ export const MOCK_PEMASUKAN_BB: PemasukanBB[] = [
     tglDokumen: '2026-01-25',
     kodeHS: '3901.20.00',
     noSeriBarang: '001',
-    buktIPenerimaanNo: 'GR-2026-002',
-    buktIPenerimaanTgl: '2026-01-28',
+    buktiPenerimaanNo: 'GR-2026-002',
+    buktiPenerimaanTgl: '2026-01-28',
     kodeBB: 'BB-HDPE-001',
     namaBarang: 'Polyethylene Resin - HDPE Grade',
     satuan: 'KG',
@@ -74,8 +74,8 @@ export const MOCK_PEMASUKAN_BB: PemasukanBB[] = [
     tglDokumen: '2026-02-03',
     kodeHS: '8481.20.00',
     noSeriBarang: '001',
-    buktIPenerimaanNo: 'GR-2026-003',
-    buktIPenerimaanTgl: '2026-02-05',
+    buktiPenerimaanNo: 'GR-2026-003',
+    buktiPenerimaanTgl: '2026-02-05',
     kodeBB: 'BB-VALVE-001',
     namaBarang: 'Industrial Ball Valves 2 inch',
     satuan: 'PCS',
@@ -94,8 +94,8 @@ export const MOCK_PEMASUKAN_BB: PemasukanBB[] = [
     tglDokumen: '2026-02-12',
     kodeHS: '7209.15.00',
     noSeriBarang: '001',
-    buktIPenerimaanNo: 'GR-2026-004',
-    buktIPenerimaanTgl: '2026-02-15',
+    buktiPenerimaanNo: 'GR-2026-004',
+    buktiPenerimaanTgl: '2026-02-15',
     kodeBB: 'BB-CRC-001',
     namaBarang: 'Cold Rolled Coil (CRC)',
     satuan: 'KG',

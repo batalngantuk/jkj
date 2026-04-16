@@ -72,6 +72,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Dashboard', href: '/production' },
         { label: 'Planning', href: '/production/planning' },
         { label: 'Work Orders', href: '/production/wo' },
+        { label: 'Subkontrak KITE', href: '/production/subkontrak' },
       ]
     },
     { 

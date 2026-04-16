@@ -156,8 +156,8 @@ export default function KiteInventoryPage() {
                           <TableCell className="whitespace-nowrap">{row.tglDokumen}</TableCell>
                           <TableCell className="font-mono text-xs">{row.kodeHS}</TableCell>
                           <TableCell className="text-center">{row.noSeriBarang}</TableCell>
-                          <TableCell className="whitespace-nowrap font-mono text-xs">{row.buktIPenerimaanNo}</TableCell>
-                          <TableCell className="whitespace-nowrap">{row.buktIPenerimaanTgl}</TableCell>
+                          <TableCell className="whitespace-nowrap font-mono text-xs">{row.buktiPenerimaanNo}</TableCell>
+                          <TableCell className="whitespace-nowrap">{row.buktiPenerimaanTgl}</TableCell>
                           <TableCell className="font-mono text-xs">{row.kodeBB}</TableCell>
                           <TableCell className="whitespace-nowrap">{row.namaBarang}</TableCell>
                           <TableCell className="text-center">{row.satuan}</TableCell>
