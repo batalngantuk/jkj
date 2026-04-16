@@ -1791,7 +1791,42 @@ IT Inventory mengambil data real-time dari semua alur di atas
 **© 2026 JKJ Manufacturing ERP**
 _Implementation Plan v1.0 - BC 2.0 Regular Import System_
 
-**Status**: 🎉 Phase 1–6 COMPLETE — Client Revisions (KITE) In Planning
-**Progress**: Phase 1–6 100% (12/12 weeks) | KITE Revisions: R1 ⏳ R2 ⏳ R3 ⏳
-**Last Updated**: April 15, 2026
-**Next Milestone**: UAT, production deployment, and CEISA 4.0 integration (future)
+**Status**: 🎉 Phase 1–6 COMPLETE — KITE Revisions COMPLETE — Navigation Review Pending
+**Progress**: Phase 1–6 100% | KITE Revisions: R1 ✅ R2 ✅ R3 ✅
+**Last Updated**: April 16, 2026
+**Next Milestone**: Navigation/sidebar review, UAT, production deployment
+
+---
+
+## 🗂️ Catatan Review: Navigasi & Sidebar
+
+> **Status**: 📋 Perlu keputusan klien
+> **Dicatat**: April 16, 2026
+
+Setelah semua fitur KITE selesai, ada beberapa hal pada navigasi yang perlu didiskusikan dengan klien sebelum diubah:
+
+### Poin 1 — Reports terlalu panjang (11 sub-item)
+Menu Reports saat ini memiliki 11 sub-item yang campur antara laporan BC 2.0, laporan umum, dan KITE:
+- Sales Analysis, Production Yield, Inventory Value
+- Material Traceability, Traceability BC 2.0, Conversion Analysis, Stock Movement
+- Dual Billing (BC 2.0), Tax Assets, Landed Cost Analysis
+- **KITE IT Inventory** (baru)
+
+**Opsi**: Kelompokkan dengan separator/header, atau pisah jadi sub-kategori.
+
+### Poin 2 — Fitur KITE tersebar di 3 menu berbeda
+Saat ini fitur KITE tersebar di:
+- Production → Subkontrak KITE
+- Warehouse → Waste/Scrap (BC 2.4)
+- Reports → KITE IT Inventory
+
+**Opsi A**: Biarkan tersebar (lebih natural mengikuti alur kerja)
+**Opsi B**: Tambah menu "KITE" tersendiri yang mengumpulkan semua fitur KITE
+
+### Poin 3 — Compliance tanpa sub-item
+Menu Compliance berdiri sendiri tanpa child page. Perlu ditambah sub-item atau cukup satu halaman?
+
+### Poin 4 — Finance → Invoices & Bills
+Fee jasa subkon seharusnya masuk ke sini, tapi belum ada koneksi eksplisit dari halaman Subkontrak ke Finance.
+
+**Keputusan yang dibutuhkan dari klien**: Poin 1, 2, 3, 4 di atas sebelum perubahan dilakukan.
