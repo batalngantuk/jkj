@@ -102,8 +102,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Dashboard', href: '/purchasing' },
         { label: 'Suppliers', href: '/purchasing/suppliers' },
         { label: 'Purchase Orders', href: '/purchasing/po' },
-        { label: 'BC 2.0 (Regular Import)', href: '/purchasing/bc20' },
-        { label: 'BC 2.0 Dashboard', href: '/purchasing/bc20/dashboard' },
+        { label: 'BC 2.0 — Daftar PIB', href: '/purchasing/bc20' },
+        { label: 'BC 2.0 — Tax Monitor', href: '/purchasing/bc20/dashboard' },
       ]
     },
     {
