@@ -1791,10 +1791,10 @@ IT Inventory mengambil data real-time dari semua alur di atas
 **© 2026 JKJ Manufacturing ERP**
 _Implementation Plan v1.0 - BC 2.0 Regular Import System_
 
-**Status**: 🎉 Phase 1–6 COMPLETE — KITE Revisions COMPLETE — Client Feedback F1–F9 Pending
-**Progress**: Phase 1–6 100% | KITE: R1 ✅ R2 ✅ R3 ✅ | Client Feedback: F1–F9 ⏳
+**Status**: 🎉 Phase 1–6 COMPLETE — KITE Revisions COMPLETE — Client Feedback F1–F9 COMPLETE
+**Progress**: Phase 1–6 100% | KITE: R1 ✅ R2 ✅ R3 ✅ | Client Feedback: F1 ✅ F2 ✅ F3 ✅ F4 ✅ F5 ✅ F6 ✅ F7 ✅ F8 ✅ F9 ✅
 **Last Updated**: April 17, 2026
-**Next Milestone**: Client feedback revisions F1–F9 (prioritas: F1 Warehouse, F2/F3 BC 2.0, F4/F5 Production)
+**Next Milestone**: Demo ke klien — semua revisi F1–F9 selesai. Lihat docs/CLIENT_FEEDBACK_REPORT.md
 
 ---
 
@@ -1848,15 +1848,15 @@ Item R1 (8 laporan KITE) sudah selesai dikerjakan sebelum dokumen ini diterima.
 
 | # | Area | Isu | Prioritas | Status |
 |---|------|-----|-----------|--------|
-| F1 | Warehouse Inbound/Outbound | Form input tidak ada sama sekali | Tinggi | ⏳ Pending |
-| F2 | BC 2.0 — Multi Material per PIB | 1 PIB hanya bisa 1 material, tidak fleksibel | Tinggi | ⏳ Pending |
-| F3 | BC 2.0 — Field Lengkap | Kode Material, Berat, Kurs, Harga per satuan hilang | Tinggi | ⏳ Pending |
-| F4 | Production — WO & FG | 2 WO beda tampilan, tidak ada tracking lokasi FG setelah selesai | Sedang | ⏳ Pending |
-| F5 | Production — Operator | Field operator tidak perlu, ganti ke "Line" | Sedang | ⏳ Pending |
-| F6 | Sales Order — Master Data & BOM | Tidak bisa edit master data, BOM tidak ada di SO, nama produk tidak fleksibel | Sedang | ⏳ Pending |
-| F7 | Tracking BB Gudang by Nama | Pencarian/filter bahan baku menggunakan nama belum tersedia | Sedang | ⏳ Pending |
-| F8 | Purchasing Lokal — DPP/PPN/Signature | Kolom DPP (TOTAL×11/12), PPN 12%, tabel tanda tangan saat print | Rendah | ⏳ Pending |
-| F9 | Export/PEB — Kurs Manual | Tidak ada kolom input kurs pada tanggal ekspor | Rendah | ⏳ Pending |
+| F1 | Warehouse Inbound/Outbound | Form input tidak ada sama sekali | Tinggi | ✅ Selesai — `eb26f6e` |
+| F2 | BC 2.0 — Multi Material per PIB | 1 PIB hanya bisa 1 material, tidak fleksibel | Tinggi | ✅ Selesai — `69ef3af` |
+| F3 | BC 2.0 — Field Lengkap | Kode Material, Berat, Kurs, Harga per satuan hilang | Tinggi | ✅ Selesai — `69ef3af` |
+| F4 | Production — WO & FG | 2 WO beda tampilan, tidak ada tracking lokasi FG setelah selesai | Sedang | ✅ Selesai — `c7fa47a` |
+| F5 | Production — Operator | Field operator tidak perlu, ganti ke "Line" | Sedang | ✅ Selesai — `c7fa47a` |
+| F6 | Sales Order — Master Data & BOM | Tidak bisa edit master data, BOM tidak ada di SO, nama produk tidak fleksibel | Sedang | ✅ Selesai — `ea1e7cd` |
+| F7 | Tracking BB Gudang by Nama | Pencarian/filter bahan baku menggunakan nama belum tersedia | Sedang | ✅ Selesai — `c9423f0` |
+| F8 | Purchasing Lokal — DPP/PPN/Signature | Kolom DPP (TOTAL×11/12), PPN 12%, tabel tanda tangan saat print | Rendah | ✅ Selesai — `c9423f0` |
+| F9 | Export/PEB — Kurs Manual | Tidak ada kolom input kurs pada tanggal ekspor | Rendah | ✅ Selesai — `c9423f0` |
 
 ---
 
