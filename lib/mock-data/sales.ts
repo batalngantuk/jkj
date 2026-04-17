@@ -139,3 +139,36 @@ export const MOCK_PRODUCTS = [
   { id: 'PROD-005', name: 'Nitrile Size M', stock: 4500, unit: 'cartons', type: 'Nitrile' },
   { id: 'PROD-006', name: 'Nitrile Size L', stock: 1000, unit: 'cartons', type: 'Nitrile' },
 ]
+
+// BOM summary for SO-level planning (simplified, mirrors production BOM)
+export const MOCK_BOMS_SO = [
+  {
+    id: 'BOM-LATEX-M',
+    productName: 'Latex Size M',
+    items: [
+      { id: 'MAT-001', materialName: 'Natural Rubber Latex', quantityPerUnit: 0.005, unit: 'kg', stockAvailable: 5000 },
+      { id: 'MAT-002', materialName: 'Sulfur Dispersion', quantityPerUnit: 0.0001, unit: 'kg', stockAvailable: 200 },
+      { id: 'MAT-003', materialName: 'Zinc Oxide', quantityPerUnit: 0.0002, unit: 'kg', stockAvailable: 300 },
+      { id: 'MAT-004', materialName: 'Inner Box', quantityPerUnit: 1, unit: 'pc', stockAvailable: 10000 },
+      { id: 'MAT-005', materialName: 'Carton Box', quantityPerUnit: 0.001, unit: 'pc', stockAvailable: 2000 },
+    ]
+  },
+  {
+    id: 'BOM-NITRILE-L',
+    productName: 'Nitrile Size L',
+    items: [
+      { id: 'MAT-006', materialName: 'Nitrile Latex', quantityPerUnit: 0.005, unit: 'kg', stockAvailable: 4000 },
+      { id: 'MAT-002', materialName: 'Sulfur Dispersion', quantityPerUnit: 0.0001, unit: 'kg', stockAvailable: 200 },
+      { id: 'MAT-004', materialName: 'Inner Box', quantityPerUnit: 1, unit: 'pc', stockAvailable: 10000 },
+    ]
+  },
+  {
+    id: 'BOM-NITRILE-M',
+    productName: 'Nitrile Size M',
+    items: [
+      { id: 'MAT-006', materialName: 'Nitrile Latex', quantityPerUnit: 0.005, unit: 'kg', stockAvailable: 4000 },
+      { id: 'MAT-002', materialName: 'Sulfur Dispersion', quantityPerUnit: 0.0001, unit: 'kg', stockAvailable: 200 },
+      { id: 'MAT-004', materialName: 'Inner Box', quantityPerUnit: 1, unit: 'pc', stockAvailable: 10000 },
+    ]
+  },
+]
