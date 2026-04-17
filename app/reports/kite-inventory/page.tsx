@@ -20,6 +20,7 @@ import {
   MOCK_MUTASI_HP,
   MOCK_WASTE_SCRAP
 } from '@/lib/mock-data/kite-inventory'
+import { exportToExcel, exportToExcelMultiSheet } from '@/lib/utils/export-excel'
 
 function formatNumber(n: number) {
   return n.toLocaleString('id-ID')
@@ -33,6 +34,19 @@ function formatCurrency(n: number, currency: string) {
 export default function KiteInventoryPage() {
   const [dateFrom, setDateFrom] = useState('2026-01-01')
   const [dateTo, setDateTo] = useState('2026-12-31')
+
+  const handleExportSemua = () => {
+    exportToExcelMultiSheet([
+      { name: '1-Pemasukan BB', data: MOCK_PEMASUKAN_BB as unknown as Record<string, unknown>[] },
+      { name: '2-Pemakaian BB', data: MOCK_PEMAKAIAN_BB as unknown as Record<string, unknown>[] },
+      { name: '3-Pemakaian BB Subkon', data: MOCK_PEMAKAIAN_BB_SUBKON as unknown as Record<string, unknown>[] },
+      { name: '4-Pemasukan HP', data: MOCK_PEMASUKAN_HP as unknown as Record<string, unknown>[] },
+      { name: '5-Pengeluaran HP', data: MOCK_PENGELUARAN_HP as unknown as Record<string, unknown>[] },
+      { name: '6-Mutasi BB', data: MOCK_MUTASI_BB as unknown as Record<string, unknown>[] },
+      { name: '7-Mutasi HP', data: MOCK_MUTASI_HP as unknown as Record<string, unknown>[] },
+      { name: '8-Waste Scrap', data: MOCK_WASTE_SCRAP as unknown as Record<string, unknown>[] },
+    ], `KITE_IT_Inventory_${dateFrom}_sd_${dateTo}`)
+  }
 
   return (
     <AppLayout>
@@ -51,7 +65,7 @@ export default function KiteInventoryPage() {
               8 Laporan Wajib sesuai Lampiran XXII PER-5/BC/2023 — Real-time IT Inventory
             </p>
           </div>
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleExportSemua}>
             <Download className="h-4 w-4" />
             Export Semua
           </Button>
@@ -114,7 +128,7 @@ export default function KiteInventoryPage() {
                   </CardTitle>
                   <CardDescription>Pencatatan setiap bahan baku yang masuk berdasarkan dokumen impor</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2 shrink-0">
+                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(MOCK_PEMASUKAN_BB as unknown as Record<string,unknown>[], 'Lap1_Pemasukan_BB', 'Pemasukan BB')}>
                   <Download className="h-3 w-3" />
                   Export
                 </Button>
@@ -190,7 +204,7 @@ export default function KiteInventoryPage() {
                   </CardTitle>
                   <CardDescription>Pengeluaran bahan baku ke produksi dan/atau ke subkontraktor</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2 shrink-0">
+                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(MOCK_PEMAKAIAN_BB as unknown as Record<string,unknown>[], 'Lap2_Pemakaian_BB', 'Pemakaian BB')}>
                   <Download className="h-3 w-3" />
                   Export
                 </Button>
@@ -249,7 +263,7 @@ export default function KiteInventoryPage() {
                   </CardTitle>
                   <CardDescription>Bahan baku KITE yang dikirim ke perusahaan subkontraktor</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2 shrink-0">
+                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(MOCK_PEMAKAIAN_BB_SUBKON as unknown as Record<string,unknown>[], 'Lap3_Pemakaian_BB_Subkon', 'Pemakaian BB Subkon')}>
                   <Download className="h-3 w-3" />
                   Export
                 </Button>
@@ -301,7 +315,7 @@ export default function KiteInventoryPage() {
                   </CardTitle>
                   <CardDescription>Barang jadi masuk gudang dari produksi sendiri maupun dari subkontraktor</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2 shrink-0">
+                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(MOCK_PEMASUKAN_HP as unknown as Record<string,unknown>[], 'Lap4_Pemasukan_HP', 'Pemasukan HP')}>
                   <Download className="h-3 w-3" />
                   Export
                 </Button>
@@ -362,7 +376,7 @@ export default function KiteInventoryPage() {
                   </CardTitle>
                   <CardDescription>Barang jadi keluar melalui PEB (ekspor) maupun penjualan domestik</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2 shrink-0">
+                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(MOCK_PENGELUARAN_HP as unknown as Record<string,unknown>[], 'Lap5_Pengeluaran_HP', 'Pengeluaran HP')}>
                   <Download className="h-3 w-3" />
                   Export
                 </Button>
@@ -426,7 +440,7 @@ export default function KiteInventoryPage() {
                   </CardTitle>
                   <CardDescription>Posisi saldo bahan baku: saldo awal, pemasukan, pengeluaran, saldo akhir</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2 shrink-0">
+                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(MOCK_MUTASI_BB as unknown as Record<string,unknown>[], 'Lap6_Mutasi_BB', 'Mutasi BB')}>
                   <Download className="h-3 w-3" />
                   Export
                 </Button>
@@ -480,7 +494,7 @@ export default function KiteInventoryPage() {
                   </CardTitle>
                   <CardDescription>Posisi saldo barang jadi: saldo awal, pemasukan, pengeluaran, saldo akhir</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2 shrink-0">
+                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(MOCK_MUTASI_HP as unknown as Record<string,unknown>[], 'Lap7_Mutasi_HP', 'Mutasi HP')}>
                   <Download className="h-3 w-3" />
                   Export
                 </Button>
@@ -534,7 +548,7 @@ export default function KiteInventoryPage() {
                   </CardTitle>
                   <CardDescription>Sisa bahan baku yang dikeluarkan melalui BC 2.4 (dijual atau dimusnahkan)</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2 shrink-0">
+                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(MOCK_WASTE_SCRAP as unknown as Record<string,unknown>[], 'Lap8_Waste_Scrap', 'Waste Scrap')}>
                   <Download className="h-3 w-3" />
                   Export
                 </Button>

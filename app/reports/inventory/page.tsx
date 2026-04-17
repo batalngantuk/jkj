@@ -6,6 +6,7 @@ import { ArrowLeft, Package, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import AppLayout from '@/components/app-layout'
+import { exportToExcel } from '@/lib/utils/export-excel'
 import { BarChartComponent } from '@/components/charts/bar-chart'
 import { PieChartComponent } from '@/components/charts/pie-chart'
 import { LineChartComponent } from '@/components/charts/line-chart'
@@ -59,7 +60,7 @@ export default function InventoryReportPage() {
                   <p className="text-sm text-muted-foreground">Stock value, turnover, and movement analysis</p>
                 </div>
               </div>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2" onClick={() => exportToExcel(inventoryByCategory as unknown as Record<string,unknown>[], 'Inventory_Value_Report', 'Inventory')}>
                 <Download className="h-4 w-4" />
                 Export Report
               </Button>

@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Download, Package, TrendingUp, TrendingDown, AlertCircle, Info } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
+import { exportToExcel } from '@/lib/utils/export-excel'
 
 const MOCK_LANDED_COSTS = [
   {
@@ -112,8 +113,7 @@ export default function LandedCostAnalysisPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline"><Download className="h-4 w-4 mr-2" />Export Excel</Button>
-            <Button variant="outline"><Download className="h-4 w-4 mr-2" />Export PDF</Button>
+            <Button variant="outline" onClick={() => exportToExcel(filtered as unknown as Record<string,unknown>[], 'Landed_Cost_Analysis', 'Landed Cost')}><Download className="h-4 w-4 mr-2" />Export Excel</Button>
           </div>
         </div>
 

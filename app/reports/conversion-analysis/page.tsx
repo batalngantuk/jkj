@@ -13,6 +13,7 @@ import {
   CheckCircle, Package, ArrowRight, BarChart2
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
+import { exportToExcel } from '@/lib/utils/export-excel'
 
 const MOCK_CONVERSIONS = [
   {
@@ -126,7 +127,7 @@ export default function ConversionAnalysisPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline"><Download className="h-4 w-4 mr-2" />Export Excel</Button>
+            <Button variant="outline" onClick={() => exportToExcel(filtered as unknown as Record<string,unknown>[], 'Conversion_Analysis_Report', 'Conversion Analysis')}><Download className="h-4 w-4 mr-2" />Export Excel</Button>
           </div>
         </div>
 

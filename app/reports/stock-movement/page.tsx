@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import AppLayout from '@/components/app-layout'
 import { MOCK_STOCK_MOVEMENTS, generateStockMovementSummary } from '@/lib/mock-data/stock-movements'
+import { exportToExcel } from '@/lib/utils/export-excel'
 
 export default function StockMovementReportPage() {
   const [selectedMaterial, setSelectedMaterial] = useState<string>('all')
@@ -68,7 +69,7 @@ export default function StockMovementReportPage() {
               <Printer className="h-4 w-4" />
               Print
             </Button>
-            <Button className="gap-2">
+            <Button className="gap-2" onClick={() => exportToExcel(filteredMovements as unknown as Record<string,unknown>[], 'Stock_Movement_Report', 'Stock Movements')}>
               <Download className="h-4 w-4" />
               Export Excel
             </Button>

@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator'
 import { Download, PiggyBank, TrendingUp, BarChart2, CheckCircle, Clock, FileText } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import Link from 'next/link'
+import { exportToExcel } from '@/lib/utils/export-excel'
 
 const MOCK_PPN_ASSETS = [
   { id: '1', bc20: 'PIB-2026-001', grDate: '2026-03-10', period: '2026-03', amount: 108185000, used: 108185000, remaining: 0, status: 'FULLY_USED', creditedPeriod: '2026-03' },
@@ -70,8 +71,7 @@ export default function TaxAssetReportPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline"><Download className="h-4 w-4 mr-2" />Export Excel</Button>
-            <Button variant="outline"><Download className="h-4 w-4 mr-2" />Export PDF</Button>
+            <Button variant="outline" onClick={() => exportToExcel(MOCK_PPN_ASSETS as unknown as Record<string,unknown>[], 'Tax_Asset_Report', 'PPN Assets')}><Download className="h-4 w-4 mr-2" />Export Excel</Button>
           </div>
         </div>
 

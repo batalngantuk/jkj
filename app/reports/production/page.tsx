@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import AppLayout from '@/components/app-layout'
 import { MOCK_TRACEABILITY } from '@/lib/mock-data/traceability'
+import { exportToExcel } from '@/lib/utils/export-excel'
 
 export default function ProductionReportPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<string>('2026-02')
@@ -43,7 +44,7 @@ export default function ProductionReportPage() {
               <p className="text-sm text-muted-foreground">Production Conversion & Material Efficiency Report</p>
             </div>
           </div>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => exportToExcel(filteredRecords as unknown as Record<string,unknown>[], 'Production_Yield_Report', 'Production Yield')}>
             <Download className="h-4 w-4" />
             Export Report
           </Button>

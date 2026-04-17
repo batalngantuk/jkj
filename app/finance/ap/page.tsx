@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AppLayout from '@/components/app-layout'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { MOCK_AP_INVOICES } from '@/lib/mock-data/finance'
+import { exportToExcel } from '@/lib/utils/export-excel'
 
 export default function APPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -63,7 +64,7 @@ export default function APPage() {
           </div>
           
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => exportToExcel(filteredInvoices as unknown as Record<string,unknown>[], 'AP_Invoices_Report', 'AP Invoices')}>
               <Download className="h-4 w-4" />
               Export
             </Button>

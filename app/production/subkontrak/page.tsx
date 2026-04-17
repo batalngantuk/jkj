@@ -30,6 +30,7 @@ import {
   DollarSign, AlertCircle, Building2, ExternalLink
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
+import { exportToExcel } from '@/lib/utils/export-excel'
 import {
   MOCK_SUBKON_RECORDS,
   MOCK_SUBKON_MASTER,
@@ -181,7 +182,7 @@ export default function SubkontrakPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2" onClick={() => exportToExcel(filtered as unknown as Record<string,unknown>[], 'Subkontrak_Report', 'Subkontrak')}>
                 <Download className="h-4 w-4" />
                 Export
               </Button>

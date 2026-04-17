@@ -22,6 +22,7 @@ import {
   Clock, FileText, ChevronRight, Info, Plus
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
+import { exportToExcel } from '@/lib/utils/export-excel'
 import {
   MOCK_WASTE_RECORDS,
   STATUS_CONFIG,
@@ -201,7 +202,7 @@ export default function WasteManagementPage() {
                   <SelectItem value="Selesai">Selesai</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2" onClick={() => exportToExcel(filtered as unknown as Record<string,unknown>[], 'Waste_Management_Report', 'Waste Records')}>
                 <Download className="h-4 w-4" />
                 Export
               </Button>

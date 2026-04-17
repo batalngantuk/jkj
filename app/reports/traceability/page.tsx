@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import AppLayout from '@/components/app-layout'
 import { TraceabilityChain, TraceabilityStep } from '@/components/customs/traceability-chain'
 import { MOCK_TRACEABILITY } from '@/lib/mock-data/traceability'
+import { exportToExcel } from '@/lib/utils/export-excel'
 
 export default function TraceabilityReportPage() {
   const [searchType, setSearchType] = useState<string>('lot')
@@ -92,7 +93,7 @@ export default function TraceabilityReportPage() {
               <p className="text-sm text-muted-foreground">Track materials from import to export for customs compliance</p>
             </div>
           </div>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => exportToExcel(MOCK_TRACEABILITY as unknown as Record<string,unknown>[], 'Traceability_Report', 'Traceability')}>
             <Download className="h-4 w-4" />
             Export Certificate
           </Button>

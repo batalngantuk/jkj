@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Plus, Download, Eye, Printer, Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { exportToExcel } from '@/lib/utils/export-excel'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
@@ -232,7 +233,7 @@ export default function FakturPage() {
                     <Plus className="h-4 w-4" />
                     Create Faktur Pajak
                   </Button>
-                  <Button variant="outline" className="gap-2 bg-transparent">
+                  <Button variant="outline" className="gap-2 bg-transparent" onClick={() => exportToExcel(FAKTUR_DATA as unknown as Record<string,unknown>[], 'Faktur_Pajak_Report', 'Faktur Pajak')}>
                     <Download className="h-4 w-4" />
                     Export Period Report
                   </Button>

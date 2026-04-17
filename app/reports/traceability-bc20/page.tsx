@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import Link from 'next/link'
+import { exportToExcel } from '@/lib/utils/export-excel'
 
 // Mock data — BC 2.0 optional traceability
 // Catatan: bc20Reference di PEB adalah OPSIONAL, bukan mandatory
@@ -198,13 +199,9 @@ export default function TraceabilityBC20Page() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => exportToExcel(MOCK_BC20_TRACES as unknown as Record<string,unknown>[], 'Traceability_BC20_Report', 'Traceability BC20')}>
               <Download className="h-4 w-4 mr-2" />
               Export Certificate
-            </Button>
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export PDF
             </Button>
           </div>
         </div>

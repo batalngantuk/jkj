@@ -3,6 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft, TrendingUp, Download } from 'lucide-react'
+import { exportToExcel } from '@/lib/utils/export-excel'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import AppLayout from '@/components/app-layout'
@@ -52,7 +53,7 @@ export default function SalesReportPage() {
                   <p className="text-sm text-muted-foreground">Detailed sales performance and trends</p>
                 </div>
               </div>
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2" onClick={() => exportToExcel(monthlySales as unknown as Record<string,unknown>[], 'Sales_Analysis_Report', 'Monthly Sales')}>
                 <Download className="h-4 w-4" />
                 Export Report
               </Button>

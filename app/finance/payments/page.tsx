@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import AppLayout from '@/components/app-layout'
 import { MOCK_PAYMENTS, MOCK_AR_INVOICES, MOCK_AP_INVOICES } from '@/lib/mock-data/finance'
+import { exportToExcel } from '@/lib/utils/export-excel'
 
 export default function PaymentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -76,7 +77,7 @@ export default function PaymentsPage() {
             </div>
           </div>
           
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => exportToExcel(filteredPayments as unknown as Record<string,unknown>[], 'Payments_Report', 'Payments')}>
             <Download className="h-4 w-4" />
             Export
           </Button>

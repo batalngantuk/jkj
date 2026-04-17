@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import Link from 'next/link'
+import { exportToExcel } from '@/lib/utils/export-excel'
 
 const MOCK_BILLINGS = [
   {
@@ -89,13 +90,9 @@ export default function DualBillingReportPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => exportToExcel(MOCK_BILLINGS as unknown as Record<string,unknown>[], 'Dual_Billing_Report', 'Dual Billing')}>
               <Download className="h-4 w-4 mr-2" />
               Export Excel
-            </Button>
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export PDF
             </Button>
           </div>
         </div>
