@@ -17,7 +17,8 @@ import {
   Settings,
   HelpCircle,
   X,
-  Shield
+  Shield,
+  Landmark
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -52,9 +53,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     )
   }
 
+  interface SubItem {
+    label: string
+    href: string
+    groupLabel?: string // separator header sebelum item ini
+  }
+
   const menuItems = [
     { icon: Layout, label: 'Dashboard', href: '/' },
     { icon: Shield, label: 'Compliance', href: '/compliance' },
+    { icon: Landmark, label: 'KITE', href: '/kite' },
     { 
       icon: ShoppingCart, 
       label: 'Sales Orders', 
@@ -126,18 +134,18 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       label: 'Reports', 
       href: '/reports',
       subItems: [
-        { label: 'Overview', href: '/reports' },
+        { label: 'Overview', href: '/reports', groupLabel: 'Umum' },
         { label: 'Sales Analysis', href: '/reports/sales' },
         { label: 'Production Yield', href: '/reports/production' },
         { label: 'Inventory Value', href: '/reports/inventory' },
         { label: 'Material Traceability', href: '/reports/traceability' },
-        { label: 'Traceability BC 2.0', href: '/reports/traceability-bc20' },
         { label: 'Conversion Analysis', href: '/reports/conversion-analysis' },
         { label: 'Stock Movement', href: '/reports/stock-movement' },
-        { label: 'Dual Billing (BC 2.0)', href: '/reports/dual-billing' },
+        { label: 'Traceability BC 2.0', href: '/reports/traceability-bc20', groupLabel: 'BC 2.0' },
+        { label: 'Dual Billing', href: '/reports/dual-billing' },
         { label: 'Tax Assets', href: '/reports/tax-assets' },
         { label: 'Landed Cost Analysis', href: '/reports/landed-cost-analysis' },
-        { label: 'KITE IT Inventory', href: '/reports/kite-inventory' },
+        { label: 'KITE IT Inventory', href: '/reports/kite-inventory', groupLabel: 'KITE' },
       ]
     },
   ]
@@ -219,19 +227,26 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                               {item.subItems?.map((sub) => {
                                   const isSubActive = pathname === sub.href
                                   return (
-                                      <Link key={sub.href} href={sub.href} className="block">
-                                          <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              className={`w-full justify-start h-8 text-sm ${
-                                                  isSubActive 
-                                                      ? 'bg-primary/20 text-primary font-semibold' 
-                                                      : 'text-foreground/80 hover:text-foreground hover:bg-accent'
-                                              }`}
-                                          >
-                                              {sub.label}
-                                          </Button>
-                                      </Link>
+                                      <React.Fragment key={sub.href}>
+                                          {sub.groupLabel && (
+                                              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-2 pt-2 pb-0.5">
+                                                  {sub.groupLabel}
+                                              </p>
+                                          )}
+                                          <Link href={sub.href} className="block">
+                                              <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  className={`w-full justify-start h-8 text-sm ${
+                                                      isSubActive
+                                                          ? 'bg-primary/20 text-primary font-semibold'
+                                                          : 'text-foreground/80 hover:text-foreground hover:bg-accent'
+                                                  }`}
+                                              >
+                                                  {sub.label}
+                                              </Button>
+                                          </Link>
+                                      </React.Fragment>
                                   )
                               })}
                           </CollapsibleContent>
