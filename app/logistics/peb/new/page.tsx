@@ -377,13 +377,13 @@ export default function PEBCreatePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5" />
-              Financial Settings
+              Kurs &amp; Nilai Ekspor
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="currency">Currency</Label>
+                <Label htmlFor="currency">Mata Uang Ekspor</Label>
                 <Select value={currency} onValueChange={setCurrency}>
                   <SelectTrigger>
                     <SelectValue />
@@ -396,13 +396,28 @@ export default function PEBCreatePage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="exchangeRate">Exchange Rate to IDR</Label>
+                <Label htmlFor="exchangeRate">
+                  Kurs {currency}/IDR pada Tanggal Ekspor <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="exchangeRate"
                   type="number"
                   value={exchangeRate}
                   onChange={(e) => setExchangeRate(parseFloat(e.target.value))}
+                  placeholder="e.g. 15500"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Sesuai kurs BI / DJBC pada tanggal ekspor
+                </p>
+              </div>
+              <div className="flex flex-col justify-end">
+                <div className="bg-muted/40 rounded p-3 space-y-1 text-sm">
+                  <p className="text-muted-foreground text-xs">Nilai FOB (estimasi)</p>
+                  <p className="font-semibold">{currency} {fobValue.toLocaleString()}</p>
+                  <p className="text-primary font-bold">
+                    = Rp {fobIdr.toLocaleString('id-ID')}
+                  </p>
+                </div>
               </div>
             </div>
           </CardContent>

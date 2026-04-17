@@ -1,12 +1,13 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { Package, Truck, ArrowDownLeft, ArrowUpRight, Search, Filter, AlertTriangle, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import AppLayout from '@/components/app-layout'
 
 import { DataTable } from '@/components/shared/data-table'
@@ -14,9 +15,23 @@ import { MOCK_INVENTORY, MOCK_TRANSACTIONS } from "@/lib/mock-data/warehouse"
 import { AlertBadge } from "@/components/shared/alert-badge"
 
 export default function WarehouseDashboard() {
+  const [search, setSearch] = useState('')
+  const [filterCategory, setFilterCategory] = useState('all')
+  const [filterStatus, setFilterStatus] = useState('all')
+
   const lowStockCount = MOCK_INVENTORY.filter(i => i.status === 'Low Stock' || i.status === 'Critical').length
   const totalValue = MOCK_INVENTORY.reduce((acc, curr) => acc + curr.value, 0)
-  
+
+  const filteredInventory = MOCK_INVENTORY.filter(item => {
+    const matchSearch = search === '' ||
+      item.name.toLowerCase().includes(search.toLowerCase()) ||
+      item.code.toLowerCase().includes(search.toLowerCase()) ||
+      item.location.toLowerCase().includes(search.toLowerCase())
+    const matchCategory = filterCategory === 'all' || item.category === filterCategory
+    const matchStatus = filterStatus === 'all' || item.status === filterStatus
+    return matchSearch && matchCategory && matchStatus
+  })
+
   const inventoryColumns = [
     {
        header: "Code",
@@ -129,19 +144,53 @@ export default function WarehouseDashboard() {
             {/* Main Inventory Table */}
             <Card className="flex-1">
                 <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
                         <CardTitle>Current Inventory</CardTitle>
-                        <div className="flex gap-2 w-1/3">
-                            <Input placeholder="Search items..." prefix={<Search className="h-4 w-4"/>} />
-                            <Button variant="outline" size="icon">
-                                <Filter className="h-4 w-4" />
-                            </Button>
+                        <div className="flex gap-2 flex-wrap">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Cari nama, kode, lokasi..."
+                                    className="pl-8 w-56"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                />
+                            </div>
+                            <Select value={filterCategory} onValueChange={setFilterCategory}>
+                                <SelectTrigger className="w-40">
+                                    <SelectValue placeholder="Kategori" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua Kategori</SelectItem>
+                                    <SelectItem value="Raw Material">Raw Material</SelectItem>
+                                    <SelectItem value="Work in Progress">Work in Progress</SelectItem>
+                                    <SelectItem value="Finished Goods">Finished Goods</SelectItem>
+                                    <SelectItem value="Spare Part">Spare Part</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Select value={filterStatus} onValueChange={setFilterStatus}>
+                                <SelectTrigger className="w-36">
+                                    <SelectValue placeholder="Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua Status</SelectItem>
+                                    <SelectItem value="In Stock">In Stock</SelectItem>
+                                    <SelectItem value="Low Stock">Low Stock</SelectItem>
+                                    <SelectItem value="Critical">Critical</SelectItem>
+                                    <SelectItem value="Overstock">Overstock</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
+                    {(search || filterCategory !== 'all' || filterStatus !== 'all') && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Menampilkan {filteredInventory.length} dari {MOCK_INVENTORY.length} item
+                        </p>
+                    )}
                 </CardHeader>
                 <CardContent>
-                    <DataTable 
-                        data={MOCK_INVENTORY}
+                    <DataTable
+                        data={filteredInventory}
                         columns={inventoryColumns}
                     />
                 </CardContent>
