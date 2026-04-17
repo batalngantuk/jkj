@@ -51,7 +51,7 @@ export default function ProductionPlanningPage() {
     {
       header: "Action",
       cell: (item: typeof MOCK_SALES_ORDERS[0]) => (
-        <Link href={`/production/wo/create?so=${item.id}`}>
+        <Link href={`/production/wo/new?so=${item.id}`}>
            <Button size="sm" className="gap-2">
              <Factory className="h-4 w-4" />
              Plan WO

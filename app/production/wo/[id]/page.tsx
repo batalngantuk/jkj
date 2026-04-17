@@ -3,16 +3,36 @@
 import React from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { ArrowLeft, Box, Timer, AlertTriangle, CheckSquare, FileBarChart, Truck } from 'lucide-react'
+import {
+  ArrowLeft, Box, Timer, AlertTriangle, CheckSquare,
+  FileBarChart, Truck, Play, Pause, PackageCheck, ClipboardCheck
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { StatusBadge } from "@/components/shared/status-badge"
-import { AlertBadge } from "@/components/shared/alert-badge"
-import { StatusTimeline, TimelineStep } from "@/components/shared/status-timeline"
-import TopNav from '@/components/top-nav'
-import Sidebar from '@/components/sidebar'
-import { MOCK_WORK_ORDERS, MOCK_BOMS } from "@/lib/mock-data/production"
+import { StatusBadge } from '@/components/shared/status-badge'
+import { StatusTimeline, TimelineStep } from '@/components/shared/status-timeline'
+import AppLayout from '@/components/app-layout'
+import { MOCK_WORK_ORDERS, MOCK_BOMS } from '@/lib/mock-data/production'
+
+const STATUS_ACTIONS: Record<string, { label: string; icon: React.ElementType; variant?: string }[]> = {
+  'PLANNED': [
+    { label: 'Mulai Produksi', icon: Play },
+  ],
+  'IN PROGRESS': [
+    { label: 'Tahan (On Hold)', icon: Pause, variant: 'outline' },
+    { label: 'Selesai → QC', icon: ClipboardCheck },
+  ],
+  'QC INSPECTION': [
+    { label: 'QC Lulus → Selesai', icon: CheckSquare },
+    { label: 'QC Gagal → Ulangi', icon: AlertTriangle, variant: 'destructive' },
+  ],
+  'COMPLETED': [],
+  'ON HOLD': [
+    { label: 'Lanjutkan Produksi', icon: Play },
+  ],
+}
 
 export default function WorkOrderDetailPage() {
   const params = useParams()
@@ -20,150 +40,249 @@ export default function WorkOrderDetailPage() {
   const wo = MOCK_WORK_ORDERS.find(w => w.id === id)
 
   if (!wo) {
-     return <div>WO Not Found</div>
+    return (
+      <AppLayout>
+        <div className="p-6">
+          <p className="text-muted-foreground">Work Order tidak ditemukan: {id}</p>
+          <Link href="/production/wo">
+            <Button variant="outline" className="mt-4">Kembali ke Daftar WO</Button>
+          </Link>
+        </div>
+      </AppLayout>
+    )
   }
 
   const bom = MOCK_BOMS.find(b => b.id === wo.bomId)
 
-  // Timeline Logic
   const timelineSteps: TimelineStep[] = [
-    { id: '1', label: 'Released', date: wo.startDate, status: 'completed' },
-    { id: '2', label: 'In Production', status: wo.status === 'IN PROGRESS' ? 'current' : wo.status === 'COMPLETED' ? 'completed' : 'upcoming' },
-    { id: '3', label: 'QC Inspection', status: wo.status === 'QC INSPECTION' ? 'current' : wo.status === 'COMPLETED' ? 'completed' : 'upcoming' },
-    { id: '4', label: 'Finished Goods', status: wo.status === 'COMPLETED' ? 'completed' : 'upcoming' }
+    { id: '1', label: 'Dibuat / Planned', date: wo.startDate, status: 'completed' },
+    {
+      id: '2', label: 'In Production',
+      status: wo.status === 'IN PROGRESS' ? 'current'
+        : (wo.status === 'QC INSPECTION' || wo.status === 'COMPLETED') ? 'completed' : 'upcoming'
+    },
+    {
+      id: '3', label: 'QC Inspection',
+      status: wo.status === 'QC INSPECTION' ? 'current'
+        : wo.status === 'COMPLETED' ? 'completed' : 'upcoming'
+    },
+    {
+      id: '4', label: 'Selesai — BJ ke Gudang',
+      date: wo.status === 'COMPLETED' ? wo.endDate : undefined,
+      status: wo.status === 'COMPLETED' ? 'completed' : 'upcoming'
+    },
   ]
 
+  const actions = STATUS_ACTIONS[wo.status] || []
+
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <TopNav />
-        <main className="flex-1 overflow-auto bg-gradient-to-br from-background to-secondary/5 p-6">
-          <div className="space-y-6 max-w-6xl mx-auto">
-            
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Link href="/production">
-                  <Button variant="ghost" size="icon">
-                    <ArrowLeft className="h-5 w-5" />
-                  </Button>
-                </Link>
-                <div>
-                  <h1 className="text-2xl font-bold text-foreground">{wo.id}</h1>
-                  <p className="text-sm text-muted-foreground">Ref: {wo.soNumber}</p>
-                </div>
-                <StatusBadge status={wo.status} />
-              </div>
-              <div className="flex gap-2">
-                 <Button variant="outline">
-                    <AlertTriangle className="mr-2 h-4 w-4" />
-                    Report Issue
-                 </Button>
-                 {wo.status === 'COMPLETED' && (
-                     <Button className="gap-2">
-                        <FileBarChart className="h-4 w-4" />
-                        Konversi Report
-                     </Button>
-                 )}
-              </div>
+    <AppLayout>
+      <div className="p-6 space-y-6 max-w-6xl mx-auto">
+
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/production/wo">
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">{wo.id}</h1>
+              <p className="text-sm text-muted-foreground">Ref SO: {wo.soNumber}</p>
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* Main Info */}
-                <div className="lg:col-span-2 space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Production Details</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid grid-cols-2 gap-6">
-                            <div>
-                                <p className="text-sm text-muted-foreground">Product</p>
-                                <p className="font-semibold">{wo.product}</p>
-                            </div>
-                             <div>
-                                <p className="text-sm text-muted-foreground">Assigned Line</p>
-                                <p className="font-medium">{wo.line}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-muted-foreground">Target Quantity</p>
-                                <p className="font-semibold text-lg">{wo.quantity.toLocaleString()} Cartons</p>
-                            </div>
-                             <div>
-                                <p className="text-sm text-muted-foreground">Schedule</p>
-                                <p className="font-medium">{wo.startDate} - {wo.endDate}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* BOM & Material Tracker */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Bill of Materials & Consumption</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                             <div className="space-y-4">
-                                {bom?.items.map(item => (
-                                    <div key={item.id} className="flex flex-col gap-1 border-b pb-3 last:border-0 last:pb-0">
-                                        <div className="flex justify-between">
-                                            <span className="font-medium">{item.materialName}</span>
-                                            <span className="text-sm text-muted-foreground">
-                                                Req: {(item.quantityPerUnit * wo.quantity).toFixed(2)} {item.unit}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <Progress value={wo.progress} className="h-2 flex-1" />
-                                            <span className="text-xs font-medium">{wo.progress}% Used</span>
-                                        </div>
-                                    </div>
-                                ))}
-                             </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Sidebar */}
-                <div className="space-y-6">
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Progress</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-col items-center mb-6">
-                                <div className="text-4xl font-bold text-primary mb-1">{wo.progress}%</div>
-                                <p className="text-sm text-muted-foreground">Completion Rate</p>
-                            </div>
-                            <StatusTimeline steps={timelineSteps} />
-                        </CardContent>
-                    </Card>
-
-                    {/* Traceability Link (Mock) */}
-                    <Card className="bg-blue-50/50 border-blue-200">
-                        <CardHeader className="pb-2">
-                             <CardTitle className="text-sm text-blue-800 flex items-center gap-2">
-                                <Truck className="h-4 w-4" />
-                                Traceability Chain
-                             </CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-sm space-y-2">
-                            <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">Source (BC 2.3)</span>
-                                <span className="font-mono bg-white px-2 rounded border">AJU-001/2026</span>
-                            </div>
-                             <div className="text-center text-muted-foreground">↓</div>
-                             <div className="flex justify-between items-center font-bold">
-                                <span>Current (WO)</span>
-                                <span className="font-mono bg-white px-2 rounded border border-blue-300">{wo.id}</span>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-            </div>
+            <StatusBadge status={wo.status} />
+            {wo.priority === 'Urgent' && (
+              <Badge variant="destructive" className="text-xs">Urgent</Badge>
+            )}
           </div>
-        </main>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm">
+              <AlertTriangle className="mr-2 h-4 w-4" />
+              Laporkan Masalah
+            </Button>
+            {actions.map((action) => {
+              const Icon = action.icon
+              return (
+                <Button
+                  key={action.label}
+                  size="sm"
+                  variant={(action.variant as 'outline' | 'destructive' | 'default') || 'default'}
+                  className="gap-2"
+                >
+                  <Icon className="h-4 w-4" />
+                  {action.label}
+                </Button>
+              )
+            })}
+            {wo.status === 'COMPLETED' && (
+              <Link href="/warehouse/outbound">
+                <Button size="sm" className="gap-2">
+                  <PackageCheck className="h-4 w-4" />
+                  Input BJ ke Gudang
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Main — left 2 cols */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Production Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Detail Produksi</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-5">
+                <div>
+                  <p className="text-sm text-muted-foreground">Produk</p>
+                  <p className="font-semibold">{wo.product}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Line Produksi</p>
+                  <p className="font-medium">{wo.line}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Target Qty</p>
+                  <p className="font-semibold text-lg">{wo.quantity.toLocaleString()} carton</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Jadwal</p>
+                  <p className="font-medium">{wo.startDate} — {wo.endDate}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* BOM & Material */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Bill of Materials &amp; Konsumsi Bahan</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {bom ? (
+                  <div className="space-y-4">
+                    {bom.items.map(item => {
+                      const totalReq = item.quantityPerUnit * wo.quantity
+                      const consumed = totalReq * (wo.progress / 100)
+                      return (
+                        <div key={item.id} className="flex flex-col gap-1 border-b pb-3 last:border-0 last:pb-0">
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium text-sm">{item.materialName}</span>
+                            <span className="text-xs text-muted-foreground font-mono">{item.code}</span>
+                          </div>
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>Kebutuhan total: {totalReq.toFixed(2)} {item.unit}</span>
+                            <span>Terpakai (est.): {consumed.toFixed(2)} {item.unit}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Progress value={wo.progress} className="h-1.5 flex-1" />
+                            <span className="text-xs font-medium w-8">{wo.progress}%</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">BOM tidak tersedia untuk WO ini.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* History Log */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Riwayat Aktivitas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {wo.history.map((h, i) => (
+                    <div key={i} className="flex gap-3 text-sm">
+                      <div className="w-32 text-muted-foreground shrink-0">{h.date}</div>
+                      <div>
+                        <span className="font-medium">{h.action}</span>
+                        <span className="text-muted-foreground ml-1">oleh {h.user}</span>
+                        <span className="ml-2">
+                          <Badge variant="outline" className="text-xs">{h.status}</Badge>
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar — right 1 col */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Progress</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col items-center mb-6">
+                  <div className="text-4xl font-bold text-primary mb-1">{wo.progress}%</div>
+                  <p className="text-sm text-muted-foreground">Tingkat Penyelesaian</p>
+                </div>
+                <StatusTimeline steps={timelineSteps} />
+              </CardContent>
+            </Card>
+
+            {/* Traceability */}
+            <Card className="bg-blue-50/50 border-blue-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-blue-800 flex items-center gap-2">
+                  <Truck className="h-4 w-4" />
+                  Traceability
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Source SO</span>
+                  <span className="font-mono bg-white px-2 rounded border text-xs">{wo.soNumber}</span>
+                </div>
+                <div className="text-center text-muted-foreground">↓</div>
+                <div className="flex justify-between items-center font-bold">
+                  <span>WO (ini)</span>
+                  <span className="font-mono bg-white px-2 rounded border border-blue-300 text-xs">{wo.id}</span>
+                </div>
+                {wo.status === 'COMPLETED' && (
+                  <>
+                    <div className="text-center text-muted-foreground">↓</div>
+                    <div className="flex justify-between items-center text-green-700">
+                      <span className="text-sm">Gudang BJ</span>
+                      <Link href="/warehouse/outbound" className="text-xs underline">Lihat</Link>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* FG Location reminder */}
+            {wo.status === 'COMPLETED' && (
+              <Card className="bg-green-50/50 border-green-200">
+                <CardContent className="pt-4 space-y-2">
+                  <p className="text-sm font-semibold text-green-800 flex items-center gap-2">
+                    <PackageCheck className="h-4 w-4" />
+                    WO Selesai
+                  </p>
+                  <p className="text-xs text-green-700">
+                    Barang jadi perlu diterima ke gudang agar stok diperbarui.
+                  </p>
+                  <Link href="/warehouse/outbound">
+                    <Button size="sm" variant="outline" className="w-full mt-2 border-green-300 text-green-800">
+                      Input BJ ke Gudang →
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+        </div>
       </div>
-    </div>
+    </AppLayout>
   )
 }
