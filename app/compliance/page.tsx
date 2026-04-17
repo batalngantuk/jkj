@@ -295,6 +295,49 @@ export default function ComplianceDashboardPage() {
           </Card>
         </div>
 
+        {/* KITE Compliance */}
+        <Card className="border-blue-200 bg-blue-50/30">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-blue-600" />
+                KITE Compliance
+              </span>
+              <Link href="/kite">
+                <Button variant="ghost" size="sm" className="gap-1">
+                  KITE Dashboard
+                  <ExternalLink className="h-3 w-3" />
+                </Button>
+              </Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-3 text-sm">
+              <Link href="/reports/kite-inventory" className="block">
+                <div className="border rounded-lg p-3 hover:bg-white transition-colors cursor-pointer">
+                  <p className="font-medium">IT Inventory</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">8 laporan wajib real-time</p>
+                  <p className="text-xs text-blue-600 mt-1">Lihat laporan →</p>
+                </div>
+              </Link>
+              <Link href="/warehouse/waste" className="block">
+                <div className="border rounded-lg p-3 hover:bg-white transition-colors cursor-pointer">
+                  <p className="font-medium">Waste / BC 2.4</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Pengelolaan sisa bahan baku</p>
+                  <p className="text-xs text-blue-600 mt-1">Lihat waste →</p>
+                </div>
+              </Link>
+              <Link href="/production/subkontrak" className="block">
+                <div className="border rounded-lg p-3 hover:bg-white transition-colors cursor-pointer">
+                  <p className="font-medium">Subkontrak</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">SUBK KITE 1.1/1.2/2.1/2.2</p>
+                  <p className="text-xs text-blue-600 mt-1">Lihat subkon →</p>
+                </div>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Recent Activities */}
         <Card>
           <CardHeader>

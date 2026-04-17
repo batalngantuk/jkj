@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -26,7 +27,7 @@ import {
 import {
   Factory, Plus, Download, FileText, Package,
   ChevronRight, CheckCircle2, Clock, Truck,
-  DollarSign, AlertCircle, Building2
+  DollarSign, AlertCircle, Building2, ExternalLink
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import {
@@ -460,6 +461,12 @@ export default function SubkontrakPage() {
                   <AlertCircle className="inline h-3 w-3 mr-1" />
                   Fee jasa subkon dicatat sebagai biaya produksi dan diproses melalui modul Finance (AP/Invoices).
                 </div>
+                <Link href="/finance/invoices" className="block mt-2">
+                  <Button variant="outline" size="sm" className="w-full gap-2">
+                    <ExternalLink className="h-3 w-3" />
+                    Lihat di Finance → Invoices & Bills
+                  </Button>
+                </Link>
               </TabsContent>
             </Tabs>
 
