@@ -1791,10 +1791,10 @@ IT Inventory mengambil data real-time dari semua alur di atas
 **© 2026 JKJ Manufacturing ERP**
 _Implementation Plan v1.0 - BC 2.0 Regular Import System_
 
-**Status**: 🎉 Phase 1–6 COMPLETE — KITE Revisions COMPLETE — Navigation Review Pending
-**Progress**: Phase 1–6 100% | KITE Revisions: R1 ✅ R2 ✅ R3 ✅
-**Last Updated**: April 16, 2026
-**Next Milestone**: Navigation/sidebar review, UAT, production deployment
+**Status**: 🎉 Phase 1–6 COMPLETE — KITE Revisions COMPLETE — Client Feedback F1–F9 Pending
+**Progress**: Phase 1–6 100% | KITE: R1 ✅ R2 ✅ R3 ✅ | Client Feedback: F1–F9 ⏳
+**Last Updated**: April 17, 2026
+**Next Milestone**: Client feedback revisions F1–F9 (prioritas: F1 Warehouse, F2/F3 BC 2.0, F4/F5 Production)
 
 ---
 
@@ -1830,3 +1830,108 @@ Menu Compliance berdiri sendiri tanpa child page. Perlu ditambah sub-item atau c
 Fee jasa subkon seharusnya masuk ke sini, tapi belum ada koneksi eksplisit dari halaman Subkontrak ke Finance.
 
 **Keputusan yang dibutuhkan dari klien**: Poin 1, 2, 3, 4 di atas sebelum perubahan dilakukan.
+
+---
+
+## 📝 Client Feedback — Revisi Lanjutan (April 2026)
+
+> **Sumber**: Dokumen review klien (komen program jkj.pdf)
+> **Status**: 📋 Dianalisa — belum dikerjakan
+> **Dicatat**: April 17, 2026
+
+Feedback diterima dari klien setelah demo sistem. Berisi 8 area yang perlu diperbaiki/ditambahkan.
+Item R1 (8 laporan KITE) sudah selesai dikerjakan sebelum dokumen ini diterima.
+
+---
+
+### Prioritas & Rencana Implementasi
+
+| # | Area | Isu | Prioritas | Status |
+|---|------|-----|-----------|--------|
+| F1 | Warehouse Inbound/Outbound | Form input tidak ada sama sekali | Tinggi | ⏳ Pending |
+| F2 | BC 2.0 — Multi Material per PIB | 1 PIB hanya bisa 1 material, tidak fleksibel | Tinggi | ⏳ Pending |
+| F3 | BC 2.0 — Field Lengkap | Kode Material, Berat, Kurs, Harga per satuan hilang | Tinggi | ⏳ Pending |
+| F4 | Production — WO & FG | 2 WO beda tampilan, tidak ada tracking lokasi FG setelah selesai | Sedang | ⏳ Pending |
+| F5 | Production — Operator | Field operator tidak perlu, ganti ke "Line" | Sedang | ⏳ Pending |
+| F6 | Sales Order — Master Data & BOM | Tidak bisa edit master data, BOM tidak ada di SO, nama produk tidak fleksibel | Sedang | ⏳ Pending |
+| F7 | Tracking BB Gudang by Nama | Pencarian/filter bahan baku menggunakan nama belum tersedia | Sedang | ⏳ Pending |
+| F8 | Purchasing Lokal — DPP/PPN/Signature | Kolom DPP (TOTAL×11/12), PPN 12%, tabel tanda tangan saat print | Rendah | ⏳ Pending |
+| F9 | Export/PEB — Kurs Manual | Tidak ada kolom input kurs pada tanggal ekspor | Rendah | ⏳ Pending |
+
+---
+
+### Detail per Item
+
+#### F1 — Warehouse Inbound/Outbound (Form Input)
+
+**Masalah**: Menu Warehouse Inbound & Outbound tidak memiliki form input apapun.
+
+**Yang dibutuhkan**:
+- Form input material masuk (Inbound): nama material, surat tanda terima, tanggal masuk, referensi PO/PIB
+- Form input barang jadi keluar (Outbound): link ke WO selesai, tanggal, tujuan
+- Dashboard warehouse lebih dari sekadar tampilkan stock
+
+---
+
+#### F2 & F3 — BC 2.0 Multi-Material & Field Lengkap
+
+**Masalah**: 1 PIB hanya bisa 1 material. Semua input via master data (tidak fleksibel). Field penting hilang.
+
+**Yang dibutuhkan**:
+- 1 PIB bisa input banyak material (line items)
+- Input bebas (bukan hanya dari dropdown master data)
+- Field tambahan: Kode Material, Berat Material, Kurs (nilai tukar), Harga per satuan BB
+- Harga per satuan, bukan hanya total per PIB
+
+---
+
+#### F4 & F5 — Production WO & Operator
+
+**Masalah**: Ada 2 WO dengan tampilan berbeda (membingungkan). Field operator tidak relevan. Lokasi FG setelah WO selesai tidak jelas.
+
+**Yang dibutuhkan**:
+- Konsolidasi tampilan WO menjadi satu tampilan konsisten
+- Ganti field "Operator" menjadi "Line Produksi"
+- Tambah informasi lokasi/gudang FG setelah WO selesai
+
+---
+
+#### F6 — Sales Order Master Data & BOM
+
+**Masalah**: Tidak ada halaman untuk edit/tambah master data. Nama produk menggunakan produk JKJ, seharusnya bisa input nama produk buyer. BOM tidak ditemukan di SO.
+
+**Yang dibutuhkan**:
+- Halaman master data (produk, customer) yang bisa diedit
+- Nama produk di SO bisa free-text (nama dari buyer)
+- BOM (Bill of Materials) bisa diisi langsung di Sales Order
+
+---
+
+#### F7 — Tracking BB Gudang by Nama
+
+**Masalah**: Pencarian bahan baku di gudang hanya bisa by kode, belum by nama.
+
+**Yang dibutuhkan**:
+- Search/filter bahan baku menggunakan nama di halaman warehouse
+
+---
+
+#### F8 — Purchasing Lokal: DPP/PPN/Signature Block
+
+**Masalah**: Dokumen pembelian lokal tidak lengkap untuk keperluan print.
+
+**Yang dibutuhkan**:
+- Kolom DPP: TOTAL × 11/12
+- Kolom PPN: 12%
+- Kolom upload gambar barang
+- Tabel tanda tangan (Purchase, Accounting, Manager, Direktur Utama) saat print
+
+---
+
+#### F9 — Export/PEB: Kurs Manual
+
+**Masalah**: Tidak ada field input kurs pada tanggal ekspor di form PEB.
+
+**Yang dibutuhkan**:
+- Field input kurs (misal: USD/IDR) pada tanggal ekspor
+- Nilai ekspor otomatis terkalkulasi dari qty × harga × kurs
