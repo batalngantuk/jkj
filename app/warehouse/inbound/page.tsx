@@ -2,186 +2,549 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle, Package, Truck, Calendar, FileText, Upload, RefreshCw } from 'lucide-react'
+import {
+  ArrowLeft, CheckCircle, Package, Truck, Calendar,
+  FileText, Plus, Search, ClipboardList, ChevronDown, ChevronUp, Trash2
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogDescription, DialogFooter
+} from '@/components/ui/dialog'
 import AppLayout from '@/components/app-layout'
+import { MOCK_PURCHASE_ORDERS, type PurchaseOrder } from '@/lib/mock-data/purchasing'
 
-import { DataTable } from '@/components/shared/data-table'
-import { StatusBadge } from "@/components/shared/status-badge"
-import { FileUpload } from "@/components/shared/file-upload"
-import { MOCK_PURCHASE_ORDERS, PurchaseOrder } from "@/lib/mock-data/purchasing"
+// Mock GR history
+const MOCK_GR_HISTORY = [
+  {
+    id: 'GR-2026-001', tglMasuk: '2026-01-20', noPIB: 'PIB-2026-001234', noPO: 'PO-2026-001',
+    supplier: 'Baosteel Co., Ltd', jenisDoc: 'BC 2.0',
+    items: [{ kode: 'BB-HRC-001', nama: 'Hot Rolled Coil (HRC)', satuan: 'KG', qtyPO: 100000, qtyDiterima: 100000 }],
+    gudang: 'Gudang RM-A', penerima: 'Ahmad Fauzi', noSuratJalan: 'SJ-2026-001', status: 'Selesai'
+  },
+  {
+    id: 'GR-2026-002', tglMasuk: '2026-01-28', noPIB: 'PIB-2026-001567', noPO: 'PO-2026-002',
+    supplier: 'Korea Petrochemical', jenisDoc: 'BC 2.0',
+    items: [{ kode: 'BB-HDPE-001', nama: 'Polyethylene Resin HDPE', satuan: 'KG', qtyPO: 10000, qtyDiterima: 10000 }],
+    gudang: 'Gudang RM-B', penerima: 'Budi Santoso', noSuratJalan: 'SJ-2026-002', status: 'Selesai'
+  },
+  {
+    id: 'GR-2026-003', tglMasuk: '2026-02-15', noPIB: '-', noPO: 'PO-2026-003',
+    supplier: 'PT. Supplier Lokal Jaya', jenisDoc: 'PO Lokal',
+    items: [{ kode: 'BB-LOCAL-001', nama: 'Cat Primer Anti Karat', satuan: 'LITER', qtyPO: 500, qtyDiterima: 490 }],
+    gudang: 'Gudang RM-B', penerima: 'Siti Rahayu', noSuratJalan: 'SJ-2026-003', status: 'Selesai'
+  },
+]
+
+interface MaterialLineGR {
+  id: string
+  kodeBarang: string
+  namaBarang: string
+  satuan: string
+  qtyDipesan: string
+  qtyDiterima: string
+  kondisi: string
+  keterangan: string
+}
+
+function newLineGR(): MaterialLineGR {
+  return {
+    id: crypto.randomUUID(),
+    kodeBarang: '', namaBarang: '', satuan: 'KG',
+    qtyDipesan: '', qtyDiterima: '', kondisi: 'Baik', keterangan: ''
+  }
+}
 
 export default function InboundPage() {
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null)
-  
-  // Only show POs that can be received (Approved or Partial)
-  const incomingPOs = MOCK_PURCHASE_ORDERS.filter(po => 
+  const [showManualForm, setShowManualForm] = useState(false)
+
+  // Manual form state
+  const [jenisDoc, setJenisDoc] = useState('')
+  const [noRefDoc, setNoRefDoc] = useState('')
+  const [noPIB, setNoPIB] = useState('')
+  const [supplier, setSupplier] = useState('')
+  const [tglMasuk, setTglMasuk] = useState('')
+  const [noSuratJalan, setNoSuratJalan] = useState('')
+  const [noKendaraan, setNoKendaraan] = useState('')
+  const [gudang, setGudang] = useState('')
+  const [penerima, setPenerima] = useState('')
+  const [catatan, setCatatan] = useState('')
+  const [lines, setLines] = useState<MaterialLineGR[]>([newLineGR()])
+  const [expandedLine, setExpandedLine] = useState<string | null>(lines[0]?.id)
+
+  const incomingPOs = MOCK_PURCHASE_ORDERS.filter(po =>
     po.status === 'APPROVED' || po.status === 'PARTIAL'
   )
 
-  const handleReceive = (po: PurchaseOrder) => {
-      setSelectedPO(po)
+  function updateLine(id: string, field: keyof MaterialLineGR, value: string) {
+    setLines(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l))
   }
 
-  const columns = [
-    {
-       header: "PO Number",
-       accessorKey: "id" as keyof typeof MOCK_PURCHASE_ORDERS[0],
-       cell: (item: typeof MOCK_PURCHASE_ORDERS[0]) => <span className="font-medium text-primary">{item.id}</span>
-    },
-    { header: "Supplier", accessorKey: "supplier" as keyof typeof MOCK_PURCHASE_ORDERS[0] },
-    { 
-        header: "Items",
-        cell: (item: typeof MOCK_PURCHASE_ORDERS[0]) => (
-            <span className="text-sm">
-                {item.items.map(i => i.name).join(', ').substring(0, 30)}
-                {item.items.length > 1 ? '...' : ''}
-            </span>
-        )
-    },
-    { 
-        header: "Expected Delivery", 
-        accessorKey: "expectedDelivery" as keyof typeof MOCK_PURCHASE_ORDERS[0],
-        cell: (item: typeof MOCK_PURCHASE_ORDERS[0]) => (
-            <div className="flex items-center gap-2">
-                <Calendar className="h-3 w-3 text-muted-foreground" />
-                <span>{item.expectedDelivery}</span>
-            </div>
-        )
-    },
-    {
-       header: "Status",
-       accessorKey: "status" as keyof typeof MOCK_PURCHASE_ORDERS[0],
-       cell: (item: typeof MOCK_PURCHASE_ORDERS[0]) => <StatusBadge status={item.status} />
-    },
-    {
-       header: "Action",
-       cell: (item: typeof MOCK_PURCHASE_ORDERS[0]) => (
-           <Button size="sm" onClick={() => handleReceive(item)} className="gap-2">
-               <Package className="h-4 w-4" />
-               Receive
-           </Button>
-       )
-    }
-  ]
+  function addLine() {
+    const nl = newLineGR()
+    setLines(prev => [...prev, nl])
+    setExpandedLine(nl.id)
+  }
+
+  function removeLine(id: string) {
+    if (lines.length === 1) return
+    setLines(prev => prev.filter(l => l.id !== id))
+  }
+
+  function resetManualForm() {
+    setJenisDoc(''); setNoRefDoc(''); setNoPIB(''); setSupplier('')
+    setTglMasuk(''); setNoSuratJalan(''); setNoKendaraan('')
+    setGudang(''); setPenerima(''); setCatatan('')
+    const nl = newLineGR()
+    setLines([nl]); setExpandedLine(nl.id)
+  }
 
   return (
-    <AppLayout><div className="p-6">
-          <div className="space-y-6">
-            
-            <div className="flex items-center gap-4">
-              <Link href="/warehouse">
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Inbound Receiving</h1>
-                <p className="text-sm text-muted-foreground">Process incoming shipments from approved Purchase Orders</p>
+    <AppLayout>
+      <div className="p-6 space-y-6">
+
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/warehouse">
+              <Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button>
+            </Link>
+            <div>
+              <h1 className="text-2xl font-bold">Inbound / Receiving</h1>
+              <p className="text-sm text-muted-foreground">Penerimaan material masuk — dari BC 2.0, PO lokal, atau pengiriman lainnya</p>
+            </div>
+          </div>
+          <Button className="gap-2" onClick={() => { resetManualForm(); setShowManualForm(true) }}>
+            <Plus className="h-4 w-4" />
+            Input Penerimaan Baru
+          </Button>
+        </div>
+
+        <Tabs defaultValue="history">
+          <TabsList>
+            <TabsTrigger value="history" className="gap-2">
+              <ClipboardList className="h-4 w-4" />
+              Riwayat Penerimaan
+            </TabsTrigger>
+            <TabsTrigger value="antrian" className="gap-2">
+              <Truck className="h-4 w-4" />
+              Antrian PO ({incomingPOs.length})
+            </TabsTrigger>
+          </TabsList>
+
+          {/* ── Tab 1: Riwayat GR ── */}
+          <TabsContent value="history">
+            <Card>
+              <CardHeader>
+                <CardTitle>Riwayat Goods Receipt (GR)</CardTitle>
+                <CardDescription>Semua penerimaan material yang sudah diinput</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead>No. GR</TableHead>
+                      <TableHead>Tgl Masuk</TableHead>
+                      <TableHead>Jenis Dok</TableHead>
+                      <TableHead>No PIB / Referensi</TableHead>
+                      <TableHead>Supplier</TableHead>
+                      <TableHead>Material</TableHead>
+                      <TableHead>Gudang</TableHead>
+                      <TableHead>Penerima</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {MOCK_GR_HISTORY.map(gr => (
+                      <TableRow key={gr.id} className="cursor-pointer hover:bg-muted/30">
+                        <TableCell className="font-mono text-xs font-medium">{gr.id}</TableCell>
+                        <TableCell className="whitespace-nowrap">{gr.tglMasuk}</TableCell>
+                        <TableCell>
+                          <Badge variant={gr.jenisDoc === 'BC 2.0' ? 'default' : 'secondary'} className="text-xs">
+                            {gr.jenisDoc}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {gr.noPIB !== '-' ? gr.noPIB : gr.noPO}
+                        </TableCell>
+                        <TableCell className="text-sm">{gr.supplier}</TableCell>
+                        <TableCell>
+                          {gr.items.map((item, i) => (
+                            <div key={i}>
+                              <p className="text-sm font-medium">{item.nama}</p>
+                              <p className="text-xs text-muted-foreground">{item.kode} · {item.qtyDiterima.toLocaleString('id-ID')} {item.satuan}</p>
+                            </div>
+                          ))}
+                        </TableCell>
+                        <TableCell className="text-sm">{gr.gudang}</TableCell>
+                        <TableCell className="text-sm">{gr.penerima}</TableCell>
+                        <TableCell>
+                          <Badge variant="default" className="text-xs bg-green-600">{gr.status}</Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ── Tab 2: Antrian PO ── */}
+          <TabsContent value="antrian">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Truck className="h-5 w-5 text-primary" />
+                  Purchase Orders Menunggu Penerimaan
+                </CardTitle>
+                <CardDescription>PO yang sudah disetujui dan menunggu pengiriman dari supplier</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead>No. PO</TableHead>
+                      <TableHead>Supplier</TableHead>
+                      <TableHead>Item</TableHead>
+                      <TableHead>Est. Tiba</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {incomingPOs.map(po => (
+                      <TableRow key={po.id}>
+                        <TableCell className="font-mono text-xs font-medium">{po.id}</TableCell>
+                        <TableCell className="text-sm">{po.supplier}</TableCell>
+                        <TableCell className="text-sm">
+                          {po.items.map(i => i.name).join(', ').substring(0, 40)}
+                          {po.items.length > 1 ? '...' : ''}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-sm">{po.expectedDelivery}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">{po.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button size="sm" className="gap-1" onClick={() => setSelectedPO(po)}>
+                            <Package className="h-3 w-3" />
+                            Terima
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* ── Dialog: Input Penerimaan Manual ── */}
+      <Dialog open={showManualForm} onOpenChange={v => { if (!v) { setShowManualForm(false); resetManualForm() } }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Input Penerimaan Material
+            </DialogTitle>
+            <DialogDescription>
+              Catat material yang masuk — dari BC 2.0, PO lokal, atau pengiriman langsung
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5">
+            {/* Jenis & Referensi Dokumen */}
+            <div>
+              <p className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Referensi Dokumen
+              </p>
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Jenis Dokumen <span className="text-red-500">*</span></Label>
+                  <Select value={jenisDoc} onValueChange={setJenisDoc}>
+                    <SelectTrigger><SelectValue placeholder="Pilih jenis..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="BC 2.0">BC 2.0 (Impor Reguler)</SelectItem>
+                      <SelectItem value="PO Lokal">PO Lokal</SelectItem>
+                      <SelectItem value="Subkontrak">Hasil Subkontrak</SelectItem>
+                      <SelectItem value="Transfer">Transfer Antar Gudang</SelectItem>
+                      <SelectItem value="Lainnya">Lainnya</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">No. Referensi (PO/SO)</Label>
+                  <Input value={noRefDoc} onChange={e => setNoRefDoc(e.target.value)} placeholder="cth: PO-2026-005" />
+                </div>
+                {jenisDoc === 'BC 2.0' && (
+                  <div className="space-y-1">
+                    <Label className="text-xs">No. PIB / BC 2.0 <span className="text-red-500">*</span></Label>
+                    <Input value={noPIB} onChange={e => setNoPIB(e.target.value)} placeholder="cth: PIB-2026-001234" />
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Incoming Queue */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Truck className="h-5 w-5 text-primary" />
-                        Incoming Shipments Queue
-                    </CardTitle>
-                    <CardDescription>
-                        Approved Purchase Orders awaiting delivery.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <DataTable 
-                        data={incomingPOs}
-                        columns={columns}
-                    />
-                </CardContent>
-            </Card>
+            <Separator />
 
-            {/* Receiving Dialog */}
-            <Dialog open={!!selectedPO} onOpenChange={(open) => !open && setSelectedPO(null)}>
-                <DialogContent className="max-w-4xl">
-                    <DialogHeader>
-                        <DialogTitle>Receive Shipment - {selectedPO?.id}</DialogTitle>
-                        <CardDescription>{selectedPO?.supplier}</CardDescription>
-                    </DialogHeader>
+            {/* Info Pengiriman */}
+            <div>
+              <p className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Truck className="h-4 w-4" /> Informasi Pengiriman
+              </p>
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="space-y-1 md:col-span-2">
+                  <Label className="text-xs">Supplier / Pengirim <span className="text-red-500">*</span></Label>
+                  <Input value={supplier} onChange={e => setSupplier(e.target.value)} placeholder="Nama supplier atau pengirim" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Tanggal Masuk <span className="text-red-500">*</span></Label>
+                  <Input type="date" value={tglMasuk} onChange={e => setTglMasuk(e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">No. Surat Jalan</Label>
+                  <Input value={noSuratJalan} onChange={e => setNoSuratJalan(e.target.value)} placeholder="cth: SJ-2026-010" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">No. Kendaraan</Label>
+                  <Input value={noKendaraan} onChange={e => setNoKendaraan(e.target.value)} placeholder="cth: B 1234 XY" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Gudang Tujuan <span className="text-red-500">*</span></Label>
+                  <Select value={gudang} onValueChange={setGudang}>
+                    <SelectTrigger><SelectValue placeholder="Pilih gudang..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Gudang RM-A">Gudang RM-A (Bahan Baku)</SelectItem>
+                      <SelectItem value="Gudang RM-B">Gudang RM-B (Bahan Baku)</SelectItem>
+                      <SelectItem value="Gudang FG-A">Gudang FG-A (Barang Jadi)</SelectItem>
+                      <SelectItem value="Gudang FG-B">Gudang FG-B (Barang Jadi)</SelectItem>
+                      <SelectItem value="Gudang Sementara">Gudang Sementara</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Penerima</Label>
+                  <Input value={penerima} onChange={e => setPenerima(e.target.value)} placeholder="Nama penerima di gudang" />
+                </div>
+              </div>
+            </div>
 
-                    <div className="grid grid-cols-2 gap-6 py-4">
-                        <div className="space-y-4">
-                            <h3 className="font-semibold text-sm border-b pb-2">Shipment Details</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>Delivery Note No. (Surat Jalan)</Label>
-                                    <Input placeholder="Enter SJ Number" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Vehicle Number</Label>
-                                    <Input placeholder="e.g. B 1234 XY" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Receiver Name</Label>
-                                    <Input defaultValue="Current User" readOnly disabled />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Received Date</Label>
-                                    <Input type="datetime-local"  />
-                                </div>
-                            </div>
-                            
-                            <div className="space-y-2 mt-4">
-                                <Label>Upload Delivery Document</Label>
-                                <FileUpload onFileSelect={() => {}} />
-                            </div>
+            <Separator />
+
+            {/* Material Lines */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold flex items-center gap-2">
+                  <Package className="h-4 w-4" /> Daftar Material Diterima
+                </p>
+                <Button type="button" variant="outline" size="sm" className="gap-1" onClick={addLine}>
+                  <Plus className="h-3 w-3" />
+                  Tambah Material
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {lines.map((line, idx) => (
+                  <div key={line.id} className="border rounded-lg overflow-hidden">
+                    {/* Line header */}
+                    <div
+                      className="flex items-center justify-between px-3 py-2 bg-muted/30 cursor-pointer hover:bg-muted/50"
+                      onClick={() => setExpandedLine(expandedLine === line.id ? null : line.id)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs w-6 h-6 rounded-full flex items-center justify-center p-0">{idx + 1}</Badge>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {line.namaBarang || <span className="text-muted-foreground italic">Material {idx + 1}</span>}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {line.kodeBarang && `${line.kodeBarang} · `}
+                            {line.qtyDiterima && `Diterima: ${line.qtyDiterima} ${line.satuan}`}
+                          </p>
                         </div>
-
-                        <div className="space-y-4">
-                            <h3 className="font-semibold text-sm border-b pb-2">Items to Receive</h3>
-                            <div className="space-y-3 max-h-[300px] overflow-auto pr-2">
-                                {selectedPO?.items.map((item, idx) => (
-                                    <div key={idx} className="bg-secondary/20 p-3 rounded-lg border">
-                                        <div className="flex justify-between mb-2">
-                                            <span className="font-medium">{item.name}</span>
-                                            <span className="text-xs font-mono bg-white px-1 rounded border">{item.code}</span>
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-3 items-end">
-                                            <div>
-                                                <span className="text-xs text-muted-foreground block mb-1">Ordered</span>
-                                                <span className="font-bold">{item.quantity.toLocaleString()} {item.unit}</span>
-                                            </div>
-                                            <div className="col-span-2">
-                                                <Label className="text-xs mb-1 block">Received Quantity</Label>
-                                                <div className="flex items-center gap-2">
-                                                    <Input 
-                                                        type="number" 
-                                                        defaultValue={item.quantity} 
-                                                        className="h-8"
-                                                    />
-                                                    <span className="text-sm text-muted-foreground">{item.unit}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {lines.length > 1 && (
+                          <Button
+                            type="button" variant="ghost" size="icon"
+                            className="h-6 w-6 text-red-500"
+                            onClick={e => { e.stopPropagation(); removeLine(line.id) }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                        {expandedLine === line.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </div>
                     </div>
 
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setSelectedPO(null)}>Cancel</Button>
-                        <Button className="bg-green-600 hover:bg-green-700 gap-2">
-                            <CheckCircle className="h-4 w-4" />
-                            Confirm Receipt
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    {/* Line form */}
+                    {expandedLine === line.id && (
+                      <div className="p-3 grid gap-3 md:grid-cols-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Kode Material</Label>
+                          <Input value={line.kodeBarang} onChange={e => updateLine(line.id, 'kodeBarang', e.target.value)} placeholder="cth: BB-HRC-001" />
+                        </div>
+                        <div className="space-y-1 md:col-span-2">
+                          <Label className="text-xs">Nama Material <span className="text-red-500">*</span></Label>
+                          <Input value={line.namaBarang} onChange={e => updateLine(line.id, 'namaBarang', e.target.value)} placeholder="Nama lengkap material" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Satuan</Label>
+                          <Select value={line.satuan} onValueChange={v => updateLine(line.id, 'satuan', v)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="KG">KG</SelectItem>
+                              <SelectItem value="TON">TON</SelectItem>
+                              <SelectItem value="PCS">PCS</SelectItem>
+                              <SelectItem value="MTR">MTR</SelectItem>
+                              <SelectItem value="LTR">LTR</SelectItem>
+                              <SelectItem value="SET">SET</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Qty Dipesan</Label>
+                          <Input type="number" value={line.qtyDipesan} onChange={e => updateLine(line.id, 'qtyDipesan', e.target.value)} placeholder="0" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Qty Diterima <span className="text-red-500">*</span></Label>
+                          <Input type="number" value={line.qtyDiterima} onChange={e => updateLine(line.id, 'qtyDiterima', e.target.value)} placeholder="0" />
+                          {line.qtyDipesan && line.qtyDiterima && parseFloat(line.qtyDiterima) < parseFloat(line.qtyDipesan) && (
+                            <p className="text-xs text-orange-600">⚠ Kurang: {(parseFloat(line.qtyDipesan) - parseFloat(line.qtyDiterima)).toLocaleString('id-ID')} {line.satuan}</p>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Kondisi</Label>
+                          <Select value={line.kondisi} onValueChange={v => updateLine(line.id, 'kondisi', v)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Baik">Baik</SelectItem>
+                              <SelectItem value="Rusak Sebagian">Rusak Sebagian</SelectItem>
+                              <SelectItem value="Rusak Semua">Rusak Semua</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1 md:col-span-2">
+                          <Label className="text-xs">Keterangan</Label>
+                          <Input value={line.keterangan} onChange={e => updateLine(line.id, 'keterangan', e.target.value)} placeholder="Catatan kondisi barang (opsional)" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
 
+            <Separator />
+
+            {/* Catatan */}
+            <div className="space-y-1">
+              <Label className="text-xs">Catatan Penerimaan</Label>
+              <Textarea value={catatan} onChange={e => setCatatan(e.target.value)} rows={2} placeholder="Catatan tambahan (opsional)" />
+            </div>
           </div>
-        </div></AppLayout>)
+
+          <DialogFooter className="gap-2 pt-2">
+            <Button variant="outline" onClick={() => { setShowManualForm(false); resetManualForm() }}>Batal</Button>
+            <Button
+              className="gap-2 bg-green-600 hover:bg-green-700"
+              disabled={!jenisDoc || !supplier || !tglMasuk || !gudang}
+              onClick={() => { setShowManualForm(false); resetManualForm() }}
+            >
+              <CheckCircle className="h-4 w-4" />
+              Konfirmasi Penerimaan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: Receive dari PO ── */}
+      <Dialog open={!!selectedPO} onOpenChange={open => !open && setSelectedPO(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Terima Pengiriman — {selectedPO?.id}</DialogTitle>
+            <DialogDescription>{selectedPO?.supplier}</DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-6 py-4">
+            <div className="space-y-3">
+              <p className="font-semibold text-sm border-b pb-2">Detail Pengiriman</p>
+              <div className="space-y-2">
+                <Label className="text-xs">No. Surat Jalan</Label>
+                <Input placeholder="cth: SJ-2026-010" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">No. Kendaraan</Label>
+                <Input placeholder="cth: B 1234 XY" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Tanggal Diterima</Label>
+                <Input type="datetime-local" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Gudang Tujuan</Label>
+                <Select>
+                  <SelectTrigger><SelectValue placeholder="Pilih gudang..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Gudang RM-A">Gudang RM-A</SelectItem>
+                    <SelectItem value="Gudang RM-B">Gudang RM-B</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Penerima</Label>
+                <Input placeholder="Nama penerima di gudang" />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="font-semibold text-sm border-b pb-2">Item yang Diterima</p>
+              <div className="space-y-3 max-h-64 overflow-auto pr-1">
+                {selectedPO?.items.map((item, idx) => (
+                  <div key={idx} className="bg-muted/20 p-3 rounded-lg border">
+                    <div className="flex justify-between mb-2">
+                      <span className="font-medium text-sm">{item.name}</span>
+                      <span className="text-xs font-mono bg-white px-1 rounded border">{item.code}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 items-end">
+                      <div>
+                        <span className="text-xs text-muted-foreground block">Dipesan</span>
+                        <span className="font-bold text-sm">{item.quantity.toLocaleString()} {item.unit}</span>
+                      </div>
+                      <div>
+                        <Label className="text-xs mb-1 block">Qty Diterima</Label>
+                        <div className="flex items-center gap-1">
+                          <Input type="number" defaultValue={item.quantity} className="h-8 text-sm" />
+                          <span className="text-xs text-muted-foreground">{item.unit}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedPO(null)}>Batal</Button>
+            <Button className="bg-green-600 hover:bg-green-700 gap-2" onClick={() => setSelectedPO(null)}>
+              <CheckCircle className="h-4 w-4" />
+              Konfirmasi Penerimaan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AppLayout>
+  )
 }
