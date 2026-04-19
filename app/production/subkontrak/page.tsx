@@ -31,8 +31,8 @@ import {
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import { exportToExcel } from '@/lib/utils/export-excel'
+import { useSubkontrak } from '@/lib/store/hooks'
 import {
-  MOCK_SUBKON_RECORDS,
   MOCK_SUBKON_MASTER,
   SUBKON_STATUS_STEPS,
   SUBKON_STATUS_CONFIG,
@@ -90,6 +90,7 @@ function StatusStepper({ status }: { status: SubkonStatus }) {
 }
 
 export default function SubkontrakPage() {
+  const { records, createSubkon } = useSubkontrak()
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [selectedRecord, setSelectedRecord] = useState<SubkonRecord | null>(null)
   const [showFormDialog, setShowFormDialog] = useState(false)
@@ -101,15 +102,15 @@ export default function SubkontrakPage() {
   const [formFasilitas, setFormFasilitas] = useState('')
   const [formCatatan, setFormCatatan] = useState('')
 
-  const filtered = MOCK_SUBKON_RECORDS.filter(r =>
+  const filtered = records.filter(r =>
     filterStatus === 'all' ? true : r.status === filterStatus
   )
 
   const counts = {
-    total: MOCK_SUBKON_RECORDS.length,
-    draft: MOCK_SUBKON_RECORDS.filter(r => r.status === 'Draft').length,
-    berjalan: MOCK_SUBKON_RECORDS.filter(r => ['BB Dikirim', 'Dalam Proses', 'Hasil Diterima'].includes(r.status)).length,
-    selesai: MOCK_SUBKON_RECORDS.filter(r => r.status === 'Selesai').length,
+    total: records.length,
+    draft: records.filter(r => r.status === 'Draft').length,
+    berjalan: records.filter(r => ['BB Dikirim', 'Dalam Proses', 'Hasil Diterima'].includes(r.status)).length,
+    selesai: records.filter(r => r.status === 'Selesai').length,
   }
 
   function resetForm() {
@@ -574,7 +575,35 @@ export default function SubkontrakPage() {
             </Button>
             <Button
               disabled={!formSubkon || !formDeskripsi || !formTarget}
-              onClick={() => { setShowFormDialog(false); resetForm() }}
+              onClick={() => {
+                const master = MOCK_SUBKON_MASTER.find(s => s.id === formSubkon)
+                const fasKirim = formFasilitas === 'pengembalian' ? 'SUBK KITE 2.1' : 'SUBK KITE 1.1'
+                const fasTerima = formFasilitas === 'pengembalian' ? 'SUBK KITE 2.2' : 'SUBK KITE 1.2'
+                createSubkon({
+                  namaSubkon: master?.nama ?? formSubkon,
+                  alamatSubkon: '-',
+                  npwpSubkon: master?.npwp ?? '-',
+                  jobNo: '-',
+                  jobTgl: new Date().toISOString().slice(0, 10),
+                  deskripsiPekerjaan: formDeskripsi,
+                  targetSelesai: formTarget,
+                  tglSelesaiAktual: '-',
+                  subkKiteKirimNo: '-',
+                  subkKiteKirimTgl: '-',
+                  subkKiteKirimJenis: fasKirim,
+                  subkKiteTerimaNo: '-',
+                  subkKiteTerimaTgl: '-',
+                  subkKiteTerimaJenis: fasTerima,
+                  suratJalanNo: '-',
+                  suratJalanTgl: '-',
+                  items: [],
+                  feeJasa: { invoiceNo: '-', invoiceTgl: '-', nilaiJasa: 0, status: 'Belum Dibayar' },
+                  status: 'Draft',
+                  catatan: formCatatan,
+                })
+                setShowFormDialog(false)
+                resetForm()
+              }}
               className="gap-2"
             >
               <FileText className="h-4 w-4" />

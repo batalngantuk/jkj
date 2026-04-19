@@ -19,13 +19,17 @@ import {
   MOCK_MUTASI_BB,
   MOCK_MUTASI_HP,
   MOCK_WASTE_SCRAP,
+  type PemasukanBB,
+  type PemakaianBB,
+  type PemakaianBBSubkon,
   type PemasukanHP,
   type PengeluaranHP,
+  type MutasiBB,
   type MutasiHP,
   type WasteScrap,
 } from '@/lib/mock-data/kite-inventory'
 import { exportToExcel, exportToExcelMultiSheet } from '@/lib/utils/export-excel'
-import { useFGReceipts, usePEB, useWaste, useStock } from '@/lib/store/hooks'
+import { useFGReceipts, usePEB, useWaste, useStock, useSubkontrak } from '@/lib/store/hooks'
 
 function formatNumber(n: number) {
   return n.toLocaleString('id-ID')
@@ -40,10 +44,90 @@ export default function KiteInventoryPage() {
   const { receipts } = useFGReceipts()
   const { pebs } = usePEB()
   const { records: wasteRecords } = useWaste()
-  const { stock } = useStock()
+  const { stock, movements } = useStock()
+  const { records: subkonRecords } = useSubkontrak()
 
   const [dateFrom, setDateFrom] = useState('2026-01-01')
   const [dateTo, setDateTo] = useState('2026-12-31')
+
+  // Lap 1: Pemasukan BB — seed + live GR/IMPORT movements (BB category)
+  const livePemasukanBB: PemasukanBB[] = movements
+    .filter(m => (m.transactionType === 'IMPORT' || m.transactionType === 'LOCAL_PURCHASE') && m.quantityIn > 0)
+    .filter(m => !MOCK_PEMASUKAN_BB.find(s => s.buktiPenerimaanNo === m.referenceNumber))
+    .map((m, i) => ({
+      no: MOCK_PEMASUKAN_BB.length + i + 1,
+      tglRekam: m.date,
+      jenisDokumen: m.transactionType === 'IMPORT' ? 'BC 2.0' : 'Faktur Lokal',
+      noDokumen: m.referenceNumber,
+      tglDokumen: m.date,
+      kodeHS: '-',
+      noSeriBarang: '001',
+      buktiPenerimaanNo: m.referenceNumber,
+      buktiPenerimaanTgl: m.date,
+      kodeBB: m.materialCode,
+      namaBarang: m.materialName,
+      satuan: 'kg',
+      jumlah: m.quantityIn,
+      matauang: 'USD',
+      nilaiBarang: 0,
+      gudang: 'Gudang BB-1',
+      penerimaSubkon: '-',
+      negaraAsal: '-',
+    }))
+  const allPemasukanBB = [...MOCK_PEMASUKAN_BB, ...livePemasukanBB]
+
+  // Lap 2: Pemakaian BB — seed + live PRODUCTION_OUT movements
+  const livePemakaianBB: PemakaianBB[] = movements
+    .filter(m => m.transactionType === 'PRODUCTION_OUT' && m.quantityOut > 0)
+    .filter(m => !MOCK_PEMAKAIAN_BB.find(s => s.buktiPengeluaranNo === m.referenceNumber))
+    .map((m, i) => ({
+      no: MOCK_PEMAKAIAN_BB.length + i + 1,
+      buktiPengeluaranNo: m.referenceNumber,
+      buktiPengeluaranTgl: m.date,
+      kodeBarang: m.materialCode,
+      namaBarang: m.materialName,
+      satuan: 'kg',
+      jumlahDigunakan: m.quantityOut,
+      jumlahDisubkonkan: 0,
+      penerimaSubkon: '-',
+    }))
+  const allPemakaianBB = [...MOCK_PEMAKAIAN_BB, ...livePemakaianBB]
+
+  // Lap 3: Pemakaian BB Subkontrak — seed + live subkon records (KITE items)
+  const livePemakaianBBSubkon: PemakaianBBSubkon[] = subkonRecords
+    .filter(r => !MOCK_PEMAKAIAN_BB_SUBKON.find(s => s.buktiPengeluaranNo === r.subkKiteKirimNo))
+    .flatMap((r, ri) =>
+      r.items
+        .filter(item => item.isKITE)
+        .map((item, ii) => ({
+          no: MOCK_PEMAKAIAN_BB_SUBKON.length + ri + ii + 1,
+          buktiPengeluaranNo: r.subkKiteKirimNo === '-' ? r.id : r.subkKiteKirimNo,
+          buktiPengeluaranTgl: r.subkKiteKirimTgl === '-' ? r.jobTgl : r.subkKiteKirimTgl,
+          kodeBarang: item.kodeBB,
+          namaBarang: item.namaBB,
+          satuan: item.satuanBB,
+          jumlahDisubkonkan: item.qtyKirim,
+          penerimaSubkon: r.namaSubkon,
+        }))
+    )
+  const allPemakaianBBSubkon = [...MOCK_PEMAKAIAN_BB_SUBKON, ...livePemakaianBBSubkon]
+
+  // Lap 6: Mutasi BB — seed + live stock (BB category)
+  const liveMutasiBB: MutasiBB[] = stock
+    .filter(s => s.category === 'BB')
+    .filter(s => !MOCK_MUTASI_BB.find(m => m.kodeBarang === s.materialCode))
+    .map((s, i) => ({
+      no: MOCK_MUTASI_BB.length + i + 1,
+      kodeBarang: s.materialCode,
+      namaBarang: s.materialName,
+      satuan: s.unit,
+      saldoAwal: 0,
+      pemasukan: s.qtyOnHand + (s.qtyReserved || 0),
+      pengeluaran: s.qtyReserved || 0,
+      saldoAkhir: s.qtyAvailable,
+      gudang: s.location,
+    }))
+  const allMutasiBB = [...MOCK_MUTASI_BB, ...liveMutasiBB]
 
   // Lap 4: Pemasukan HP — seed + FG receipts dari live store
   const livePemasukanHP: PemasukanHP[] = receipts.map((r, i) => ({
@@ -120,12 +204,12 @@ export default function KiteInventoryPage() {
 
   const handleExportSemua = () => {
     exportToExcelMultiSheet([
-      { name: '1-Pemasukan BB', data: MOCK_PEMASUKAN_BB as unknown as Record<string, unknown>[] },
-      { name: '2-Pemakaian BB', data: MOCK_PEMAKAIAN_BB as unknown as Record<string, unknown>[] },
-      { name: '3-Pemakaian BB Subkon', data: MOCK_PEMAKAIAN_BB_SUBKON as unknown as Record<string, unknown>[] },
+      { name: '1-Pemasukan BB', data: allPemasukanBB as unknown as Record<string, unknown>[] },
+      { name: '2-Pemakaian BB', data: allPemakaianBB as unknown as Record<string, unknown>[] },
+      { name: '3-Pemakaian BB Subkon', data: allPemakaianBBSubkon as unknown as Record<string, unknown>[] },
       { name: '4-Pemasukan HP', data: allPemasukanHP as unknown as Record<string, unknown>[] },
       { name: '5-Pengeluaran HP', data: allPengeluaranHP as unknown as Record<string, unknown>[] },
-      { name: '6-Mutasi BB', data: MOCK_MUTASI_BB as unknown as Record<string, unknown>[] },
+      { name: '6-Mutasi BB', data: allMutasiBB as unknown as Record<string, unknown>[] },
       { name: '7-Mutasi HP', data: allMutasiHP as unknown as Record<string, unknown>[] },
       { name: '8-Waste Scrap', data: allWasteScrap as unknown as Record<string, unknown>[] },
     ], `KITE_IT_Inventory_${dateFrom}_sd_${dateTo}`)
@@ -211,7 +295,7 @@ export default function KiteInventoryPage() {
                   </CardTitle>
                   <CardDescription>Pencatatan setiap bahan baku yang masuk berdasarkan dokumen impor</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(MOCK_PEMASUKAN_BB as unknown as Record<string,unknown>[], 'Lap1_Pemasukan_BB', 'Pemasukan BB')}>
+                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(allPemasukanBB as unknown as Record<string,unknown>[], 'Lap1_Pemasukan_BB', 'Pemasukan BB')}>
                   <Download className="h-3 w-3" />
                   Export
                 </Button>
@@ -242,7 +326,7 @@ export default function KiteInventoryPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {MOCK_PEMASUKAN_BB.map(row => (
+                      {allPemasukanBB.map(row => (
                         <TableRow key={row.no}>
                           <TableCell className="text-center">{row.no}</TableCell>
                           <TableCell className="whitespace-nowrap">{row.tglRekam}</TableCell>
@@ -271,7 +355,7 @@ export default function KiteInventoryPage() {
                     </TableBody>
                   </Table>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3">{MOCK_PEMASUKAN_BB.length} record ditemukan</p>
+                <p className="text-xs text-muted-foreground mt-3">{allPemasukanBB.length} record ditemukan</p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -287,7 +371,7 @@ export default function KiteInventoryPage() {
                   </CardTitle>
                   <CardDescription>Pengeluaran bahan baku ke produksi dan/atau ke subkontraktor</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(MOCK_PEMAKAIAN_BB as unknown as Record<string,unknown>[], 'Lap2_Pemakaian_BB', 'Pemakaian BB')}>
+                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(allPemakaianBB as unknown as Record<string,unknown>[], 'Lap2_Pemakaian_BB', 'Pemakaian BB')}>
                   <Download className="h-3 w-3" />
                   Export
                 </Button>
@@ -309,7 +393,7 @@ export default function KiteInventoryPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {MOCK_PEMAKAIAN_BB.map(row => (
+                      {allPemakaianBB.map(row => (
                         <TableRow key={row.no}>
                           <TableCell className="text-center">{row.no}</TableCell>
                           <TableCell className="font-mono text-xs">{row.buktiPengeluaranNo}</TableCell>
@@ -330,7 +414,7 @@ export default function KiteInventoryPage() {
                     </TableBody>
                   </Table>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3">{MOCK_PEMAKAIAN_BB.length} record ditemukan</p>
+                <p className="text-xs text-muted-foreground mt-3">{allPemakaianBB.length} record ditemukan</p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -346,7 +430,7 @@ export default function KiteInventoryPage() {
                   </CardTitle>
                   <CardDescription>Bahan baku KITE yang dikirim ke perusahaan subkontraktor</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(MOCK_PEMAKAIAN_BB_SUBKON as unknown as Record<string,unknown>[], 'Lap3_Pemakaian_BB_Subkon', 'Pemakaian BB Subkon')}>
+                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(allPemakaianBBSubkon as unknown as Record<string,unknown>[], 'Lap3_Pemakaian_BB_Subkon', 'Pemakaian BB Subkon')}>
                   <Download className="h-3 w-3" />
                   Export
                 </Button>
@@ -367,7 +451,7 @@ export default function KiteInventoryPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {MOCK_PEMAKAIAN_BB_SUBKON.map(row => (
+                      {allPemakaianBBSubkon.map(row => (
                         <TableRow key={row.no}>
                           <TableCell className="text-center">{row.no}</TableCell>
                           <TableCell className="font-mono text-xs">{row.buktiPengeluaranNo}</TableCell>
@@ -382,7 +466,7 @@ export default function KiteInventoryPage() {
                     </TableBody>
                   </Table>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3">{MOCK_PEMAKAIAN_BB_SUBKON.length} record ditemukan</p>
+                <p className="text-xs text-muted-foreground mt-3">{allPemakaianBBSubkon.length} record ditemukan</p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -523,7 +607,7 @@ export default function KiteInventoryPage() {
                   </CardTitle>
                   <CardDescription>Posisi saldo bahan baku: saldo awal, pemasukan, pengeluaran, saldo akhir</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(MOCK_MUTASI_BB as unknown as Record<string,unknown>[], 'Lap6_Mutasi_BB', 'Mutasi BB')}>
+                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => exportToExcel(allMutasiBB as unknown as Record<string,unknown>[], 'Lap6_Mutasi_BB', 'Mutasi BB')}>
                   <Download className="h-3 w-3" />
                   Export
                 </Button>
@@ -545,7 +629,7 @@ export default function KiteInventoryPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {MOCK_MUTASI_BB.map(row => (
+                      {allMutasiBB.map(row => (
                         <TableRow key={row.no}>
                           <TableCell className="text-center">{row.no}</TableCell>
                           <TableCell className="font-mono text-xs">{row.kodeBarang}</TableCell>
@@ -561,7 +645,7 @@ export default function KiteInventoryPage() {
                     </TableBody>
                   </Table>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3">{MOCK_MUTASI_BB.length} item bahan baku</p>
+                <p className="text-xs text-muted-foreground mt-3">{allMutasiBB.length} item bahan baku</p>
               </CardContent>
             </Card>
           </TabsContent>

@@ -15,7 +15,7 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { StatusTimeline, TimelineStep } from '@/components/shared/status-timeline'
 import AppLayout from '@/components/app-layout'
 import { MOCK_BOMS } from '@/lib/mock-data/production'
-import { useWorkOrders } from '@/lib/store/hooks'
+import { useWorkOrders, useStock } from '@/lib/store/hooks'
 
 const STATUS_ACTIONS: Record<string, { label: string; icon: React.ElementType; variant?: string }[]> = {
   'PLANNED': [
@@ -39,6 +39,7 @@ export default function WorkOrderDetailPage() {
   const params = useParams()
   const id = params.id as string
   const { getById, updateWorkOrder } = useWorkOrders()
+  const { deductStock } = useStock()
   const wo = getById(id)
 
   if (!wo) {
@@ -106,7 +107,14 @@ export default function WorkOrderDetailPage() {
             {actions.map((action) => {
               const Icon = action.icon
               const handleAction = () => {
-                if (action.label === 'Mulai Produksi') updateWorkOrder(wo.id, { status: 'IN PROGRESS', progress: 0 })
+                if (action.label === 'Mulai Produksi') {
+                  if (bom) {
+                    bom.items.forEach(item => {
+                      deductStock(item.code, item.quantityPerUnit * wo.quantity, wo.id, 'WO', 'PRODUCTION_OUT')
+                    })
+                  }
+                  updateWorkOrder(wo.id, { status: 'IN PROGRESS', progress: 0 })
+                }
                 else if (action.label === 'Selesai → QC') updateWorkOrder(wo.id, { status: 'QC INSPECTION', progress: 90 })
                 else if (action.label === 'QC Lulus → Selesai') updateWorkOrder(wo.id, { status: 'COMPLETED', progress: 100 })
                 else if (action.label === 'QC Gagal → Ulangi') updateWorkOrder(wo.id, { status: 'IN PROGRESS', progress: 50 })

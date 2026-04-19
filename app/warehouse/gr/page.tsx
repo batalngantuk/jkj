@@ -31,8 +31,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
+import AppLayout from '@/components/app-layout'
+import { useStock } from '@/lib/store/hooks'
+import { useRouter } from 'next/navigation'
 
 export default function GoodsReceiptPage() {
+  const { addStock } = useStock()
+  const router = useRouter()
   const [deliveredQty, setDeliveredQty] = useState({
     'LAT-001': 10000,
     'LAT-002': 4950,
@@ -465,7 +470,25 @@ export default function GoodsReceiptPage() {
                 <FileText className="h-4 w-4" />
                 Save as Draft
               </Button>
-              <Button className="gap-2 bg-primary hover:bg-primary/90">
+              <Button
+                className="gap-2 bg-primary hover:bg-primary/90"
+                onClick={() => {
+                  items.forEach(item => {
+                    const qty = deliveredQty[item.code as keyof typeof deliveredQty] || 0
+                    addStock(
+                      item.code,
+                      item.description,
+                      qty,
+                      'GR-2026-001',
+                      'GR',
+                      'BB',
+                      item.unit,
+                      storageLocation[item.code as keyof typeof storageLocation] || 'Gudang BB-1',
+                    )
+                  })
+                  router.push('/warehouse')
+                }}
+              >
                 <CheckCircle className="h-4 w-4" />
                 Complete GR & Update Stock
               </Button>
