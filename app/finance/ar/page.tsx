@@ -10,14 +10,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import AppLayout from '@/components/app-layout'
 import { StatusBadge } from '@/components/shared/status-badge'
-import { MOCK_AR_INVOICES, ARInvoice } from '@/lib/mock-data/finance'
 import { exportToExcel } from '@/lib/utils/export-excel'
+import { useARInvoices } from '@/lib/store/hooks'
+import type { ARInvoice } from '@/lib/mock-data/finance'
 
 export default function ARPage() {
+  const { invoices: MOCK_AR_INVOICES } = useARInvoices()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
 
-  const filteredInvoices = MOCK_AR_INVOICES.filter(invoice => {
+  const filteredInvoices = MOCK_AR_INVOICES.filter((invoice: ARInvoice) => {
     const matchesSearch = 
       invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||

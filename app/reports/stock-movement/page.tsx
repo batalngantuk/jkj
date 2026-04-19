@@ -9,18 +9,40 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import AppLayout from '@/components/app-layout'
-import { MOCK_STOCK_MOVEMENTS, generateStockMovementSummary } from '@/lib/mock-data/stock-movements'
+import { MOCK_STOCK_MOVEMENTS, generateStockMovementSummary, type StockMovement } from '@/lib/mock-data/stock-movements'
 import { exportToExcel } from '@/lib/utils/export-excel'
+import { useStock } from '@/lib/store/hooks'
 
 export default function StockMovementReportPage() {
+  const { movements: liveMovements } = useStock()
   const [selectedMaterial, setSelectedMaterial] = useState<string>('all')
   const [selectedPeriod, setSelectedPeriod] = useState<string>('2026-02')
 
+  // Merge static seed + live movements
+  const allMovements = [
+    ...MOCK_STOCK_MOVEMENTS,
+    ...liveMovements.map(m => ({
+      id: m.id,
+      date: m.date,
+      materialCode: m.materialCode,
+      materialName: m.materialName,
+      transactionType: (m.transactionType === 'FG_IN' ? 'ADJUSTMENT' : m.transactionType) as StockMovement['transactionType'],
+      referenceNumber: m.referenceNumber,
+      referenceType: m.referenceType as 'BC23' | 'BC30' | 'WO' | 'PO' | 'SO' | 'ADJ' | 'NONE',
+      quantityIn: m.quantityIn,
+      quantityOut: m.quantityOut,
+      unit: 'kg',
+      runningBalance: m.runningBalance,
+      notes: m.notes || '',
+      lotNumber: undefined as string | undefined,
+    }))
+  ]
+
   // Get unique materials
-  const materials = Array.from(new Set(MOCK_STOCK_MOVEMENTS.map(m => m.materialCode)))
-  
+  const materials = Array.from(new Set(allMovements.map(m => m.materialCode)))
+
   // Filter movements
-  const filteredMovements = MOCK_STOCK_MOVEMENTS.filter(m => {
+  const filteredMovements = allMovements.filter(m => {
     if (selectedMaterial !== 'all' && m.materialCode !== selectedMaterial) return false
     if (selectedPeriod && !m.date.startsWith(selectedPeriod)) return false
     return true

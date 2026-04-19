@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import AppLayout from '@/components/app-layout'
-import { MOCK_WORK_ORDERS } from '@/lib/mock-data/production'
+import { useWorkOrders } from '@/lib/store/hooks'
 
 const STATUS_COLOR: Record<string, string> = {
   'PLANNED': 'bg-gray-100 text-gray-700 border-gray-300',
@@ -22,10 +22,11 @@ const STATUS_COLOR: Record<string, string> = {
 }
 
 export default function WorkOrderListPage() {
+  const { workOrders } = useWorkOrders()
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
 
-  const filtered = MOCK_WORK_ORDERS.filter(wo => {
+  const filtered = workOrders.filter(wo => {
     const matchSearch = wo.id.toLowerCase().includes(search.toLowerCase()) ||
       wo.product.toLowerCase().includes(search.toLowerCase()) ||
       wo.soNumber.toLowerCase().includes(search.toLowerCase())
@@ -34,11 +35,11 @@ export default function WorkOrderListPage() {
   })
 
   const counts = {
-    all: MOCK_WORK_ORDERS.length,
-    planned: MOCK_WORK_ORDERS.filter(w => w.status === 'PLANNED').length,
-    inProgress: MOCK_WORK_ORDERS.filter(w => w.status === 'IN PROGRESS').length,
-    qc: MOCK_WORK_ORDERS.filter(w => w.status === 'QC INSPECTION').length,
-    completed: MOCK_WORK_ORDERS.filter(w => w.status === 'COMPLETED').length,
+    all: workOrders.length,
+    planned: workOrders.filter(w => w.status === 'PLANNED').length,
+    inProgress: workOrders.filter(w => w.status === 'IN PROGRESS').length,
+    qc: workOrders.filter(w => w.status === 'QC INSPECTION').length,
+    completed: workOrders.filter(w => w.status === 'COMPLETED').length,
   }
 
   return (

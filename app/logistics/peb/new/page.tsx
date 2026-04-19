@@ -20,9 +20,11 @@ import {
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import { useRouter } from 'next/navigation'
+import { usePEB } from '@/lib/store/hooks'
 
 export default function PEBCreatePage() {
   const router = useRouter()
+  const { createPEB } = usePEB()
   const [loading, setLoading] = useState(false)
 
   // Form State
@@ -147,22 +149,46 @@ export default function PEBCreatePage() {
     setItems(newItems)
   }
 
+  const buildPayload = (status: 'DRAFT' | 'SUBMITTED') => ({
+    documentDate: new Date().toISOString().split('T')[0],
+    status,
+    customerName,
+    destinationCountry,
+    portOfLoading,
+    exportDate,
+    currency: currency as 'USD' | 'EUR' | 'SGD',
+    exchangeRate,
+    fobValue,
+    fobIdr,
+    items: items.map((i, idx) => ({
+      id: String(idx + 1),
+      materialCode: i.materialCode,
+      materialName: i.materialName,
+      hsCode: i.hsCode,
+      quantity: parseFloat(i.quantity) || 0,
+      uom: i.uom,
+      unitPrice: parseFloat(i.unitPrice) || 0,
+      totalPrice: parseFloat(i.totalPrice) || 0,
+    })),
+    createdBy: 'Admin',
+  })
+
   const handleSaveDraft = async () => {
     setLoading(true)
-    // TODO: Call API to save as DRAFT
+    createPEB(buildPayload('DRAFT'))
     setTimeout(() => {
       setLoading(false)
-      alert('PEB saved as draft')
-    }, 1000)
+      router.push('/logistics/peb')
+    }, 400)
   }
 
   const handleSubmit = async () => {
     setLoading(true)
-    // TODO: Call API to create and submit PEB
+    createPEB(buildPayload('SUBMITTED'))
     setTimeout(() => {
       setLoading(false)
       router.push('/logistics/peb')
-    }, 1000)
+    }, 400)
   }
 
   return (

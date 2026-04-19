@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { FileUpload } from '@/components/shared/file-upload'
 import { MOCK_PRODUCTS, MOCK_BOMS_SO } from '@/lib/mock-data/sales'
 import AppLayout from '@/components/app-layout'
+import { useSalesOrders } from '@/lib/store/hooks'
 
 interface SOLine {
   id: string
@@ -44,6 +45,7 @@ function newLine(): SOLine {
 
 export default function NewSalesOrderPage() {
   const router = useRouter()
+  const { createOrder } = useSalesOrders()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Header fields
@@ -77,7 +79,20 @@ export default function NewSalesOrderPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    await new Promise(r => setTimeout(r, 800))
+    createOrder({
+      poNumber,
+      customer,
+      product: lines.map(l => l.namaBarang).join(', '),
+      quantity: lines.reduce((s, l) => s + (Number(l.qty) || 0), 0),
+      unitPrice: Number(lines[0]?.hargaSatuan) || 0,
+      total: totalIDR,
+      deliveryDate,
+      status: 'DRAFT',
+      progress: 0,
+      priority: priority as 'Normal' | 'Urgent',
+      createdBy: 'Sales Admin',
+      notes,
+    })
     router.push('/sales')
   }
 

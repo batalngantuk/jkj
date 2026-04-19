@@ -14,113 +14,68 @@ import {
 import AppLayout from '@/components/app-layout'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-
-// Mock data - akan di-replace dengan API call
-const MOCK_PEB_DETAIL = {
-  id: '1',
-  pebNumber: 'PEB-2026-001',
-  npeNumber: 'NPE-123456',
-  documentDate: '2026-03-10',
-  status: 'APPROVED',
-
-  // Customer
-  customer: {
-    id: '1',
-    customerCode: 'CUST-001',
-    customerName: 'ABC Trading USA',
-    country: 'United States',
-    email: 'contact@abctrading.com',
-    phone: '+1-555-0123',
-  },
-
-  // Sales Order (optional)
-  salesOrder: {
-    soNumber: 'SO-2026-001',
-    soDate: '2026-03-05',
-  },
-
-  // Export Details
-  destinationCountry: 'United States',
-  destinationPort: 'Port of Los Angeles',
-  portOfLoading: 'Tanjung Priok',
-  customsOffice: 'KPBC Tanjung Priok',
-  exportDate: '2026-03-15',
-  estimatedDeparture: '2026-03-16',
-  actualDeparture: null,
-
-  // Shipping
-  vesselName: 'MV Pacific Star',
-  voyageNumber: 'VOY-2026-001',
-  containerNumber: 'ABCD1234567',
-  blNumber: 'BL-2026-001',
-  sealNumber: 'SEAL-12345',
-
-  // Financial
-  fobValue: 125000,
-  currency: 'USD',
-  exchangeRate: 15500,
-  fobIdr: 1937500000,
-  vatRate: 0,
-  vatAmount: 0,
-
-  // Export Incentive
-  exportIncentive: 0,
-  incentiveType: null,
-
-  // Optional Traceability
-  workOrderId: 'WO-2026-001',
-  fgLotNumber: 'FG-LOT-001',
-  bc20Reference: 'PIB-2026-001',
-
-  // Customs
-  customsReleaseDate: '2026-03-14',
-  customsReleaseRef: 'CUS-REL-2026-001',
-  exportPermitNumber: 'PERMIT-2026-001',
-
-  // Documents
-  pebFile: 'peb-2026-001.pdf',
-  invoiceFile: 'invoice-2026-001.pdf',
-  packingListFile: 'packing-list-2026-001.pdf',
-  blFile: null,
-  coaFile: 'coa-2026-001.pdf',
-  formEFile: null,
-  healthCertFile: null,
-
-  // Items
-  items: [
-    {
-      id: '1',
-      materialCode: 'FG-001',
-      materialName: 'Steel Coil Grade A',
-      hsCode: '7208.10.00',
-      hsDescription: 'Flat-rolled products of iron',
-      quantity: 100,
-      uom: 'MT',
-      unitPrice: 1250,
-      totalPrice: 125000,
-      packagingType: 'Bundle',
-      numberOfPackages: 10,
-      grossWeight: 102000,
-      netWeight: 100000,
-      lotNumber: 'LOT-001',
-    },
-  ],
-
-  // Audit
-  notes: 'Export to regular customer. ASEAN market.',
-  createdBy: 'user@jkj.com',
-  createdAt: '2026-03-10T10:00:00Z',
-  submittedAt: '2026-03-10T14:00:00Z',
-  submittedBy: 'user@jkj.com',
-  approvedAt: '2026-03-14T09:00:00Z',
-  approvedBy: 'customs@beacukai.go.id',
-}
+import { usePEB } from '@/lib/store/hooks'
 
 export default function PEBDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [peb, setPeb] = useState(MOCK_PEB_DETAIL)
+  const id = params.id as string
+  const { getById, updatePEB } = usePEB()
+  const livePeb = getById(id)
   const [loading, setLoading] = useState(false)
+
+  if (!livePeb) {
+    return (
+      <AppLayout>
+        <div className="p-6">
+          <p className="text-muted-foreground">PEB tidak ditemukan: {id}</p>
+          <Link href="/logistics/peb">
+            <Button variant="outline" className="mt-4">Kembali ke Daftar PEB</Button>
+          </Link>
+        </div>
+      </AppLayout>
+    )
+  }
+
+  const peb = {
+    ...livePeb,
+    // fields present in mock but not in PEBDocument — provide defaults
+    npeNumber: '',
+    customer: { id: '', customerCode: '', customerName: livePeb.customerName, country: livePeb.destinationCountry, email: '', phone: '' },
+    salesOrder: livePeb.soNumber ? { soNumber: livePeb.soNumber, soDate: '' } : null,
+    destinationPort: '',
+    customsOffice: '',
+    estimatedDeparture: '',
+    actualDeparture: null as string | null,
+    vesselName: '',
+    voyageNumber: '',
+    containerNumber: '',
+    blNumber: '',
+    sealNumber: '',
+    vatRate: 0,
+    vatAmount: 0,
+    exportIncentive: 0,
+    incentiveType: null,
+    workOrderId: livePeb.woId || '',
+    fgLotNumber: '',
+    bc20Reference: '',
+    customsReleaseDate: '',
+    customsReleaseRef: '',
+    exportPermitNumber: '',
+    pebFile: null,
+    invoiceFile: null,
+    packingListFile: null,
+    blFile: null,
+    coaFile: null,
+    formEFile: null,
+    healthCertFile: null,
+    notes: livePeb.notes || '',
+    submittedAt: '',
+    submittedBy: '',
+    approvedAt: '',
+    approvedBy: '',
+  }
+
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
     if (currency === 'USD') {
@@ -173,25 +128,17 @@ export default function PEBDetailPage() {
 
   const handleSubmit = async () => {
     setLoading(true)
-    // TODO: Call API /api/peb/[id]/submit
-    setTimeout(() => {
-      setLoading(false)
-      setPeb({ ...peb, status: 'SUBMITTED' })
-      alert('PEB submitted to customs successfully')
-    }, 1000)
+    updatePEB(livePeb.id, { status: 'SUBMITTED' })
+    setTimeout(() => setLoading(false), 400)
   }
 
   const handleMarkExported = async () => {
     setLoading(true)
-    // TODO: Call API /api/peb/[id]/export
-    setTimeout(() => {
-      setLoading(false)
-      setPeb({ ...peb, status: 'EXPORTED', actualDeparture: new Date().toISOString() })
-      alert('PEB marked as exported successfully')
-    }, 1000)
+    updatePEB(livePeb.id, { status: 'EXPORTED' })
+    setTimeout(() => setLoading(false), 400)
   }
 
-  const canSubmit = peb.status === 'DRAFT' || peb.status === 'VERIFIED'
+  const canSubmit = peb.status === 'DRAFT'
   const canExport = peb.status === 'APPROVED'
 
   return (
@@ -412,16 +359,12 @@ export default function PEBDetailPage() {
                           </p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Packaging</p>
-                          <p className="font-medium">
-                            {item.numberOfPackages} {item.packagingType}
-                          </p>
+                          <p className="text-muted-foreground">UOM</p>
+                          <p className="font-medium">{item.uom}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Net Weight</p>
-                          <p className="font-medium">
-                            {item.netWeight.toLocaleString('id-ID')} kg
-                          </p>
+                          <p className="text-muted-foreground">HS Code</p>
+                          <p className="font-medium">{item.hsCode}</p>
                         </div>
                       </div>
                     </div>

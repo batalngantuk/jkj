@@ -14,7 +14,8 @@ import { Progress } from '@/components/ui/progress'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { StatusTimeline, TimelineStep } from '@/components/shared/status-timeline'
 import AppLayout from '@/components/app-layout'
-import { MOCK_WORK_ORDERS, MOCK_BOMS } from '@/lib/mock-data/production'
+import { MOCK_BOMS } from '@/lib/mock-data/production'
+import { useWorkOrders } from '@/lib/store/hooks'
 
 const STATUS_ACTIONS: Record<string, { label: string; icon: React.ElementType; variant?: string }[]> = {
   'PLANNED': [
@@ -37,7 +38,8 @@ const STATUS_ACTIONS: Record<string, { label: string; icon: React.ElementType; v
 export default function WorkOrderDetailPage() {
   const params = useParams()
   const id = params.id as string
-  const wo = MOCK_WORK_ORDERS.find(w => w.id === id)
+  const { getById, updateWorkOrder } = useWorkOrders()
+  const wo = getById(id)
 
   if (!wo) {
     return (
@@ -103,12 +105,21 @@ export default function WorkOrderDetailPage() {
             </Button>
             {actions.map((action) => {
               const Icon = action.icon
+              const handleAction = () => {
+                if (action.label === 'Mulai Produksi') updateWorkOrder(wo.id, { status: 'IN PROGRESS', progress: 0 })
+                else if (action.label === 'Selesai → QC') updateWorkOrder(wo.id, { status: 'QC INSPECTION', progress: 90 })
+                else if (action.label === 'QC Lulus → Selesai') updateWorkOrder(wo.id, { status: 'COMPLETED', progress: 100 })
+                else if (action.label === 'QC Gagal → Ulangi') updateWorkOrder(wo.id, { status: 'IN PROGRESS', progress: 50 })
+                else if (action.label === 'Tahan (On Hold)') updateWorkOrder(wo.id, { status: 'ON HOLD' })
+                else if (action.label === 'Lanjutkan Produksi') updateWorkOrder(wo.id, { status: 'IN PROGRESS' })
+              }
               return (
                 <Button
                   key={action.label}
                   size="sm"
                   variant={(action.variant as 'outline' | 'destructive' | 'default') || 'default'}
                   className="gap-2"
+                  onClick={handleAction}
                 >
                   <Icon className="h-4 w-4" />
                   {action.label}

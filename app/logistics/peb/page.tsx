@@ -11,72 +11,10 @@ import {
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import Link from 'next/link'
-
-// Mock data - akan di-replace dengan API call
-const MOCK_PEB_DATA = [
-  {
-    id: '1',
-    pebNumber: 'PEB-2026-001',
-    npeNumber: 'NPE-123456',
-    documentDate: '2026-03-10',
-    status: 'APPROVED',
-    customer: {
-      customerName: 'ABC Trading USA',
-      country: 'United States',
-    },
-    destinationCountry: 'United States',
-    destinationPort: 'Port of Los Angeles',
-    exportDate: '2026-03-15',
-    fobValue: 125000,
-    fobIdr: 1937500000,
-    currency: 'USD',
-    vatRate: 0,
-    vatAmount: 0,
-    itemCount: 3,
-  },
-  {
-    id: '2',
-    pebNumber: 'PEB-2026-002',
-    npeNumber: 'NPE-123456',
-    documentDate: '2026-03-11',
-    status: 'SUBMITTED',
-    customer: {
-      customerName: 'XYZ Corp Japan',
-      country: 'Japan',
-    },
-    destinationCountry: 'Japan',
-    destinationPort: 'Port of Tokyo',
-    exportDate: '2026-03-18',
-    fobValue: 85000,
-    fobIdr: 1317500000,
-    currency: 'USD',
-    vatRate: 0,
-    vatAmount: 0,
-    itemCount: 2,
-  },
-  {
-    id: '3',
-    pebNumber: 'PEB-2026-003',
-    npeNumber: 'NPE-123456',
-    documentDate: '2026-03-12',
-    status: 'DRAFT',
-    customer: {
-      customerName: 'EuroTech GmbH',
-      country: 'Germany',
-    },
-    destinationCountry: 'Germany',
-    destinationPort: 'Port of Hamburg',
-    exportDate: '2026-03-20',
-    fobValue: 95000,
-    fobIdr: 1472500000,
-    currency: 'USD',
-    vatRate: 0,
-    vatAmount: 0,
-    itemCount: 4,
-  },
-]
+import { usePEB } from '@/lib/store/hooks'
 
 export default function PEBListPage() {
+  const { pebs: MOCK_PEB_DATA } = usePEB()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
 
@@ -120,7 +58,7 @@ export default function PEBListPage() {
 
   const filteredData = MOCK_PEB_DATA.filter(peb => {
     const matchesSearch = peb.pebNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         peb.customer.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+                         peb.customerName.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'ALL' || peb.status === statusFilter
     return matchesSearch && matchesStatus
   })
@@ -315,8 +253,8 @@ export default function PEBListPage() {
                                 <Ship className="h-3 w-3" />
                                 Customer
                               </p>
-                              <p className="font-medium">{peb.customer.customerName}</p>
-                              <p className="text-xs text-muted-foreground">{peb.customer.country}</p>
+                              <p className="font-medium">{peb.customerName}</p>
+                              <p className="text-xs text-muted-foreground">{peb.destinationCountry}</p>
                             </div>
 
                             <div>
@@ -324,8 +262,8 @@ export default function PEBListPage() {
                                 <MapPin className="h-3 w-3" />
                                 Destination
                               </p>
-                              <p className="font-medium">{peb.destinationPort}</p>
-                              <p className="text-xs text-muted-foreground">{peb.destinationCountry}</p>
+                              <p className="font-medium">{peb.destinationCountry}</p>
+                              <p className="text-xs text-muted-foreground">{peb.portOfLoading}</p>
                             </div>
 
                             <div>
@@ -337,7 +275,7 @@ export default function PEBListPage() {
                                 {new Date(peb.exportDate).toLocaleDateString('id-ID')}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                {peb.itemCount} item{peb.itemCount > 1 ? 's' : ''}
+                                {peb.items.length} item{peb.items.length !== 1 ? 's' : ''}
                               </p>
                             </div>
 

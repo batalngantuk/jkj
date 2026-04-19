@@ -6,8 +6,9 @@ import { ArrowLeft, Printer, FileText, Factory, Truck, CreditCard, AlertTriangle
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MOCK_SALES_ORDERS, MOCK_CUSTOMERS } from '@/lib/mock-data/sales'
-import { MOCK_WORK_ORDERS } from '@/lib/mock-data/production'
+import { MOCK_CUSTOMERS } from '@/lib/mock-data/sales'
+import { useSalesOrders } from '@/lib/store/hooks'
+import { useWorkOrders } from '@/lib/store/hooks'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { StatusTimeline, TimelineStep } from '@/components/shared/status-timeline'
 import { ApprovalButtonGroup } from '@/components/shared/approval-button-group'
@@ -18,8 +19,10 @@ import AppLayout from '@/components/app-layout'
 export default function SalesOrderDetailPage() {
   const params = useParams()
   const id = params.id as string
+  const { getById, updateOrder } = useSalesOrders()
+  const { getBySoNumber } = useWorkOrders()
 
-  const order = MOCK_SALES_ORDERS.find(o => o.id === id)
+  const order = getById(id)
 
   if (!order) {
     return (
@@ -35,9 +38,7 @@ export default function SalesOrderDetailPage() {
   }
 
   const customer = MOCK_CUSTOMERS.find(c => c.name === order.customer)
-
-  // Find related WOs from mock production data
-  const relatedWOs = MOCK_WORK_ORDERS.filter(wo => wo.soNumber === order.id)
+  const relatedWOs = getBySoNumber(order.id)
 
   const timelineSteps: TimelineStep[] = [
     {
@@ -77,11 +78,11 @@ export default function SalesOrderDetailPage() {
   ]
 
   const handleApprove = () => {
-    alert('Order Approved! System akan trigger cek produksi.')
+    updateOrder(order.id, { status: 'APPROVED', progress: 0 })
   }
 
   const handleReject = () => {
-    alert('Order Rejected.')
+    updateOrder(order.id, { status: 'REJECTED' })
   }
 
   return (

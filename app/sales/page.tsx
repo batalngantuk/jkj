@@ -21,15 +21,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 import AppLayout from '@/components/app-layout'
-import { MOCK_SALES_ORDERS, SalesOrder } from "@/lib/mock-data/sales"
+import { SalesOrder } from "@/lib/mock-data/sales"
 import { StatusBadge } from "@/components/shared/status-badge"
 import { DataTable } from "@/components/shared/data-table"
+import { useSalesOrders } from '@/lib/store/hooks'
 
 export default function SalesOrderManagement() {
+  const { orders } = useSalesOrders()
   const [statusFilter, setStatusFilter] = useState('All')
   const [searchQuery, setSearchQuery] = useState('')
 
-  const filteredOrders = MOCK_SALES_ORDERS.filter((order) => {
+  const filteredOrders = orders.filter((order) => {
     const statusMatch = statusFilter === 'All' || order.status === statusFilter
     const searchMatch =
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -39,12 +41,12 @@ export default function SalesOrderManagement() {
   })
 
   const statusCounts = {
-    DRAFT: MOCK_SALES_ORDERS.filter((o) => o.status === 'DRAFT').length,
-    'PENDING APPROVAL': MOCK_SALES_ORDERS.filter((o) => o.status === 'PENDING APPROVAL').length,
-    APPROVED: MOCK_SALES_ORDERS.filter((o) => o.status === 'APPROVED').length,
-    'IN PRODUCTION': MOCK_SALES_ORDERS.filter((o) => o.status === 'IN PRODUCTION').length,
-    'READY TO SHIP': MOCK_SALES_ORDERS.filter((o) => o.status === 'READY TO SHIP').length,
-    COMPLETED: MOCK_SALES_ORDERS.filter((o) => o.status === 'COMPLETED').length,
+    DRAFT: orders.filter((o) => o.status === 'DRAFT').length,
+    'PENDING APPROVAL': orders.filter((o) => o.status === 'PENDING APPROVAL').length,
+    APPROVED: orders.filter((o) => o.status === 'APPROVED').length,
+    'IN PRODUCTION': orders.filter((o) => o.status === 'IN PRODUCTION').length,
+    'READY TO SHIP': orders.filter((o) => o.status === 'READY TO SHIP').length,
+    COMPLETED: orders.filter((o) => o.status === 'COMPLETED').length,
   }
 
   const columns = [

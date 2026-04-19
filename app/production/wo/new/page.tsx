@@ -13,8 +13,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import AppLayout from '@/components/app-layout'
-import { MOCK_SALES_ORDERS, MOCK_PRODUCTS } from '@/lib/mock-data/sales'
+import { MOCK_PRODUCTS } from '@/lib/mock-data/sales'
 import { MOCK_PRODUCTION_LINES, MOCK_BOMS } from '@/lib/mock-data/production'
+import { useSalesOrders, useWorkOrders } from '@/lib/store/hooks'
+import type { SalesOrder } from '@/lib/mock-data/sales'
 
 const SHIFTS = [
   { value: 'Shift 1', time: '06:00 – 14:00' },
@@ -30,6 +32,8 @@ const FG_LOCATIONS = [
 
 function CreateWOForm({ soId }: { soId: string | null }) {
   const router = useRouter()
+  const { orders: salesOrders } = useSalesOrders()
+  const { createWorkOrder } = useWorkOrders()
   const [isLoading, setIsLoading] = useState(false)
 
   // Section 1: Order Info
@@ -55,7 +59,7 @@ function CreateWOForm({ soId }: { soId: string | null }) {
   // Auto-fill product when SO selected
   React.useEffect(() => {
     if (selectedSo && selectedSo !== 'manual') {
-      const so = MOCK_SALES_ORDERS.find(s => s.id === selectedSo)
+      const so = salesOrders.find((s: SalesOrder) => s.id === selectedSo)
       if (so) {
         const prod = MOCK_PRODUCTS.find(p => p.name === so.product)
         if (prod) setSelectedProduct(prod.id)
@@ -63,7 +67,7 @@ function CreateWOForm({ soId }: { soId: string | null }) {
         if (so.priority) setPriority(so.priority)
       }
     }
-  }, [selectedSo])
+  }, [selectedSo, salesOrders])
 
   const selectedProductData = MOCK_PRODUCTS.find(p => p.id === selectedProduct)
   const bom = MOCK_BOMS.find(b => b.productId === selectedProduct)
@@ -72,10 +76,23 @@ function CreateWOForm({ soId }: { soId: string | null }) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    const line = MOCK_PRODUCTION_LINES.find(l => l.id === selectedLine)
+    createWorkOrder({
+      soNumber: selectedSo,
+      product: selectedProductData?.name || '',
+      quantity: qty,
+      startDate,
+      endDate,
+      status: 'PLANNED',
+      priority: priority as 'Normal' | 'Urgent',
+      line: line?.name || selectedLine,
+      progress: 0,
+      bomId: bom?.id || '',
+    })
     setTimeout(() => {
       setIsLoading(false)
       router.push('/production/wo')
-    }, 800)
+    }, 400)
   }
 
   return (
@@ -97,7 +114,7 @@ function CreateWOForm({ soId }: { soId: string | null }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="manual">Manual (Tanpa SO)</SelectItem>
-                {MOCK_SALES_ORDERS.filter(s => s.status === 'APPROVED' || s.status === 'IN PRODUCTION').map(so => (
+                {salesOrders.filter((s: SalesOrder) => s.status === 'APPROVED' || s.status === 'IN PRODUCTION').map(so => (
                   <SelectItem key={so.id} value={so.id}>
                     {so.id} — {so.customer} ({so.product})
                   </SelectItem>

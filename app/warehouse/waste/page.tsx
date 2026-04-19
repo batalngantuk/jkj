@@ -24,12 +24,12 @@ import {
 import AppLayout from '@/components/app-layout'
 import { exportToExcel } from '@/lib/utils/export-excel'
 import {
-  MOCK_WASTE_RECORDS,
   STATUS_CONFIG,
   WASTE_STATUS_STEPS,
   type WasteRecord,
   type WasteStatus
 } from '@/lib/mock-data/waste-management'
+import { useWaste } from '@/lib/store/hooks'
 
 // Mock WO data untuk dropdown
 const MOCK_WO_OPTIONS = [
@@ -80,6 +80,7 @@ function StatusStepper({ status }: { status: WasteStatus }) {
 }
 
 export default function WasteManagementPage() {
+  const { records: wasteRecords, createWaste } = useWaste()
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [selectedRecord, setSelectedRecord] = useState<WasteRecord | null>(null)
   const [showFormDialog, setShowFormDialog] = useState(false)
@@ -110,23 +111,45 @@ export default function WasteManagementPage() {
   }
 
   function handleSubmitForm() {
+    if (!selectedWO) return
+    createWaste({
+      woNumber: selectedWO.woNumber,
+      woDate: selectedWO.woDate,
+      kodeBB: selectedWO.kodeBB,
+      namaBB: selectedWO.namaBB,
+      satuan: selectedWO.satuan,
+      bbMasuk: selectedWO.bbMasuk,
+      bbTerpakai: bbTerpakaiNum,
+      wasteQty,
+      wasteRatioBCLKT: selectedWO.wasteRatioBCLKT,
+      wasteRatioAktual,
+      bc24No: '',
+      bc24Tgl: '',
+      status: 'Draft',
+      disposisi: (formDisposisi as any) || '-',
+      pembeli: formPembeli,
+      nilaiWaste: parseFloat(formNilai) || 0,
+      matauang: 'IDR',
+      tglVerifikasi: '',
+      petugasBC: '',
+      catatan: formCatatan,
+    })
     setFormSubmitted(true)
-    // Tutup dialog, tampilkan sukses (mock)
     setShowFormDialog(false)
     resetForm()
   }
 
-  const filtered = MOCK_WASTE_RECORDS.filter(r =>
+  const filtered = wasteRecords.filter((r: WasteRecord) =>
     filterStatus === 'all' ? true : r.status === filterStatus
   )
 
   // Summary counts
   const counts = {
-    total: MOCK_WASTE_RECORDS.length,
-    draft: MOCK_WASTE_RECORDS.filter(r => r.status === 'Draft').length,
-    diajukan: MOCK_WASTE_RECORDS.filter(r => r.status === 'Diajukan BC 2.4').length,
-    diverifikasi: MOCK_WASTE_RECORDS.filter(r => r.status === 'Diverifikasi BC').length,
-    selesai: MOCK_WASTE_RECORDS.filter(r => r.status === 'Selesai').length,
+    total: wasteRecords.length,
+    draft: wasteRecords.filter((r: WasteRecord) => r.status === 'Draft').length,
+    diajukan: wasteRecords.filter((r: WasteRecord) => r.status === 'Diajukan BC 2.4').length,
+    diverifikasi: wasteRecords.filter((r: WasteRecord) => r.status === 'Diverifikasi BC').length,
+    selesai: wasteRecords.filter((r: WasteRecord) => r.status === 'Selesai').length,
   }
 
   return (

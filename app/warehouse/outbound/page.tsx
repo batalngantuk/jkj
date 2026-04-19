@@ -20,72 +20,16 @@ import {
   DialogDescription, DialogFooter
 } from '@/components/ui/dialog'
 import AppLayout from '@/components/app-layout'
-import { MOCK_WORK_ORDERS, type WorkOrder } from '@/lib/mock-data/production'
-import { MOCK_SALES_ORDERS, type SalesOrder } from '@/lib/mock-data/sales'
-
-// Mock FG receiving history (from WOs)
-const MOCK_FG_RECEIPTS = [
-  {
-    id: 'FGR-2026-001',
-    tglMasuk: '2026-02-04',
-    noWO: 'WO-2026-003',
-    noSO: 'SO-2026-006',
-    product: 'Nitrile Size S',
-    qtyProduksi: 2500,
-    qtyDiterima: 2500,
-    qtyRejek: 0,
-    gudang: 'Gudang FG-A',
-    penerima: 'Budi Santoso',
-    catatan: 'QC Passed - sesuai spec',
-  },
-  {
-    id: 'FGR-2026-002',
-    tglMasuk: '2026-02-12',
-    noWO: 'WO-2026-004',
-    noSO: 'SO-2026-004',
-    product: 'Latex Size L',
-    qtyProduksi: 1500,
-    qtyDiterima: 1480,
-    qtyRejek: 20,
-    gudang: 'Gudang FG-A',
-    penerima: 'Ahmad Fauzi',
-    catatan: '20 carton rejected — packaging rusak',
-  },
-]
-
-// Mock shipping history
-const MOCK_SHIPPING_HISTORY = [
-  {
-    id: 'SHP-2026-001',
-    tglKirim: '2026-02-06',
-    noSO: 'SO-2026-001',
-    customer: 'PT. Medika Prima Indonesia',
-    product: 'Latex Size M',
-    qtySO: 1000,
-    qtyDikirim: 1000,
-    noSuratJalan: 'SJ-OUT-2026-001',
-    noPEB: 'PEB-2026-001',
-    transporter: 'PT. Eka Prima Logistik',
-    noKendaraan: 'B 1234 AB',
-    status: 'Terkirim',
-  },
-  {
-    id: 'SHP-2026-002',
-    tglKirim: '2026-02-10',
-    noSO: 'SO-2026-002',
-    customer: 'Global Health Supply Co.',
-    product: 'Nitrile Size M',
-    qtySO: 3000,
-    qtyDikirim: 3000,
-    noSuratJalan: 'SJ-OUT-2026-002',
-    noPEB: 'PEB-2026-002',
-    transporter: 'PT. Tri Logistik Nusantara',
-    noKendaraan: 'B 5678 CD',
-    status: 'Terkirim',
-  },
-]
+import { useWorkOrders, useSalesOrders, useFGReceipts, useStock } from '@/lib/store/hooks'
+import type { WorkOrder } from '@/lib/mock-data/production'
+import type { SalesOrder } from '@/lib/mock-data/sales'
 
 export default function OutboundPage() {
+  const { workOrders } = useWorkOrders()
+  const { orders: salesOrders } = useSalesOrders()
+  const { receipts, createReceipt } = useFGReceipts()
+  const { addStock } = useStock()
+
   const [selectedWO, setSelectedWO] = useState<WorkOrder | null>(null)
   const [selectedSO, setSelectedSO] = useState<SalesOrder | null>(null)
   const [fgFormOpen, setFgFormOpen] = useState(false)
@@ -105,17 +49,18 @@ export default function OutboundPage() {
   })
 
   // WOs that are COMPLETED and waiting FG receiving
-  const woReadyForFG = MOCK_WORK_ORDERS.filter(wo => wo.status === 'COMPLETED')
+  const receivedWoIds = new Set(receipts.map(r => r.woId))
+  const woReadyForFG = workOrders.filter(wo => wo.status === 'COMPLETED' && !receivedWoIds.has(wo.id))
   const filteredWO = woReadyForFG.filter(wo =>
     wo.id.toLowerCase().includes(searchFG.toLowerCase()) ||
     wo.product.toLowerCase().includes(searchFG.toLowerCase())
   )
 
   // SOs ready to ship
-  const soReadyToShip = MOCK_SALES_ORDERS.filter(so =>
+  const soReadyToShip = salesOrders.filter((so: SalesOrder) =>
     so.status === 'READY TO SHIP' || so.status === 'IN PRODUCTION'
   )
-  const filteredSO = soReadyToShip.filter(so =>
+  const filteredSO = soReadyToShip.filter((so: SalesOrder) =>
     so.id.toLowerCase().includes(searchSO.toLowerCase()) ||
     so.customer.toLowerCase().includes(searchSO.toLowerCase())
   )
@@ -168,13 +113,13 @@ export default function OutboundPage() {
           <Card>
             <CardContent className="pt-4">
               <p className="text-xs text-muted-foreground">FG Receipt Bulan Ini</p>
-              <p className="text-2xl font-bold text-green-600">{MOCK_FG_RECEIPTS.length}</p>
+              <p className="text-2xl font-bold text-green-600">{receipts.length}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
               <p className="text-xs text-muted-foreground">Shipment Bulan Ini</p>
-              <p className="text-2xl font-bold text-primary">{MOCK_SHIPPING_HISTORY.length}</p>
+              <p className="text-2xl font-bold text-primary">0</p>
             </CardContent>
           </Card>
         </div>
@@ -288,21 +233,25 @@ export default function OutboundPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {MOCK_FG_RECEIPTS.map((r) => (
+                    {receipts.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">Belum ada penerimaan BJ</TableCell>
+                      </TableRow>
+                    ) : receipts.map((r) => (
                       <TableRow key={r.id}>
                         <TableCell className="font-medium text-primary">{r.id}</TableCell>
-                        <TableCell>{r.tglMasuk}</TableCell>
-                        <TableCell className="text-muted-foreground">{r.noWO}</TableCell>
-                        <TableCell>{r.product}</TableCell>
-                        <TableCell className="text-right font-medium">{r.qtyDiterima.toLocaleString()}</TableCell>
+                        <TableCell>{r.tanggal}</TableCell>
+                        <TableCell className="text-muted-foreground">{r.woId}</TableCell>
+                        <TableCell>{r.productName}</TableCell>
+                        <TableCell className="text-right font-medium">{r.qtyReceived.toLocaleString()}</TableCell>
                         <TableCell className="text-right">
-                          {r.qtyRejek > 0 ? (
-                            <span className="text-red-600 font-medium">{r.qtyRejek}</span>
+                          {r.qtyReject > 0 ? (
+                            <span className="text-red-600 font-medium">{r.qtyReject}</span>
                           ) : (
                             <span className="text-muted-foreground">0</span>
                           )}
                         </TableCell>
-                        <TableCell>{r.gudang}</TableCell>
+                        <TableCell>{r.gudangTujuan}</TableCell>
                         <TableCell>{r.penerima}</TableCell>
                       </TableRow>
                     ))}
@@ -410,24 +359,11 @@ export default function OutboundPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {MOCK_SHIPPING_HISTORY.map((s) => (
-                      <TableRow key={s.id}>
-                        <TableCell className="font-medium text-primary">{s.id}</TableCell>
-                        <TableCell>{s.tglKirim}</TableCell>
-                        <TableCell className="text-muted-foreground">{s.noSO}</TableCell>
-                        <TableCell>{s.customer}</TableCell>
-                        <TableCell>{s.product}</TableCell>
-                        <TableCell className="text-right font-medium">{s.qtyDikirim.toLocaleString()}</TableCell>
-                        <TableCell className="text-sm">{s.noSuratJalan}</TableCell>
-                        <TableCell className="text-sm text-blue-600">{s.noPEB}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-green-700 border-green-300 bg-green-50">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            {s.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                        Belum ada riwayat pengiriman
+                      </TableCell>
+                    </TableRow>
                   </TableBody>
                 </Table>
               </CardContent>
@@ -526,7 +462,38 @@ export default function OutboundPage() {
               <Button variant="outline" onClick={() => setFgFormOpen(false)}>Batal</Button>
               <Button
                 disabled={!fgForm.qtyDiterima || !fgForm.penerima}
-                onClick={() => setFgFormOpen(false)}
+                onClick={() => {
+                  if (!selectedWO) return
+                  const qtyRec = parseInt(fgForm.qtyDiterima) || 0
+                  const qtyRej = parseInt(fgForm.qtyRejek) || 0
+                  createReceipt({
+                    woId: selectedWO.id,
+                    woNumber: selectedWO.id,
+                    soNumber: selectedWO.soNumber,
+                    productName: selectedWO.product,
+                    qtyProduced: selectedWO.quantity,
+                    qtyReceived: qtyRec,
+                    qtyReject: qtyRej,
+                    unit: 'carton',
+                    wasteQty: qtyRej,
+                    wasteRatio: selectedWO.quantity > 0 ? qtyRej / selectedWO.quantity : 0,
+                    gudangTujuan: fgForm.gudang,
+                    penerima: fgForm.penerima,
+                    tanggal: new Date().toISOString().split('T')[0],
+                    status: 'Diterima',
+                  })
+                  addStock(
+                    selectedWO.product.replace(/\s+/g, '-').toUpperCase(),
+                    selectedWO.product,
+                    qtyRec - qtyRej,
+                    selectedWO.id,
+                    'FG_RECEIPT',
+                    'FG',
+                    'carton',
+                    fgForm.gudang,
+                  )
+                  setFgFormOpen(false)
+                }}
                 className="gap-2"
               >
                 <PackageCheck className="h-4 w-4" />
