@@ -32,15 +32,17 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 [Manager]     Approve SO
                     ↓
 [Purchasing]  Buat PO ke supplier → Input BC 2.0 saat barang tiba
-                    ↓ ← Lap 1 (Pemasukan BB) otomatis update
-[Gudang]      Goods Receipt — BB masuk gudang, lot number dicatat
-                    ↓ ← Lap 6 (Mutasi BB) otomatis update
+                    ↓
+[Gudang]      Goods Receipt — BB masuk gudang → klik "Complete GR & Update Stock"
+                    ↓ ← Lap 1 (Pemasukan BB) ✅ OTOMATIS UPDATE
+                    ↓ ← Lap 6 (Mutasi BB) ✅ OTOMATIS UPDATE
 [Produksi]    Buat Work Order dari SO yang approved
-                    ↓ ← Lap 2 (Pemakaian BB) otomatis update
-[Produksi]    Eksekusi WO — BB dipakai, FG dihasilkan
+                    ↓
+[Produksi]    Klik "Mulai Produksi" di halaman WO → BB dipakai, FG dihasilkan
+                    ↓ ← Lap 2 (Pemakaian BB) ✅ OTOMATIS UPDATE
                     ↓ (jika ada subkontrak)
-[Produksi]    Kirim BB ke subkontraktor (SUBK KITE) → terima hasil
-                    ↓ ← Lap 3 (Pemakaian BB Subkon) otomatis update
+[Produksi]    Buat job subkontrak baru → Kirim BB ke subkontraktor (SUBK KITE)
+                    ↓ ← Lap 3 (Pemakaian BB Subkon) ✅ OTOMATIS UPDATE
 [Gudang]      Input FG ke gudang (WO Completed → "Terima ke Gudang")
                     ↓ ← Lap 4 (Pemasukan HP) ✅ OTOMATIS UPDATE
 [Gudang]      Catat waste / scrap → Ajukan BC 2.4
@@ -220,16 +222,16 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 
    | No | Nama Laporan | Sumber Data Otomatis | Cara Memperbarui |
    |----|-------------|---------------------|-----------------|
-   | **Lap 1** | Pemasukan Bahan Baku | BC 2.0 + Goods Receipt | Input BC 2.0 di `/purchasing/bc20/new` → Terima GR di `/warehouse/gr` |
-   | **Lap 2** | Pemakaian Bahan Baku | Work Order (BB keluar ke produksi) | Buat WO & ubah status ke *In Progress* di `/production/wo` |
-   | **Lap 3** | Pemakaian BB Subkontrak | Dokumen SUBK KITE | Buat subkontrak di `/production/subkontrak` |
-   | **Lap 4** | Pemasukan Hasil Produksi | **FG Receipt** (WO Completed → Input ke Gudang) | Setelah WO selesai, klik *"Terima ke Gudang"* di `/warehouse/outbound` → **Lap 4 otomatis update** |
-   | **Lap 5** | Pengeluaran Hasil Produksi | **PEB** (status Submitted / Approved / Exported) | Buat PEB di `/logistics/peb/new` → Submit → **Lap 5 otomatis update** |
-   | **Lap 6** | Mutasi Bahan Baku | Stock movements BB (IMPORT / LOCAL_PURCHASE / PRODUCTION_OUT) | Otomatis dari seluruh transaksi BB di sistem |
-   | **Lap 7** | Mutasi Hasil Produksi | **Live FG Stock** (kategori FG di gudang) | Otomatis dari stock FG — diperbarui setiap FG masuk/keluar gudang |
-   | **Lap 8** | Waste / Scrap | **Waste Records** (status Diajukan BC 2.4 / Diverifikasi / Selesai) | Input waste di `/warehouse/waste` → Ubah status ke *Diajukan BC 2.4* → **Lap 8 otomatis update** |
+   | **Lap 1** | Pemasukan Bahan Baku | ✅ **Live** — Stock movements IMPORT/GR | Klik *"Complete GR & Update Stock"* di `/warehouse/gr` |
+   | **Lap 2** | Pemakaian Bahan Baku | ✅ **Live** — Stock movements PRODUCTION_OUT | Klik *"Mulai Produksi"* di halaman WO `/production/wo/[id]` |
+   | **Lap 3** | Pemakaian BB Subkontrak | ✅ **Live** — Subkontrak records (item KITE) | Buat job subkontrak di `/production/subkontrak` → *Simpan sebagai Draft* |
+   | **Lap 4** | Pemasukan Hasil Produksi | ✅ **Live** — FG Receipts (WO Completed → Input ke Gudang) | Setelah WO selesai, klik *"Terima ke Gudang"* di `/warehouse/outbound` |
+   | **Lap 5** | Pengeluaran Hasil Produksi | ✅ **Live** — PEB (status Submitted / Approved / Exported) | Buat PEB di `/logistics/peb/new` → Submit |
+   | **Lap 6** | Mutasi Bahan Baku | ✅ **Live** — Stock items (kategori BB) | Otomatis dari seluruh transaksi BB — GR, produksi, subkontrak |
+   | **Lap 7** | Mutasi Hasil Produksi | ✅ **Live** — Stock items (kategori FG) | Otomatis dari stok FG — diperbarui setiap FG masuk/keluar gudang |
+   | **Lap 8** | Waste / Scrap | ✅ **Live** — Waste Records (status Diajukan BC 2.4 / Diverifikasi / Selesai) | Input waste di `/warehouse/waste` → ubah status ke *Diajukan BC 2.4* |
 
-   > **Catatan penting:** Lap 1–3 & 6 menggunakan data seed/statis dari master transaksi. Lap 4, 5, 7, 8 sudah **live** — terisi otomatis dari transaksi nyata yang diinput user.
+   > **Semua 8 laporan sudah live** — terisi otomatis dari transaksi yang diinput di modul lain. Tidak perlu input data secara manual di halaman laporan.
 
    - **"Export Semua"** → 1 file Excel, 8 sheet sekaligus (format Lampiran XXII PER-5/BC/2023)
    - Export per laporan tersedia di tiap tab dengan tombol *Export* individual
@@ -317,16 +319,18 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 
 ### Status Otomatisasi Laporan IT Inventory
 
-| Laporan | Status | Cara Mengisi |
-|---------|--------|-------------|
-| Lap 1 — Pemasukan BB | Seed + akan live saat GR di-wire | Input BC 2.0 → GR |
-| Lap 2 — Pemakaian BB | Seed + akan live saat WO consumption di-wire | Eksekusi WO |
-| Lap 3 — BB Subkontrak | Seed + akan live saat subkon di-wire | Buat SUBK KITE |
-| Lap 4 — Pemasukan HP | ✅ **Live** | Terima FG di Warehouse Outbound |
-| Lap 5 — Pengeluaran HP | ✅ **Live** | Buat & submit PEB |
-| Lap 6 — Mutasi BB | Seed statis | Akan live di fase berikutnya |
+Semua 8 laporan sudah **live** — terisi otomatis dari transaksi di sistem.
+
+| Laporan | Status | Trigger |
+|---------|--------|---------|
+| Lap 1 — Pemasukan BB | ✅ **Live** | Complete GR di `/warehouse/gr` |
+| Lap 2 — Pemakaian BB | ✅ **Live** | Klik *Mulai Produksi* di WO detail |
+| Lap 3 — BB Subkontrak | ✅ **Live** | Buat job subkontrak (item KITE) di `/production/subkontrak` |
+| Lap 4 — Pemasukan HP | ✅ **Live** | Terima FG di `/warehouse/outbound` |
+| Lap 5 — Pengeluaran HP | ✅ **Live** | Buat & submit PEB di `/logistics/peb/new` |
+| Lap 6 — Mutasi BB | ✅ **Live** | Otomatis dari transaksi BB (GR + WO + subkontrak) |
 | Lap 7 — Mutasi HP | ✅ **Live** | Otomatis dari stok FG |
-| Lap 8 — Waste/Scrap | ✅ **Live** | Input waste → status Diajukan BC 2.4 |
+| Lap 8 — Waste/Scrap | ✅ **Live** | Input waste → status *Diajukan BC 2.4* di `/warehouse/waste` |
 
 ### Aturan Operasional
 
@@ -337,9 +341,10 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 - **Subkontrak**: setiap pengeluaran BB ke subkontraktor wajib dilengkapi dokumen SUBK KITE **sebelum** BB keluar dari kawasan JKJ.
 - **PPN Ekspor = 0%** (zero-rated) — tidak ada PPN keluaran dari penjualan ekspor. PPN masukan dari impor material untuk produk ekspor dapat di-restitusi.
 - **Urutan input yang benar** untuk laporan KITE lengkap:
-  1. Input BC 2.0 + GR → Lap 1 & 6 terisi
-  2. Buat WO → In Progress → Lap 2 terisi
-  3. Selesaikan WO → Terima FG di Outbound → **Lap 4 update**
-  4. Input waste → Ajukan BC 2.4 → **Lap 8 update**
-  5. Buat & submit PEB → **Lap 5 & 7 update**
-  6. Buka `/reports/kite-inventory` → Export Semua → serahkan ke DJBC
+  1. Input BC 2.0 di `/purchasing/bc20/new` → lanjut ke Goods Receipt di `/warehouse/gr` → klik **"Complete GR & Update Stock"** → **Lap 1 & 6 update**
+  2. Buat WO di `/production/wo/new` → buka detail WO → klik **"Mulai Produksi"** → **Lap 2 update**
+  3. *(jika ada subkontrak)* Buat job di `/production/subkontrak` → pastikan item berlabel KITE → **Lap 3 update**
+  4. Selesaikan WO → Terima FG di `/warehouse/outbound` → **Lap 4 update**
+  5. Input waste di `/warehouse/waste` → ubah status ke *Diajukan BC 2.4* → **Lap 8 update**
+  6. Buat & submit PEB di `/logistics/peb/new` → **Lap 5 & 7 update**
+  7. Buka `/reports/kite-inventory` → **Export Semua** → serahkan ke DJBC
