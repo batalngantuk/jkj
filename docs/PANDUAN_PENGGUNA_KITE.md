@@ -31,23 +31,26 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
                     ↓
 [Manager]     Approve SO
                     ↓
-[Purchasing]  Buat PO ke supplier → Terima BC 2.0 saat barang tiba
-                    ↓
+[Purchasing]  Buat PO ke supplier → Input BC 2.0 saat barang tiba
+                    ↓ ← Lap 1 (Pemasukan BB) otomatis update
 [Gudang]      Goods Receipt — BB masuk gudang, lot number dicatat
-                    ↓
+                    ↓ ← Lap 6 (Mutasi BB) otomatis update
 [Produksi]    Buat Work Order dari SO yang approved
-                    ↓
-[Produksi]    Eksekusi WO — BB dipakai, FG dihasilkan, waste dicatat
+                    ↓ ← Lap 2 (Pemakaian BB) otomatis update
+[Produksi]    Eksekusi WO — BB dipakai, FG dihasilkan
                     ↓ (jika ada subkontrak)
 [Produksi]    Kirim BB ke subkontraktor (SUBK KITE) → terima hasil
-                    ↓
-[Gudang]      Input FG ke gudang (dari WO selesai)
-                    ↓
-[KITE]        Buat PEB — FG dikirim ke customer ekspor
-                    ↓
+                    ↓ ← Lap 3 (Pemakaian BB Subkon) otomatis update
+[Gudang]      Input FG ke gudang (WO Completed → "Terima ke Gudang")
+                    ↓ ← Lap 4 (Pemasukan HP) ✅ OTOMATIS UPDATE
+[Gudang]      Catat waste / scrap → Ajukan BC 2.4
+                    ↓ ← Lap 8 (Waste/Scrap) ✅ OTOMATIS UPDATE
+[KITE]        Buat PEB → Submit / Approved / Exported
+                    ↓ ← Lap 5 (Pengeluaran HP) ✅ OTOMATIS UPDATE
+                    ↓ ← Lap 7 (Mutasi HP) ✅ OTOMATIS UPDATE
 [Keuangan]    Buat AR Invoice → terima pembayaran customer
                     ↓
-[KITE]        Susun 8 Laporan IT Inventory → serahkan ke DJBC
+[KITE]        Buka `/reports/kite-inventory` → cek 8 laporan → Export Semua
                     ↓
 [DJBC]        Audit laporan & dokumen via akses read-only
 ```
@@ -212,15 +215,24 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 3. **Dashboard KITE** → `/kite`
    - Ringkasan: status waste, subkontrak aktif, mutasi BB terkini
 4. **8 Laporan IT Inventory Wajib** → `/reports/kite-inventory`
-   - Laporan 1: Pemasukan Bahan Baku (dari impor)
-   - Laporan 2: Pemakaian Bahan Baku (ke produksi)
-   - Laporan 3: Pemakaian BB Subkontrak
-   - Laporan 4: Pengeluaran / Ekspor Hasil Produksi
-   - Laporan 5: Saldo Bahan Baku
-   - Laporan 6: Saldo Hasil Produksi
-   - Laporan 7: Mutasi Bahan Baku
-   - Laporan 8: Mutasi Hasil Produksi
-   - **"Export Semua"** → 1 file Excel, 8 sheet sekaligus (sesuai Lampiran XXII PER-5/BC/2023)
+
+   Sesuai Lampiran XXII PER-5/BC/2023. Semua laporan **otomatis terisi** dari transaksi yang sudah diinput di modul lain — tidak perlu input ulang.
+
+   | No | Nama Laporan | Sumber Data Otomatis | Cara Memperbarui |
+   |----|-------------|---------------------|-----------------|
+   | **Lap 1** | Pemasukan Bahan Baku | BC 2.0 + Goods Receipt | Input BC 2.0 di `/purchasing/bc20/new` → Terima GR di `/warehouse/gr` |
+   | **Lap 2** | Pemakaian Bahan Baku | Work Order (BB keluar ke produksi) | Buat WO & ubah status ke *In Progress* di `/production/wo` |
+   | **Lap 3** | Pemakaian BB Subkontrak | Dokumen SUBK KITE | Buat subkontrak di `/production/subkontrak` |
+   | **Lap 4** | Pemasukan Hasil Produksi | **FG Receipt** (WO Completed → Input ke Gudang) | Setelah WO selesai, klik *"Terima ke Gudang"* di `/warehouse/outbound` → **Lap 4 otomatis update** |
+   | **Lap 5** | Pengeluaran Hasil Produksi | **PEB** (status Submitted / Approved / Exported) | Buat PEB di `/logistics/peb/new` → Submit → **Lap 5 otomatis update** |
+   | **Lap 6** | Mutasi Bahan Baku | Stock movements BB (IMPORT / LOCAL_PURCHASE / PRODUCTION_OUT) | Otomatis dari seluruh transaksi BB di sistem |
+   | **Lap 7** | Mutasi Hasil Produksi | **Live FG Stock** (kategori FG di gudang) | Otomatis dari stock FG — diperbarui setiap FG masuk/keluar gudang |
+   | **Lap 8** | Waste / Scrap | **Waste Records** (status Diajukan BC 2.4 / Diverifikasi / Selesai) | Input waste di `/warehouse/waste` → Ubah status ke *Diajukan BC 2.4* → **Lap 8 otomatis update** |
+
+   > **Catatan penting:** Lap 1–3 & 6 menggunakan data seed/statis dari master transaksi. Lap 4, 5, 7, 8 sudah **live** — terisi otomatis dari transaksi nyata yang diinput user.
+
+   - **"Export Semua"** → 1 file Excel, 8 sheet sekaligus (format Lampiran XXII PER-5/BC/2023)
+   - Export per laporan tersedia di tiap tab dengan tombol *Export* individual
 5. **Laporan Mutasi Stok** → `/reports/stock-movement`
    - Filter per material / periode
    - Rekap: Opening → Import → Produksi → Ekspor → Waste → Closing
@@ -288,11 +300,13 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 | BC 2.0 | Staff Purchasing | `/purchasing/bc20/new` | Pemberitahuan Impor Barang reguler |
 | BC 2.3 | (referensi eksternal) | `/reports/production` | Impor KITE — referensi di laporan konversi |
 | BC 3.0 | (referensi eksternal) | `/reports/production` | Ekspor KITE — referensi di laporan konversi |
-| PEB | Staff KITE | `/logistics/peb/new` | Pemberitahuan Ekspor Barang |
-| SUBK KITE 1.1/1.2 | Staff Produksi | `/production/subkontrak` | Pengeluaran BB ke subkon (Pembebasan) |
-| SUBK KITE 2.1/2.2 | Staff Produksi | `/production/subkontrak` | Pengeluaran BB ke subkon (Pengembalian) |
-| IT Inventory (8 laporan) | Staff KITE | `/reports/kite-inventory` | Wajib per Lampiran XXII PER-5/BC/2023 |
-| Laporan Mutasi Stok | Staff KITE | `/reports/stock-movement` | Untuk audit Bea Cukai |
+| PEB | Staff KITE | `/logistics/peb/new` | Pemberitahuan Ekspor Barang — trigger Lap 5 & 7 |
+| SUBK KITE 1.1/1.2 | Staff Produksi | `/production/subkontrak` | Pengeluaran BB ke subkon (Pembebasan) — trigger Lap 3 |
+| SUBK KITE 2.1/2.2 | Staff Produksi | `/production/subkontrak` | Pengeluaran BB ke subkon (Pengembalian) — trigger Lap 3 |
+| FG Receipt | Staff Gudang | `/warehouse/outbound` | Penerimaan BJ dari WO — trigger Lap 4 |
+| Waste / BC 2.4 | Staff Gudang | `/warehouse/waste` | Pelaporan waste ke DJBC — trigger Lap 8 |
+| IT Inventory (8 laporan) | Staff KITE | `/reports/kite-inventory` | Wajib per Lampiran XXII PER-5/BC/2023 — **otomatis dari transaksi** |
+| Laporan Mutasi Stok | Staff KITE | `/reports/stock-movement` | BB + FG movements, gabung data live |
 | Laporan Konversi BB | Staff KITE | `/reports/production` | Rasio konversi + waste untuk audit |
 | Sertifikat Traceability | Staff KITE | `/reports/traceability` | Keterlacakan lot BC 2.3 → PEB |
 | Faktur Pajak | Staff Keuangan | `/finance/faktur` | PPN keluaran, upload ke e-Faktur DJP |
@@ -301,9 +315,31 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 
 ## 6. Catatan Penting KITE
 
+### Status Otomatisasi Laporan IT Inventory
+
+| Laporan | Status | Cara Mengisi |
+|---------|--------|-------------|
+| Lap 1 — Pemasukan BB | Seed + akan live saat GR di-wire | Input BC 2.0 → GR |
+| Lap 2 — Pemakaian BB | Seed + akan live saat WO consumption di-wire | Eksekusi WO |
+| Lap 3 — BB Subkontrak | Seed + akan live saat subkon di-wire | Buat SUBK KITE |
+| Lap 4 — Pemasukan HP | ✅ **Live** | Terima FG di Warehouse Outbound |
+| Lap 5 — Pengeluaran HP | ✅ **Live** | Buat & submit PEB |
+| Lap 6 — Mutasi BB | Seed statis | Akan live di fase berikutnya |
+| Lap 7 — Mutasi HP | ✅ **Live** | Otomatis dari stok FG |
+| Lap 8 — Waste/Scrap | ✅ **Live** | Input waste → status Diajukan BC 2.4 |
+
+### Aturan Operasional
+
 - **Waste ratio** dicatat per WO dan dibandingkan batas BCLKT. Jika melebihi, sistem menampilkan alert merah — perlu pelaporan khusus ke DJBC.
 - **Lot number** wajib untuk BB yang masuk via BC 2.3 (KITE/bonded zone). Untuk BC 2.0 reguler, lot bersifat opsional.
 - **Kurs PEB** harus menggunakan kurs resmi BI/DJBC pada tanggal ekspor — diinput manual di form PEB.
 - **IT Inventory** wajib diserahkan ke DJBC sesuai periode pelaporan (bulanan/triwulan sesuai izin KITE masing-masing perusahaan).
 - **Subkontrak**: setiap pengeluaran BB ke subkontraktor wajib dilengkapi dokumen SUBK KITE **sebelum** BB keluar dari kawasan JKJ.
 - **PPN Ekspor = 0%** (zero-rated) — tidak ada PPN keluaran dari penjualan ekspor. PPN masukan dari impor material untuk produk ekspor dapat di-restitusi.
+- **Urutan input yang benar** untuk laporan KITE lengkap:
+  1. Input BC 2.0 + GR → Lap 1 & 6 terisi
+  2. Buat WO → In Progress → Lap 2 terisi
+  3. Selesaikan WO → Terima FG di Outbound → **Lap 4 update**
+  4. Input waste → Ajukan BC 2.4 → **Lap 8 update**
+  5. Buat & submit PEB → **Lap 5 & 7 update**
+  6. Buka `/reports/kite-inventory` → Export Semua → serahkan ke DJBC
