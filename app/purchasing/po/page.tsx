@@ -10,35 +10,37 @@ import AppLayout from '@/components/app-layout'
 
 import { DataTable } from '@/components/shared/data-table'
 import { StatusBadge } from "@/components/shared/status-badge"
-import { MOCK_PURCHASE_ORDERS } from "@/lib/mock-data/purchasing"
+import { usePurchaseOrders } from "@/lib/store/hooks"
+import type { PurchaseOrder } from "@/lib/mock-data/purchasing"
 
 export default function POListPage() {
+  const { orders: MOCK_PURCHASE_ORDERS } = usePurchaseOrders()
   const columns = [
     {
        header: "PO Number",
-       accessorKey: "id" as keyof typeof MOCK_PURCHASE_ORDERS[0],
-       cell: (item: typeof MOCK_PURCHASE_ORDERS[0]) => <span className="font-medium text-primary">{item.id}</span>
+       accessorKey: "id" as keyof PurchaseOrder,
+       cell: (item: PurchaseOrder) => <span className="font-medium text-primary">{item.id}</span>
     },
-    { header: "Supplier", accessorKey: "supplier" as keyof typeof MOCK_PURCHASE_ORDERS[0] },
-    { 
-       header: "Order Date", 
-       accessorKey: "orderDate" as keyof typeof MOCK_PURCHASE_ORDERS[0] 
+    { header: "Supplier", accessorKey: "supplier" as keyof PurchaseOrder },
+    {
+       header: "Order Date",
+       accessorKey: "orderDate" as keyof PurchaseOrder
     },
     {
        header: "Total Amount",
-       cell: (item: typeof MOCK_PURCHASE_ORDERS[0]) => (
+       cell: (item: PurchaseOrder) => (
            <span className="font-medium">Rp {item.totalAmount.toLocaleString()}</span>
        )
     },
     {
        header: "Status",
-       accessorKey: "status" as keyof typeof MOCK_PURCHASE_ORDERS[0],
-       cell: (item: typeof MOCK_PURCHASE_ORDERS[0]) => <StatusBadge status={item.status} />
+       accessorKey: "status" as keyof PurchaseOrder,
+       cell: (item: PurchaseOrder) => <StatusBadge status={item.status} />
     },
     {
        header: "Payment",
-       accessorKey: "paymentStatus" as keyof typeof MOCK_PURCHASE_ORDERS[0],
-       cell: (item: typeof MOCK_PURCHASE_ORDERS[0]) => {
+       accessorKey: "paymentStatus" as keyof PurchaseOrder,
+       cell: (item: PurchaseOrder) => {
            let type = 'default'
            if (item.paymentStatus === 'PAID') type = 'success'
            if (item.paymentStatus === 'PARTIAL') type = 'warning'
@@ -57,7 +59,7 @@ export default function POListPage() {
     },
     {
        header: "Action",
-       cell: (item: typeof MOCK_PURCHASE_ORDERS[0]) => (
+       cell: (item: PurchaseOrder) => (
            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                <Eye className="h-4 w-4" />
            </Button>

@@ -10,10 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import AppLayout from '@/components/app-layout'
 import { StatusBadge } from '@/components/shared/status-badge'
-import { MOCK_AP_INVOICES } from '@/lib/mock-data/finance'
 import { exportToExcel } from '@/lib/utils/export-excel'
+import { useAPInvoices } from '@/lib/store/hooks'
 
 export default function APPage() {
+  const { invoices: MOCK_AP_INVOICES } = useAPInvoices()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
 
