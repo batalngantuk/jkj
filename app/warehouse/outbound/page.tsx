@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft, Truck, Package, PackageCheck, FileText, CheckCircle,
-  Plus, Search, ClipboardList, Warehouse, ChevronDown, ChevronUp
+  Search, ClipboardList, Warehouse, Download
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -20,7 +20,8 @@ import {
   DialogDescription, DialogFooter
 } from '@/components/ui/dialog'
 import AppLayout from '@/components/app-layout'
-import { useWorkOrders, useSalesOrders, useFGReceipts, useStock } from '@/lib/store/hooks'
+import { useWorkOrders, useSalesOrders, useFGReceipts, useStock, useShipments } from '@/lib/store/hooks'
+import { exportToExcel } from '@/lib/utils/export-excel'
 import type { WorkOrder } from '@/lib/mock-data/production'
 import type { SalesOrder } from '@/lib/mock-data/sales'
 
@@ -29,6 +30,7 @@ export default function OutboundPage() {
   const { orders: salesOrders } = useSalesOrders()
   const { receipts, createReceipt } = useFGReceipts()
   const { addStock } = useStock()
+  const { shipments, createShipment } = useShipments()
 
   const [selectedWO, setSelectedWO] = useState<WorkOrder | null>(null)
   const [selectedSO, setSelectedSO] = useState<SalesOrder | null>(null)
@@ -70,6 +72,8 @@ export default function OutboundPage() {
     setFgForm({ noWO: wo.id, qtyDiterima: wo.quantity.toString(), qtyRejek: '0', gudang: 'Gudang FG-A', penerima: '', catatan: '' })
     setFgFormOpen(true)
   }
+
+  const [activeTab, setActiveTab] = useState('fg-entry')
 
   const openShipForm = (so: SalesOrder) => {
     setSelectedSO(so)
@@ -119,12 +123,12 @@ export default function OutboundPage() {
           <Card>
             <CardContent className="pt-4">
               <p className="text-xs text-muted-foreground">Shipment Bulan Ini</p>
-              <p className="text-2xl font-bold text-primary">0</p>
+              <p className="text-2xl font-bold text-primary">{shipments.length}</p>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="fg-entry">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="fg-entry" className="gap-2">
               <Package className="h-4 w-4" />
@@ -334,38 +338,104 @@ export default function OutboundPage() {
             </Card>
           </TabsContent>
 
-          {/* Tab 4: Shipping History */}
+          {/* Tab 4: Shipping History — Surat Jalan Ekspor */}
           <TabsContent value="ship-history" className="mt-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  Riwayat Pengiriman
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Surat Jalan Ekspor
+                  </CardTitle>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => exportToExcel(
+                      shipments.map(s => ({
+                        'No. Surat Jalan': s.noSuratJalan,
+                        'Tanggal': s.tanggal,
+                        'No. SO': s.soId,
+                        'Customer': s.customer,
+                        'Produk': s.items.map(i => i.productName).join(', '),
+                        'Qty Dikirim': s.items.reduce((a, i) => a + i.qtyDikirim, 0),
+                        'No. PEB': s.noPEB || '-',
+                        'Transporter': s.transporter || '-',
+                        'No. Kendaraan': s.noKendaraan || '-',
+                        'Supir': s.supir || '-',
+                        'Status': s.status,
+                        'Catatan': s.catatan || '-',
+                      })),
+                      'Surat_Jalan_Ekspor',
+                      'Surat Jalan Ekspor'
+                    )}
+                  >
+                    <Download className="h-4 w-4" />
+                    Export Excel
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Tgl Kirim</TableHead>
-                      <TableHead>No. SO</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Produk</TableHead>
-                      <TableHead className="text-right">Qty</TableHead>
-                      <TableHead>No. Surat Jalan</TableHead>
-                      <TableHead>No. PEB</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                        Belum ada riwayat pengiriman
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                {shipments.length === 0 ? (
+                  <div className="text-center py-10 text-muted-foreground">
+                    <Truck className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                    <p>Belum ada surat jalan ekspor</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead>No. Surat Jalan</TableHead>
+                        <TableHead>Tanggal</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Produk</TableHead>
+                        <TableHead className="text-right">Qty</TableHead>
+                        <TableHead>No. PEB</TableHead>
+                        <TableHead>Transporter</TableHead>
+                        <TableHead>Kendaraan</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {shipments.map(s => (
+                        <TableRow key={s.id}>
+                          <TableCell className="font-mono text-xs font-semibold text-primary">{s.noSuratJalan}</TableCell>
+                          <TableCell className="whitespace-nowrap text-sm">{s.tanggal}</TableCell>
+                          <TableCell className="text-sm font-medium">{s.customer}</TableCell>
+                          <TableCell>
+                            {s.items.map((item, i) => (
+                              <div key={i}>
+                                <p className="text-sm">{item.productName}</p>
+                              </div>
+                            ))}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {s.items.reduce((a, i) => a + i.qtyDikirim, 0).toLocaleString('id-ID')}
+                            <span className="text-xs text-muted-foreground ml-1">{s.items[0]?.unit}</span>
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {s.noPEB ? (
+                              <span className="text-blue-700">{s.noPEB}</span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{s.transporter || '—'}</TableCell>
+                          <TableCell className="font-mono text-xs">{s.noKendaraan || '—'}</TableCell>
+                          <TableCell>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              s.status === 'Terima Dikonfirmasi'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {s.status}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -601,8 +671,25 @@ export default function OutboundPage() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setSelectedSO(null)}>Batal</Button>
               <Button
-                disabled={!shipForm.qtyDikirim}
-                onClick={() => setSelectedSO(null)}
+                disabled={!shipForm.qtyDikirim || !selectedSO}
+                onClick={() => {
+                  if (!selectedSO) return
+                  createShipment({
+                    tanggal: new Date().toISOString().split('T')[0],
+                    soId: selectedSO.id,
+                    soNumber: selectedSO.poNumber,
+                    customer: selectedSO.customer,
+                    items: [{ productName: selectedSO.product, qtyDikirim: parseInt(shipForm.qtyDikirim) || 0, unit: 'carton' }],
+                    noPEB: shipForm.noPEB,
+                    transporter: shipForm.transporter,
+                    noKendaraan: shipForm.noKendaraan,
+                    supir: shipForm.supir,
+                    catatan: shipForm.catatan,
+                    status: 'Dikirim',
+                  })
+                  setSelectedSO(null)
+                  setActiveTab('ship-history')
+                }}
                 className="gap-2 bg-blue-600 hover:bg-blue-700"
               >
                 <Truck className="h-4 w-4" />

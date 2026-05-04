@@ -2,23 +2,37 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Package, Truck, ArrowDownLeft, ArrowUpRight, Search, Filter, AlertTriangle, Layers, PackageOpen } from 'lucide-react'
+import { Package, Truck, ArrowDownLeft, ArrowUpRight, Search, AlertTriangle, Layers, PackageOpen, Factory, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
 import AppLayout from '@/components/app-layout'
 
 import { DataTable } from '@/components/shared/data-table'
 import { MOCK_INVENTORY, MOCK_TRANSACTIONS } from "@/lib/mock-data/warehouse"
 import { AlertBadge } from "@/components/shared/alert-badge"
+import { useStock, useSubkontrak } from '@/lib/store/hooks'
 
 export default function WarehouseDashboard() {
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterFasilitas, setFilterFasilitas] = useState('all')
+
+  const { stock } = useStock()
+  const { records: subkonRecords } = useSubkontrak()
+
+  // WIP stock dari live store
+  const wipStock = stock.filter(s => s.category === 'WIP')
+
+  // Hasil subkon yang sudah masuk kembali (status Hasil Diterima atau Selesai)
+  const subkonDiterima = subkonRecords.filter(r =>
+    r.status === 'Hasil Diterima' || r.status === 'Selesai'
+  )
 
   const lowStockCount = MOCK_INVENTORY.filter(i => i.status === 'Low Stock' || i.status === 'Critical').length
   const totalValue = MOCK_INVENTORY.reduce((acc, curr) => acc + curr.value, 0)
@@ -222,6 +236,112 @@ export default function WarehouseDashboard() {
                         data={filteredInventory}
                         columns={inventoryColumns}
                     />
+                </CardContent>
+            </Card>
+
+            {/* Gudang WIP */}
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <Factory className="h-5 w-5 text-orange-500" />
+                        <CardTitle>Gudang WIP (Work in Progress)</CardTitle>
+                        <Badge variant="outline" className="ml-auto text-xs">{wipStock.length} item</Badge>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    {wipStock.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-6">Tidak ada stok WIP saat ini</p>
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/50">
+                                    <TableHead>Kode Material</TableHead>
+                                    <TableHead>Nama</TableHead>
+                                    <TableHead className="text-right">Qty On Hand</TableHead>
+                                    <TableHead className="text-right">Qty Reserved</TableHead>
+                                    <TableHead className="text-right">Qty Available</TableHead>
+                                    <TableHead>Satuan</TableHead>
+                                    <TableHead>Lokasi</TableHead>
+                                    <TableHead>Last Update</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {wipStock.map(s => (
+                                    <TableRow key={s.materialCode}>
+                                        <TableCell className="font-mono text-xs font-medium">{s.materialCode}</TableCell>
+                                        <TableCell className="text-sm">{s.materialName}</TableCell>
+                                        <TableCell className="text-right font-medium">{s.qtyOnHand.toLocaleString('id-ID')}</TableCell>
+                                        <TableCell className="text-right text-orange-600">{s.qtyReserved.toLocaleString('id-ID')}</TableCell>
+                                        <TableCell className="text-right text-green-700 font-semibold">{s.qtyAvailable.toLocaleString('id-ID')}</TableCell>
+                                        <TableCell className="text-sm">{s.unit}</TableCell>
+                                        <TableCell className="text-sm text-muted-foreground">{s.location}</TableCell>
+                                        <TableCell className="text-xs text-muted-foreground">{s.lastUpdated}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Gudang Hasil Subkon */}
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <Building2 className="h-5 w-5 text-purple-500" />
+                        <CardTitle>Gudang Hasil Subkon</CardTitle>
+                        <Badge variant="outline" className="ml-auto text-xs">{subkonDiterima.length} job selesai</Badge>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    {subkonDiterima.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-6">Belum ada hasil subkon yang diterima</p>
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-muted/50">
+                                    <TableHead>Job No</TableHead>
+                                    <TableHead>Subkontraktor</TableHead>
+                                    <TableHead>Deskripsi Pekerjaan</TableHead>
+                                    <TableHead>Tgl Selesai</TableHead>
+                                    <TableHead>Material Dikirim</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {subkonDiterima.map(r => (
+                                    <TableRow key={r.id}>
+                                        <TableCell className="font-mono text-xs font-medium">{r.id}</TableCell>
+                                        <TableCell className="text-sm font-medium">{r.namaSubkon}</TableCell>
+                                        <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{r.deskripsiPekerjaan}</TableCell>
+                                        <TableCell className="text-sm whitespace-nowrap">{r.tglSelesaiAktual !== '-' ? r.tglSelesaiAktual : r.targetSelesai}</TableCell>
+                                        <TableCell>
+                                            <div className="space-y-0.5">
+                                                {r.items.slice(0, 2).map((item, i) => (
+                                                    <p key={i} className="text-xs text-muted-foreground">
+                                                        {item.kodeBB} — {item.qtyKirim.toLocaleString('id-ID')} {item.satuanBB}
+                                                    </p>
+                                                ))}
+                                                {r.items.length > 2 && (
+                                                    <p className="text-xs text-muted-foreground">+{r.items.length - 2} item lagi</p>
+                                                )}
+                                                {r.items.length === 0 && <p className="text-xs text-muted-foreground">—</p>}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${
+                                                r.status === 'Selesai'
+                                                    ? 'bg-green-50 text-green-700 border-green-300'
+                                                    : 'bg-yellow-50 text-yellow-700 border-yellow-300'
+                                            }`}>
+                                                {r.status}
+                                            </span>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
                 </CardContent>
             </Card>
 
