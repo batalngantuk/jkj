@@ -490,7 +490,7 @@ export default function PEBDetailPage() {
                   )}
                   {peb.fgLotNumber && (
                     <div>
-                      <p className="text-muted-foreground">FG Lot Number</p>
+                      <p className="text-muted-foreground">Kode Barang FG</p>
                       <p className="font-medium">{peb.fgLotNumber}</p>
                     </div>
                   )}

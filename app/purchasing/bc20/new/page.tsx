@@ -99,6 +99,8 @@ export default function NewBC20Page() {
   const [supplierCustom, setSupplierCustom] = useState('')
   const [poReference, setPoReference] = useState('')
   const [noAjuPIB, setNoAjuPIB] = useState('')
+  const [noPendaftaran, setNoPendaftaran] = useState('')
+  const [tglDokumen, setTglDokumen] = useState('')
   const [portOfEntry, setPortOfEntry] = useState('')
   const [customsOffice, setCustomsOffice] = useState('')
   const [estimatedArrival, setEstimatedArrival] = useState('')
@@ -198,6 +200,18 @@ export default function NewBC20Page() {
                     onChange={e => setNoAjuPIB(e.target.value)}
                     placeholder="cth: 000000-2026-000001"
                   />
+                </div>
+                <div className="space-y-1">
+                  <Label>Nomor Pendaftaran</Label>
+                  <Input
+                    value={noPendaftaran}
+                    onChange={e => setNoPendaftaran(e.target.value)}
+                    placeholder="cth: 000001-2026"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Tanggal Dokumen</Label>
+                  <Input type="date" value={tglDokumen} onChange={e => setTglDokumen(e.target.value)} />
                 </div>
                 <div className="space-y-1">
                   <Label>Referensi PO</Label>

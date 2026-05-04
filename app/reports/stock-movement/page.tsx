@@ -226,7 +226,7 @@ export default function StockMovementReportPage() {
                         <TableHead>Date</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Reference</TableHead>
-                        <TableHead>Lot Number</TableHead>
+                        <TableHead>Kode Barang</TableHead>
                         <TableHead className="text-right">In</TableHead>
                         <TableHead className="text-right">Out</TableHead>
                         <TableHead className="text-right">Balance</TableHead>

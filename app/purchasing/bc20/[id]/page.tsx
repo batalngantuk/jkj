@@ -38,6 +38,8 @@ const MOCK_BC20_DETAIL = {
   id: '1',
   documentNumber: 'PIB-001234-2026',
   documentDate: '2026-03-01',
+  noPendaftaran: '000001-2026',
+  tglDokumen: '2026-03-02',
   status: 'TAX_PAYMENT_PENDING' as BC20Status,
 
   // Supplier & PO
@@ -833,6 +835,16 @@ export default function BC20DetailPage() {
               <CardTitle className="text-base">Document Info</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              <div>
+                <p className="text-sm text-muted-foreground">Nomor Pendaftaran</p>
+                <p className="text-sm font-medium font-mono">{bc20.noPendaftaran || '—'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Tanggal Dokumen</p>
+                <p className="text-sm font-medium">
+                  {bc20.tglDokumen ? new Date(bc20.tglDokumen).toLocaleDateString('id-ID') : '—'}
+                </p>
+              </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <div>

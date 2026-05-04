@@ -30,6 +30,7 @@ export default function CreatePOPage() {
   const router = useRouter()
   const [items, setItems] = useState<POItem[]>([{ id: 1, name: '', qty: 0, unit: '', price: 0 }])
   const [loading, setLoading] = useState(false)
+  const [poType, setPoType] = useState<'Lokal' | 'Impor'>('Lokal')
   const [supplier, setSupplier] = useState('')
   const [deliveryDate, setDeliveryDate] = useState('')
   const [notes, setNotes] = useState('')
@@ -103,6 +104,18 @@ export default function CreatePOPage() {
                 <CardTitle>Detail Order</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Tipe PO</Label>
+                  <Select value={poType} onValueChange={v => setPoType(v as 'Lokal' | 'Impor')}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Lokal">Lokal</SelectItem>
+                      <SelectItem value="Impor">Impor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="space-y-2">
                   <Label>Supplier</Label>
                   <Select value={supplier} onValueChange={setSupplier}>

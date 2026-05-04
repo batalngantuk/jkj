@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Package, Truck, ArrowDownLeft, ArrowUpRight, Search, Filter, AlertTriangle, Layers } from 'lucide-react'
+import { Package, Truck, ArrowDownLeft, ArrowUpRight, Search, Filter, AlertTriangle, Layers, PackageOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -18,6 +18,7 @@ export default function WarehouseDashboard() {
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [filterFasilitas, setFilterFasilitas] = useState('all')
 
   const lowStockCount = MOCK_INVENTORY.filter(i => i.status === 'Low Stock' || i.status === 'Critical').length
   const totalValue = MOCK_INVENTORY.reduce((acc, curr) => acc + curr.value, 0)
@@ -29,7 +30,8 @@ export default function WarehouseDashboard() {
       item.location.toLowerCase().includes(search.toLowerCase())
     const matchCategory = filterCategory === 'all' || item.category === filterCategory
     const matchStatus = filterStatus === 'all' || item.status === filterStatus
-    return matchSearch && matchCategory && matchStatus
+    const matchFasilitas = filterFasilitas === 'all' || item.fasilitas === filterFasilitas
+    return matchSearch && matchCategory && matchStatus && matchFasilitas
   })
 
   const inventoryColumns = [
@@ -55,6 +57,17 @@ export default function WarehouseDashboard() {
                   // For now reliance on the Badge for status is sufficient visual cue.
                />
            </div>
+       )
+    },
+    {
+       header: "Fasilitas",
+       accessorKey: "fasilitas" as keyof typeof MOCK_INVENTORY[0],
+       cell: (item: typeof MOCK_INVENTORY[0]) => (
+           <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+             item.fasilitas === 'KITE' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700'
+           }`}>
+             {item.fasilitas}
+           </span>
        )
     },
     { header: "Location", accessorKey: "location" as keyof typeof MOCK_INVENTORY[0] },
@@ -92,6 +105,12 @@ export default function WarehouseDashboard() {
                     <Button variant="outline" className="gap-2">
                         <ArrowUpRight className="h-4 w-4" />
                         Outbound (Shipping)
+                    </Button>
+                 </Link>
+                 <Link href="/warehouse/issue">
+                    <Button variant="outline" className="gap-2">
+                        <PackageOpen className="h-4 w-4" />
+                        Pengeluaran BB
                     </Button>
                  </Link>
                  <Button className="bg-primary hover:bg-primary/90 gap-2">
@@ -178,6 +197,16 @@ export default function WarehouseDashboard() {
                                     <SelectItem value="Low Stock">Low Stock</SelectItem>
                                     <SelectItem value="Critical">Critical</SelectItem>
                                     <SelectItem value="Overstock">Overstock</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Select value={filterFasilitas} onValueChange={setFilterFasilitas}>
+                                <SelectTrigger className="w-36">
+                                    <SelectValue placeholder="Fasilitas" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Semua</SelectItem>
+                                    <SelectItem value="KITE">KITE</SelectItem>
+                                    <SelectItem value="Non-KITE">Non-KITE</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

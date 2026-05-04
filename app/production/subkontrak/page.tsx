@@ -99,7 +99,8 @@ export default function SubkontrakPage() {
   const [formSubkon, setFormSubkon] = useState('')
   const [formDeskripsi, setFormDeskripsi] = useState('')
   const [formTarget, setFormTarget] = useState('')
-  const [formFasilitas, setFormFasilitas] = useState('')
+  // kept for resetForm compatibility
+  const [, setFormFasilitas] = useState('')
   const [formCatatan, setFormCatatan] = useState('')
 
   const filtered = records.filter(r =>
@@ -421,7 +422,7 @@ export default function SubkontrakPage() {
 
                 <div className="p-3 bg-muted/30 rounded-lg text-xs text-muted-foreground">
                   <AlertCircle className="inline h-3 w-3 mr-1" />
-                  SUBK KITE 1.1/1.2 untuk fasilitas Pembebasan — SUBK KITE 2.1/2.2 untuk fasilitas Pengembalian.
+                  SUBK KITE 1.1 = pengeluaran BB ke subkon | SUBK KITE 1.2 = pemasukan hasil dari subkon.
                   Dokumen ini wajib ada sebelum BB keluar kawasan JKJ menuju subkontraktor.
                 </div>
               </TabsContent>
@@ -546,15 +547,9 @@ export default function SubkontrakPage() {
               </div>
               <div className="space-y-1">
                 <Label>Fasilitas KITE</Label>
-                <Select value={formFasilitas} onValueChange={setFormFasilitas}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pembebasan">Pembebasan (SUBK 1.1/1.2)</SelectItem>
-                    <SelectItem value="pengembalian">Pengembalian (SUBK 2.1/2.2)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center h-10 px-3 rounded-md border bg-muted/40 text-sm text-muted-foreground">
+                  Pembebasan (SUBK KITE 1.1/1.2)
+                </div>
               </div>
             </div>
 
@@ -577,8 +572,6 @@ export default function SubkontrakPage() {
               disabled={!formSubkon || !formDeskripsi || !formTarget}
               onClick={() => {
                 const master = MOCK_SUBKON_MASTER.find(s => s.id === formSubkon)
-                const fasKirim = formFasilitas === 'pengembalian' ? 'SUBK KITE 2.1' : 'SUBK KITE 1.1'
-                const fasTerima = formFasilitas === 'pengembalian' ? 'SUBK KITE 2.2' : 'SUBK KITE 1.2'
                 createSubkon({
                   namaSubkon: master?.nama ?? formSubkon,
                   alamatSubkon: '-',
@@ -590,10 +583,10 @@ export default function SubkontrakPage() {
                   tglSelesaiAktual: '-',
                   subkKiteKirimNo: '-',
                   subkKiteKirimTgl: '-',
-                  subkKiteKirimJenis: fasKirim,
+                  subkKiteKirimJenis: 'SUBK KITE 1.1',
                   subkKiteTerimaNo: '-',
                   subkKiteTerimaTgl: '-',
-                  subkKiteTerimaJenis: fasTerima,
+                  subkKiteTerimaJenis: 'SUBK KITE 1.2',
                   suratJalanNo: '-',
                   suratJalanTgl: '-',
                   items: [],

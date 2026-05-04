@@ -13,6 +13,7 @@ export interface StockItem {
   qtyAvailable: number   // qtyOnHand - qtyReserved
   location: string
   lastUpdated: string
+  fasilitas?: 'KITE' | 'Non-KITE'
 }
 
 export interface StockMovement {
@@ -30,14 +31,14 @@ export interface StockMovement {
 }
 
 const SEED_STOCK: StockItem[] = [
-  { materialCode: 'RM-LATEX', materialName: 'Natural Rubber Latex', category: 'BB', unit: 'kg', qtyOnHand: 5000, qtyReserved: 500, qtyAvailable: 4500, location: 'Gudang BB-1', lastUpdated: '2026-02-28' },
-  { materialCode: 'RM-NITRILE', materialName: 'Nitrile Latex', category: 'BB', unit: 'kg', qtyOnHand: 4000, qtyReserved: 300, qtyAvailable: 3700, location: 'Gudang BB-1', lastUpdated: '2026-02-28' },
-  { materialCode: 'RM-SULFUR', materialName: 'Sulfur Dispersion', category: 'BB', unit: 'kg', qtyOnHand: 200, qtyReserved: 10, qtyAvailable: 190, location: 'Gudang BB-2', lastUpdated: '2026-02-28' },
-  { materialCode: 'RM-ZINC', materialName: 'Zinc Oxide', category: 'BB', unit: 'kg', qtyOnHand: 300, qtyReserved: 20, qtyAvailable: 280, location: 'Gudang BB-2', lastUpdated: '2026-02-28' },
-  { materialCode: 'PKG-BOX', materialName: 'Inner Box', category: 'Packaging', unit: 'pc', qtyOnHand: 10000, qtyReserved: 1000, qtyAvailable: 9000, location: 'Gudang PKG', lastUpdated: '2026-02-28' },
-  { materialCode: 'PKG-CARTON', materialName: 'Carton Box', category: 'Packaging', unit: 'pc', qtyOnHand: 2000, qtyReserved: 200, qtyAvailable: 1800, location: 'Gudang PKG', lastUpdated: '2026-02-28' },
-  { materialCode: 'FG-LATEX-M', materialName: 'Latex Size M', category: 'FG', unit: 'cartons', qtyOnHand: 500, qtyReserved: 0, qtyAvailable: 500, location: 'Gudang FG-A', lastUpdated: '2026-02-28' },
-  { materialCode: 'FG-NITRILE-S', materialName: 'Nitrile Size S', category: 'FG', unit: 'cartons', qtyOnHand: 2450, qtyReserved: 0, qtyAvailable: 2450, location: 'Gudang FG-A', lastUpdated: '2026-03-04' },
+  { materialCode: 'RM-LATEX', materialName: 'Natural Rubber Latex', category: 'BB', unit: 'kg', qtyOnHand: 5000, qtyReserved: 500, qtyAvailable: 4500, location: 'Gudang BB-1', lastUpdated: '2026-02-28', fasilitas: 'KITE' },
+  { materialCode: 'RM-NITRILE', materialName: 'Nitrile Latex', category: 'BB', unit: 'kg', qtyOnHand: 4000, qtyReserved: 300, qtyAvailable: 3700, location: 'Gudang BB-1', lastUpdated: '2026-02-28', fasilitas: 'KITE' },
+  { materialCode: 'RM-SULFUR', materialName: 'Sulfur Dispersion', category: 'BB', unit: 'kg', qtyOnHand: 200, qtyReserved: 10, qtyAvailable: 190, location: 'Gudang BB-2', lastUpdated: '2026-02-28', fasilitas: 'KITE' },
+  { materialCode: 'RM-ZINC', materialName: 'Zinc Oxide', category: 'BB', unit: 'kg', qtyOnHand: 300, qtyReserved: 20, qtyAvailable: 280, location: 'Gudang BB-2', lastUpdated: '2026-02-28', fasilitas: 'KITE' },
+  { materialCode: 'PKG-BOX', materialName: 'Inner Box', category: 'Packaging', unit: 'pc', qtyOnHand: 10000, qtyReserved: 1000, qtyAvailable: 9000, location: 'Gudang PKG', lastUpdated: '2026-02-28', fasilitas: 'Non-KITE' },
+  { materialCode: 'PKG-CARTON', materialName: 'Carton Box', category: 'Packaging', unit: 'pc', qtyOnHand: 2000, qtyReserved: 200, qtyAvailable: 1800, location: 'Gudang PKG', lastUpdated: '2026-02-28', fasilitas: 'Non-KITE' },
+  { materialCode: 'FG-LATEX-M', materialName: 'Latex Size M', category: 'FG', unit: 'cartons', qtyOnHand: 500, qtyReserved: 0, qtyAvailable: 500, location: 'Gudang FG-A', lastUpdated: '2026-02-28', fasilitas: 'KITE' },
+  { materialCode: 'FG-NITRILE-S', materialName: 'Nitrile Size S', category: 'FG', unit: 'cartons', qtyOnHand: 2450, qtyReserved: 0, qtyAvailable: 2450, location: 'Gudang FG-A', lastUpdated: '2026-03-04', fasilitas: 'KITE' },
 ]
 
 const SEED_MOVEMENTS: StockMovement[] = [

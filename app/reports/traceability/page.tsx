@@ -111,7 +111,7 @@ export default function TraceabilityReportPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="lot">Lot Number</SelectItem>
+                  <SelectItem value="lot">Kode Barang</SelectItem>
                   <SelectItem value="bc20">BC 2.0 Number (PIB)</SelectItem>
                   <SelectItem value="peb">PEB Number</SelectItem>
                   <SelectItem value="wo">Work Order</SelectItem>
@@ -174,7 +174,7 @@ export default function TraceabilityReportPage() {
                   <div className="space-y-1 text-sm">
                     <p><span className="text-muted-foreground">BC 2.0 (PIB):</span> <span className="font-mono">{selectedRecord.bc20Number}</span></p>
                     <p><span className="text-muted-foreground">Description:</span> {selectedRecord.rmDescription}</p>
-                    <p><span className="text-muted-foreground">Lot Number:</span> <span className="font-mono text-primary">{selectedRecord.rmLotNumber}</span></p>
+                    <p><span className="text-muted-foreground">Kode Barang:</span> <span className="font-mono text-primary">{selectedRecord.rmLotNumber}</span></p>
                     <p><span className="text-muted-foreground">Quantity:</span> {selectedRecord.rmQuantity.toLocaleString()} {selectedRecord.rmUnit}</p>
                     <p><span className="text-muted-foreground">GR Date:</span> {new Date(selectedRecord.grDate).toLocaleDateString('id-ID')}</p>
                   </div>
@@ -187,7 +187,7 @@ export default function TraceabilityReportPage() {
                       <>
                         <p><span className="text-muted-foreground">PEB:</span> <span className="font-mono">{selectedRecord.pebNumber}</span></p>
                         <p><span className="text-muted-foreground">Product:</span> {selectedRecord.productName}</p>
-                        <p><span className="text-muted-foreground">Lot Number:</span> <span className="font-mono text-primary">{selectedRecord.fgLotNumber}</span></p>
+                        <p><span className="text-muted-foreground">Kode Barang:</span> <span className="font-mono text-primary">{selectedRecord.fgLotNumber}</span></p>
                         <p><span className="text-muted-foreground">Quantity:</span> {selectedRecord.fgQuantity.toLocaleString()} {selectedRecord.fgUnit}</p>
                         <p><span className="text-muted-foreground">Export Date:</span> {selectedRecord.exportDate ? new Date(selectedRecord.exportDate).toLocaleDateString('id-ID') : '-'}</p>
                       </>

@@ -11,6 +11,7 @@ export interface InventoryItem {
   status: 'In Stock' | 'Low Stock' | 'Critical' | 'Overstock'
   value: number
   lastUpdated: string
+  fasilitas: 'KITE' | 'Non-KITE'
 }
 
 export interface StockTransaction {
@@ -38,7 +39,8 @@ export const MOCK_INVENTORY: InventoryItem[] = [
     maxStock: 30000,
     status: 'In Stock',
     value: 50000000,
-    lastUpdated: '2026-02-05 08:00'
+    lastUpdated: '2026-02-05 08:00',
+    fasilitas: 'KITE'
   },
   {
     id: 'INV-002',
@@ -52,7 +54,8 @@ export const MOCK_INVENTORY: InventoryItem[] = [
     maxStock: 20000,
     status: 'Low Stock',
     value: 12000000,
-    lastUpdated: '2026-02-05 09:30'
+    lastUpdated: '2026-02-05 09:30',
+    fasilitas: 'KITE'
   },
   {
     id: 'INV-003',
@@ -66,7 +69,8 @@ export const MOCK_INVENTORY: InventoryItem[] = [
     maxStock: 5000,
     status: 'Critical',
     value: 2000000,
-    lastUpdated: '2026-02-04 14:00'
+    lastUpdated: '2026-02-04 14:00',
+    fasilitas: 'KITE'
   },
   // Packaging
   {
@@ -81,7 +85,8 @@ export const MOCK_INVENTORY: InventoryItem[] = [
     maxStock: 50000,
     status: 'In Stock',
     value: 15000000,
-    lastUpdated: '2026-02-01'
+    lastUpdated: '2026-02-01',
+    fasilitas: 'Non-KITE'
   },
   // Finished Goods
   {
@@ -96,7 +101,8 @@ export const MOCK_INVENTORY: InventoryItem[] = [
     maxStock: 5000,
     status: 'In Stock',
     value: 100000000,
-    lastUpdated: '2026-02-05 11:00'
+    lastUpdated: '2026-02-05 11:00',
+    fasilitas: 'KITE'
   },
   {
     id: 'INV-FG-002',
@@ -110,7 +116,8 @@ export const MOCK_INVENTORY: InventoryItem[] = [
     maxStock: 10000,
     status: 'In Stock',
     value: 250000000,
-    lastUpdated: '2026-02-05 10:15'
+    lastUpdated: '2026-02-05 10:15',
+    fasilitas: 'KITE'
   }
 ]
 

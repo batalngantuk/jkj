@@ -36,14 +36,14 @@ export interface SubkonRecord {
   tglSelesaiAktual: string
 
   // Dokumen SUBK KITE
-  // 1.1/2.1 = pengeluaran BB ke subkon
-  // 1.2/2.2 = pemasukan hasil dari subkon
-  subkKiteKirimNo: string   // SUBK KITE 1.1 atau 2.1
+  // 1.1 = pengeluaran BB ke subkon
+  // 1.2 = pemasukan hasil dari subkon
+  subkKiteKirimNo: string   // SUBK KITE 1.1
   subkKiteKirimTgl: string
-  subkKiteKirimJenis: 'SUBK KITE 1.1' | 'SUBK KITE 2.1'
-  subkKiteTerimaNo: string  // SUBK KITE 1.2 atau 2.2
+  subkKiteKirimJenis: 'SUBK KITE 1.1'
+  subkKiteTerimaNo: string  // SUBK KITE 1.2
   subkKiteTerimaTgl: string
-  subkKiteTerimaJenis: 'SUBK KITE 1.2' | 'SUBK KITE 2.2'
+  subkKiteTerimaJenis: 'SUBK KITE 1.2'
 
   // Surat Jalan
   suratJalanNo: string

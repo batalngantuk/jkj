@@ -21,6 +21,17 @@ export default function POListPage() {
        accessorKey: "id" as keyof PurchaseOrder,
        cell: (item: PurchaseOrder) => <span className="font-medium text-primary">{item.id}</span>
     },
+    {
+       header: "Tipe",
+       accessorKey: "poType" as keyof PurchaseOrder,
+       cell: (item: PurchaseOrder) => (
+           <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+             item.poType === 'Impor' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+           }`}>
+             {item.poType}
+           </span>
+       )
+    },
     { header: "Supplier", accessorKey: "supplier" as keyof PurchaseOrder },
     {
        header: "Order Date",

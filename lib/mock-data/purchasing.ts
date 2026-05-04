@@ -1,5 +1,6 @@
 export interface PurchaseOrder {
   id: string
+  poType: 'Lokal' | 'Impor'
   supplier: string
   items: Array<{
     code: string
@@ -37,6 +38,7 @@ export const MOCK_SUPPLIERS: Supplier[] = [
 export const MOCK_PURCHASE_ORDERS: PurchaseOrder[] = [
   {
     id: 'PO-2026-001',
+    poType: 'Lokal',
     supplier: 'PT. Agro Latex Indonesia',
     items: [
       { code: 'RM-LATEX', name: 'Natural Rubber Latex', quantity: 10000, unit: 'kg', unitPrice: 15000, total: 150000000 }
@@ -49,6 +51,7 @@ export const MOCK_PURCHASE_ORDERS: PurchaseOrder[] = [
   },
   {
     id: 'PO-2026-002',
+    poType: 'Impor',
     supplier: 'Global Chemicals Ltd',
     items: [
       { code: 'RM-SULFUR', name: 'Sulfur Dispersion', quantity: 500, unit: 'kg', unitPrice: 25000, total: 12500000 },
@@ -62,6 +65,7 @@ export const MOCK_PURCHASE_ORDERS: PurchaseOrder[] = [
   },
   {
     id: 'PO-2026-003',
+    poType: 'Lokal',
     supplier: 'Indo Box Packaging',
     items: [
       { code: 'PKG-BOX-S', name: 'Inner Box Size S', quantity: 50000, unit: 'pcs', unitPrice: 1200, total: 60000000 }

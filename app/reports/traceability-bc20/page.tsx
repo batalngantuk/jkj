@@ -227,8 +227,8 @@ export default function TraceabilityBC20Page() {
                   <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="bc20">BC 2.0 Number</SelectItem>
-                    <SelectItem value="lot">Lot Number (RM)</SelectItem>
-                    <SelectItem value="fglot">Lot Number (FG)</SelectItem>
+                    <SelectItem value="lot">Kode Barang (RM)</SelectItem>
+                    <SelectItem value="fglot">Kode Barang (FG)</SelectItem>
                     <SelectItem value="peb">PEB Number</SelectItem>
                     <SelectItem value="wo">Work Order</SelectItem>
                   </SelectContent>
@@ -298,7 +298,7 @@ export default function TraceabilityBC20Page() {
                             <p className="text-xs font-medium">{step.quantity}</p>
                             {step.lotNumber && (
                               <p className="text-xs opacity-75 font-mono mt-0.5">
-                                Lot: {step.lotNumber}
+                                Kode: {step.lotNumber}
                               </p>
                             )}
                           </div>
@@ -397,7 +397,7 @@ export default function TraceabilityBC20Page() {
                           <span className="font-mono">{selected.rmHsCode}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Lot Number:</span>
+                          <span className="text-muted-foreground">Kode Barang:</span>
                           <span className="font-mono text-blue-700">
                             {selected.rmLotNumber || '—'}
                           </span>
@@ -431,7 +431,7 @@ export default function TraceabilityBC20Page() {
                           <span>{selected.productName}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">FG Lot Number:</span>
+                          <span className="text-muted-foreground">Kode Barang (FG):</span>
                           <span className="font-mono text-green-700">
                             {selected.fgLotNumber || '—'}
                           </span>

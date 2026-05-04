@@ -483,7 +483,7 @@ export default function PEBCreatePage() {
                 />
               </div>
               <div>
-                <Label htmlFor="fgLotNumber">FG Lot Number (Optional)</Label>
+                <Label htmlFor="fgLotNumber">Kode Barang FG (Optional)</Label>
                 <Input
                   id="fgLotNumber"
                   value={fgLotNumber}
