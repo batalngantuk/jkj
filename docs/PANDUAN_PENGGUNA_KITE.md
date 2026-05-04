@@ -1,6 +1,6 @@
 # Panduan Pengguna — Sistem ERP JKJ (KITE)
 
-**Versi:** April 2026  
+**Versi:** Mei 2026  
 **Untuk:** PT JKJ — Perusahaan Penerima Fasilitas KITE (Kemudahan Impor Tujuan Ekspor)
 
 ---
@@ -102,11 +102,12 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 **Tanggung jawab:** Pengadaan bahan baku impor, kelola dokumen BC 2.0.
 
 1. **Buat Purchase Order** → `/purchasing/po` → *Create PO*
+   - Pilih **Tipe PO**: Lokal atau Impor (badge hijau/biru di daftar PO)
    - Isi supplier, item, qty, harga, kurs
    - Sistem otomatis hitung DPP (×11/12) dan PPN 12%
    - Preview blok tanda tangan (Dibuat / Diperiksa / Disetujui / Supplier)
 2. **Input BC 2.0** saat barang tiba di pelabuhan → `/purchasing/bc20/new`
-   - Nomor PIB, supplier, deskripsi barang, HS Code
+   - Nomor PIB, **Nomor Pendaftaran**, **Tanggal Dokumen**, supplier, deskripsi barang, HS Code
    - Nilai CIF (USD), kurs, bea masuk, PPN import, PPh 22
    - Sistem catat otomatis sebagai tax asset (PPN & PPh 22 tidak masuk landed cost)
 3. **Pantau dashboard BC 2.0** → `/purchasing/bc20/dashboard`
@@ -131,13 +132,19 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 3. **Pantau stok gudang** → `/warehouse`
    - Search by nama / kode barang / lokasi
    - Filter by kategori (BB / FG / Packaging / WIP)
+   - Filter by **Fasilitas**: KITE / Non-KITE
    - Lihat status stok: OK / Low Stock / Out of Stock
+   - Section **Gudang WIP** — live dari stok kategori WIP
+   - Section **Gudang Hasil Subkon** — live dari job subkontrak (status Hasil Diterima/Selesai)
 4. **Terima FG dari produksi** → `/warehouse/outbound` → Tab *Input Barang Jadi*
    - Pilih WO yang sudah selesai
    - Input qty diterima, qty reject, lokasi gudang FG, nama penerima
 5. **Kirim FG ke customer** → `/warehouse/outbound` → Tab *Kirim ke Customer*
    - Isi no. Surat Jalan, transporter, supir, no. kendaraan
    - Link ke nomor PEB jika pengiriman ekspor
+   - Klik *Dispatch* → Surat Jalan otomatis tersimpan di tab **Surat Jalan Ekspor**
+5a. **Lihat / export Surat Jalan Ekspor** → `/warehouse/outbound` → Tab *Surat Jalan Ekspor*
+   - Daftar semua surat jalan yang sudah dibuat, export Excel
 6. **Catat waste / scrap** → `/warehouse/waste`
    - Input waste per batch produksi
    - Sistem otomatis bandingkan waste ratio aktual vs batas BCLKT
@@ -161,9 +168,9 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
    - Saat Completed → klik *"Input BJ ke Gudang"* (notif ke Gudang)
 4. **Kelola Subkontrak KITE** → `/production/subkontrak`
    - Buat job subkon baru, pilih subkontraktor dari master
-   - Catat dokumen SUBK KITE:
-     - **1.1 / 1.2** → fasilitas Pembebasan
-     - **2.1 / 2.2** → fasilitas Pengembalian
+   - Fasilitas: **Pembebasan (SUBK KITE 1.1/1.2)** — satu-satunya skema yang digunakan JKJ
+     - **1.1** = pengeluaran BB ke subkontraktor
+     - **1.2** = pemasukan hasil dari subkontraktor
    - Pantau alur: Draft → BB Dikirim → Dalam Proses → Hasil Diterima → Selesai
    - Catat fee jasa subkontraktor (diproses ke Finance → AP)
 5. **Pantau laporan produksi** → `/reports/production`
@@ -197,7 +204,14 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
    - Pantau PPN import yang bisa dikreditkan vs PPN keluaran
    - Pantau PPh 22 yang bisa dikreditkan di SPT Tahunan PPh Badan
    - Rekonsiliasi bulanan: PPN masukan vs keluaran → lebih/kurang bayar
-6. **Laporan keuangan** → `/finance/reports`
+6. **Jurnal Umum** → `/finance/journal`
+   - Input jurnal kas/bank dan jurnal umum manual
+   - Tipe: Kas Masuk / Kas Keluar / Jurnal Umum
+   - Multi-line debit/kredit per entri
+7. **Saldo Akun** → `/finance/accounts`
+   - Saldo real-time semua akun dari jurnal
+8. **Laporan Keuangan** → `/finance/reports`
+   - Laporan Laba Rugi, Neraca, Arus Kas, Rekap Jurnal
 
 ---
 
@@ -284,6 +298,7 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 | Subkontrak KITE | ✅ | — | — | — | ✅ | — | Lihat | ✅ |
 | PEB Ekspor | ✅ | — | — | — | — | — | ✅ | ✅ |
 | Keuangan (AR/AP/Payments) | ✅ | — | — | — | — | ✅ | — | — |
+| Jurnal & Laporan Keuangan | ✅ | — | — | — | — | ✅ | — | — |
 | Faktur Pajak | ✅ | — | — | — | — | ✅ | — | — |
 | Tax Assets | ✅ | — | — | — | — | ✅ | Lihat | — |
 | IT Inventory (8 laporan) | ✅ | — | — | — | — | — | ✅ | ✅ |
@@ -303,9 +318,9 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 | BC 2.3 | (referensi eksternal) | `/reports/production` | Impor KITE — referensi di laporan konversi |
 | BC 3.0 | (referensi eksternal) | `/reports/production` | Ekspor KITE — referensi di laporan konversi |
 | PEB | Staff KITE | `/logistics/peb/new` | Pemberitahuan Ekspor Barang — trigger Lap 5 & 7 |
-| SUBK KITE 1.1/1.2 | Staff Produksi | `/production/subkontrak` | Pengeluaran BB ke subkon (Pembebasan) — trigger Lap 3 |
-| SUBK KITE 2.1/2.2 | Staff Produksi | `/production/subkontrak` | Pengeluaran BB ke subkon (Pengembalian) — trigger Lap 3 |
+| SUBK KITE 1.1/1.2 | Staff Produksi | `/production/subkontrak` | Pengeluaran/pemasukan BB subkon (Pembebasan) — trigger Lap 3 |
 | FG Receipt | Staff Gudang | `/warehouse/outbound` | Penerimaan BJ dari WO — trigger Lap 4 |
+| Surat Jalan Ekspor | Staff Gudang | `/warehouse/outbound` → Tab *Surat Jalan Ekspor* | Dokumen pengiriman ekspor ke customer — disimpan & bisa di-export Excel |
 | Waste / BC 2.4 | Staff Gudang | `/warehouse/waste` | Pelaporan waste ke DJBC — trigger Lap 8 |
 | IT Inventory (8 laporan) | Staff KITE | `/reports/kite-inventory` | Wajib per Lampiran XXII PER-5/BC/2023 — **otomatis dari transaksi** |
 | Laporan Mutasi Stok | Staff KITE | `/reports/stock-movement` | BB + FG movements, gabung data live |
@@ -335,7 +350,7 @@ Semua 8 laporan sudah **live** — terisi otomatis dari transaksi di sistem.
 ### Aturan Operasional
 
 - **Waste ratio** dicatat per WO dan dibandingkan batas BCLKT. Jika melebihi, sistem menampilkan alert merah — perlu pelaporan khusus ke DJBC.
-- **Lot number** wajib untuk BB yang masuk via BC 2.3 (KITE/bonded zone). Untuk BC 2.0 reguler, lot bersifat opsional.
+- **Kode Barang** (sebelumnya "Lot Number") wajib untuk BB yang masuk via BC 2.3 (KITE/bonded zone). Untuk BC 2.0 reguler, bersifat opsional.
 - **Kurs PEB** harus menggunakan kurs resmi BI/DJBC pada tanggal ekspor — diinput manual di form PEB.
 - **IT Inventory** wajib diserahkan ke DJBC sesuai periode pelaporan (bulanan/triwulan sesuai izin KITE masing-masing perusahaan).
 - **Subkontrak**: setiap pengeluaran BB ke subkontraktor wajib dilengkapi dokumen SUBK KITE **sebelum** BB keluar dari kawasan JKJ.

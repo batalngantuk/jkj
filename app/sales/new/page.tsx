@@ -13,20 +13,23 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { FileUpload } from '@/components/shared/file-upload'
-import { MOCK_PRODUCTS, MOCK_BOMS_SO } from '@/lib/mock-data/sales'
 import AppLayout from '@/components/app-layout'
 import { useSalesOrders } from '@/lib/store/hooks'
+import type { BOMItem } from '@/lib/mock-data/sales'
 
 interface SOLine {
   id: string
-  namaBarang: string       // free text — nama produk
-  kodeBarang: string       // opsional
+  namaBarang: string
+  kodeBarang: string
   satuan: string
   qty: number | ''
   hargaSatuan: number | ''
   catatan: string
-  bomId: string            // BOM terpilih
   expanded: boolean
+}
+
+function newBOMItem(no: number): BOMItem {
+  return { id: crypto.randomUUID(), no, namaMaterial: '', spesifikasi: '', warna: '', konsumsi: '', satuan: 'kg', penggunaan: '', asalMaterial: '' }
 }
 
 function newLine(): SOLine {
@@ -38,7 +41,6 @@ function newLine(): SOLine {
     qty: '',
     hargaSatuan: '',
     catatan: '',
-    bomId: '',
     expanded: true,
   }
 }
@@ -59,6 +61,16 @@ export default function NewSalesOrderPage() {
 
   // Line items
   const [lines, setLines] = useState<SOLine[]>([newLine()])
+  // BOM manual
+  const [bomItems, setBomItems] = useState<BOMItem[]>([newBOMItem(1)])
+  const [showBOM, setShowBOM] = useState(false)
+
+  const updateBOMItem = (id: string, patch: Partial<BOMItem>) =>
+    setBomItems(prev => prev.map(b => b.id === id ? { ...b, ...patch } : b))
+  const removeBOMItem = (id: string) =>
+    setBomItems(prev => prev.filter(b => b.id !== id).map((b, i) => ({ ...b, no: i + 1 })))
+  const addBOMItem = () =>
+    setBomItems(prev => [...prev, newBOMItem(prev.length + 1)])
 
   const updateLine = (id: string, updates: Partial<SOLine>) => {
     setLines(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l))
@@ -92,6 +104,7 @@ export default function NewSalesOrderPage() {
       priority: priority as 'Normal' | 'Urgent',
       createdBy: 'Sales Admin',
       notes,
+      bomItems: bomItems.filter(b => b.namaMaterial),
     })
     router.push('/sales')
   }
@@ -214,9 +227,6 @@ export default function NewSalesOrderPage() {
                   const kursNum = Number(kurs) || 1
                   const subtotalIDR = currency === 'IDR' ? qty * harga : qty * harga * kursNum
 
-                  // BOM for this product
-                  const selectedBom = line.bomId ? MOCK_BOMS_SO.find(b => b.id === line.bomId) : null
-
                   return (
                     <div key={line.id} className="border rounded-lg overflow-hidden">
                       {/* Line header */}
@@ -328,40 +338,6 @@ export default function NewSalesOrderPage() {
                             )}
                           </div>
 
-                          {/* BOM Picker */}
-                          <div className="border-t pt-3 space-y-2">
-                            <Label className="text-xs text-muted-foreground">BOM (opsional — untuk planning bahan baku)</Label>
-                            <Select value={line.bomId} onValueChange={v => updateLine(line.id, { bomId: v })}>
-                              <SelectTrigger className="text-sm">
-                                <SelectValue placeholder="Pilih BOM jika produk ini diproduksi sendiri" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">— Tanpa BOM —</SelectItem>
-                                {MOCK_BOMS_SO.map(b => (
-                                  <SelectItem key={b.id} value={b.id}>{b.productName}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-
-                            {selectedBom && qty > 0 && (
-                              <div className="text-xs bg-blue-50 border border-blue-200 rounded p-3 space-y-1">
-                                <p className="font-semibold text-blue-800 mb-1">Estimasi Kebutuhan Bahan Baku:</p>
-                                {selectedBom.items.map(item => {
-                                  const needed = item.quantityPerUnit * qty
-                                  const short = item.stockAvailable < needed
-                                  return (
-                                    <div key={item.id} className="flex justify-between items-center">
-                                      <span className="text-blue-700">{item.materialName}</span>
-                                      <span className={short ? 'text-red-600 font-medium' : 'text-green-700'}>
-                                        {needed.toLocaleString()} {item.unit}
-                                        {short ? ' ⚠ Kurang' : ' ✓'}
-                                      </span>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            )}
-                          </div>
 
                           <div className="space-y-2">
                             <Label>Catatan untuk item ini</Label>
@@ -396,11 +372,135 @@ export default function NewSalesOrderPage() {
               </CardContent>
             </Card>
 
-            {/* Section 3: Dokumen PO */}
+            {/* Section 3: BOM Manual */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <span className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">3</span>
+                    Kebutuhan Material (BOM)
+                  </CardTitle>
+                  <Button type="button" variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => setShowBOM(v => !v)}>
+                    {showBOM ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    {showBOM ? 'Sembunyikan' : 'Tampilkan'}
+                  </Button>
+                </div>
+                <CardDescription>Input manual kebutuhan bahan baku per PO — No, Nama Material, Spesifikasi, Warna, Konsumsi, Satuan, Penggunaan, Asal Material</CardDescription>
+              </CardHeader>
+              {showBOM && (
+                <CardContent className="space-y-3">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/50">
+                          <TableHead className="w-10 text-center">No</TableHead>
+                          <TableHead>Nama Material</TableHead>
+                          <TableHead>Spesifikasi</TableHead>
+                          <TableHead>Warna</TableHead>
+                          <TableHead className="w-28">Konsumsi</TableHead>
+                          <TableHead className="w-24">Satuan</TableHead>
+                          <TableHead>Penggunaan</TableHead>
+                          <TableHead className="w-28">Asal Material</TableHead>
+                          <TableHead className="w-8"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {bomItems.map(b => (
+                          <TableRow key={b.id}>
+                            <TableCell className="text-center text-sm text-muted-foreground">{b.no}</TableCell>
+                            <TableCell>
+                              <Input
+                                className="h-8 text-sm min-w-36"
+                                placeholder="Nama material..."
+                                value={b.namaMaterial}
+                                onChange={e => updateBOMItem(b.id, { namaMaterial: e.target.value })}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                className="h-8 text-sm min-w-28"
+                                placeholder="Spec..."
+                                value={b.spesifikasi}
+                                onChange={e => updateBOMItem(b.id, { spesifikasi: e.target.value })}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                className="h-8 text-sm w-24"
+                                placeholder="Warna..."
+                                value={b.warna}
+                                onChange={e => updateBOMItem(b.id, { warna: e.target.value })}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                className="h-8 text-sm w-24"
+                                type="number"
+                                placeholder="0"
+                                value={b.konsumsi}
+                                onChange={e => updateBOMItem(b.id, { konsumsi: e.target.value === '' ? '' : Number(e.target.value) })}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Select value={b.satuan} onValueChange={v => updateBOMItem(b.id, { satuan: v })}>
+                                <SelectTrigger className="h-8 text-sm w-20">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {['kg', 'gram', 'liter', 'pcs', 'm', 'm²', 'roll', 'unit'].map(s => (
+                                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                className="h-8 text-sm min-w-32"
+                                placeholder="Penggunaan..."
+                                value={b.penggunaan}
+                                onChange={e => updateBOMItem(b.id, { penggunaan: e.target.value })}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Select value={b.asalMaterial} onValueChange={v => updateBOMItem(b.id, { asalMaterial: v as 'Lokal' | 'Impor' })}>
+                                <SelectTrigger className="h-8 text-sm w-24">
+                                  <SelectValue placeholder="-" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Lokal">Lokal</SelectItem>
+                                  <SelectItem value="Impor">Impor</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-muted-foreground hover:text-red-600"
+                                onClick={() => removeBOMItem(b.id)}
+                                disabled={bomItems.length === 1}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" className="gap-2" onClick={addBOMItem}>
+                    <Plus className="h-4 w-4" />Tambah Baris Material
+                  </Button>
+                </CardContent>
+              )}
+            </Card>
+
+            {/* Section 4: Dokumen PO */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">3</span>
+                  <span className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">4</span>
                   Dokumen PO Customer
                 </CardTitle>
                 <CardDescription>Upload scan / foto PO dari customer (opsional)</CardDescription>

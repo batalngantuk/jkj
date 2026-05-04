@@ -1,3 +1,15 @@
+export interface BOMItem {
+  id: string
+  no: number
+  namaMaterial: string
+  spesifikasi: string
+  warna: string
+  konsumsi: number | ''
+  satuan: string
+  penggunaan: string
+  asalMaterial: 'Lokal' | 'Impor' | ''
+}
+
 export interface SalesOrder {
   id: string
   poNumber: string
@@ -14,6 +26,7 @@ export interface SalesOrder {
   createdBy: string
   notes?: string
   poDocumentUrl?: string
+  bomItems?: BOMItem[]
   history: Array<{
     date: string
     action: string

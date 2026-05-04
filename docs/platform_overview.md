@@ -1,9 +1,9 @@
 # JKJ Manufacturing ERP - Platform Overview
 
-> **Sistem ERP Terintegrasi untuk Manufaktur dengan BC 2.0 Regular Import System**
-> Version 2.0 | Last Updated: March 2026
+> **Sistem ERP Terintegrasi untuk Manufaktur dengan Fasilitas KITE**
+> Version 3.0 | Last Updated: Mei 2026
 >
-> **Key Features**: Dual Billing • Upfront Tax Payment • Landed Cost • Tax Asset Management
+> **Key Features**: Dual Billing • Upfront Tax Payment • Landed Cost • Tax Asset Management • KITE IT Inventory • Accounting Journal
 
 ---
 
@@ -25,15 +25,16 @@
 
 JKJ Manufacturing ERP adalah sistem manajemen terintegrasi yang dirancang khusus untuk perusahaan manufaktur yang melakukan **import raw material** dan **export finished goods**. Platform ini menyediakan:
 
-- ✅ **Manajemen Sales Order** - Dari customer PO hingga delivery
-- ✅ **Production Planning** - Work order dan BOM management
-- ✅ **Warehouse Management** - Inbound, outbound, dan stock tracking
-- ✅ **Purchasing** - PO management dan supplier tracking
-- ✅ **Customs Compliance** - BC 2.0 (PIB - Regular Import) and PEB (Regular Export)
+- ✅ **Manajemen Sales Order** - Dari customer PO hingga delivery, nama produk free-text, BOM per item
+- ✅ **Production Planning** - Work order, BOM management, subkontrak KITE 1.1/1.2
+- ✅ **Warehouse Management** - Inbound, outbound, stok WIP/subkon, surat jalan ekspor, filter KITE/Non-KITE
+- ✅ **Purchasing** - PO Lokal/Impor, BC 2.0 multi-material, supplier management
+- ✅ **Customs Compliance** - BC 2.0 (PIB - Regular Import), PEB (Regular Export), KITE facility
 - ✅ **Material Traceability** - Pelacakan material dari import hingga export (optional)
-- ✅ **Finance** - Invoice, payment, tax asset management, dan landed cost
+- ✅ **Finance** - Invoice, payment, tax asset management, landed cost, **jurnal umum, laporan keuangan**
 - ✅ **Logistics** - Shipment tracking dan delivery management
-- ✅ **Reporting** - Analytics dan compliance reports
+- ✅ **KITE IT Inventory** - 8 laporan wajib PER-5/BC/2023, live dari transaksi sistem
+- ✅ **Reporting** - Analytics, compliance reports, stock movement, traceability
 
 ### Keunggulan Platform
 
@@ -201,11 +202,15 @@ graph TB
 
 **Fitur**:
 
-- **Inbound/Receiving**: Goods receipt dari supplier
-- **Outbound/Shipping**: Pengiriman ke customer
-- Stock level monitoring
-- Location tracking
-- **Lot/batch tracking**
+- **Inbound/Receiving** (`/warehouse/inbound`): Goods receipt dari supplier dengan form lengkap
+- **Pengeluaran BB** (`/warehouse/issue`): Pengeluaran bahan baku ke produksi/subkontrak
+- **Outbound/Shipping** (`/warehouse/outbound`): Penerimaan FG dari WO + pengiriman ke customer
+  - Tab **Surat Jalan Ekspor** — buat & lihat surat jalan ekspor (live dari store `useShipments`), export Excel
+- Stock level monitoring dengan search by nama/kode/lokasi
+- **Filter Fasilitas** — pisahkan stok KITE vs Non-KITE
+- **Gudang WIP** — tampilan live stok barang dalam proses produksi
+- **Gudang Hasil Subkon** — live dari `useSubkontrak` (status Hasil Diterima/Selesai)
+- Lot/batch tracking (disebut "Kode Barang" di UI)
 - Stock movement history
 
 **User**: Warehouse Staff, Warehouse Manager
@@ -216,6 +221,7 @@ graph TB
 - **Blocked until BC 2.0 status = "CUSTOMS RELEASED"**
 - Link to WO (production consumption)
 - Link to PEB (export shipment - optional linkage)
+- Link to Subkontrak records (Gudang Hasil Subkon)
 - **Auto-record inventory at landed cost** (CIF + Bea Masuk + freight)
 - **Auto-generate journal entries** for tax assets
 
@@ -229,7 +235,9 @@ graph TB
 
 - Supplier management (add, edit, view)
 - Purchase Order (PO) creation & tracking
-- **BC 2.0 Import Declaration** 🆕
+  - **Tipe PO**: Lokal / Impor — badge di list, selector di form create
+  - DPP & PPN 12% otomatis, blok tanda tangan 4 kolom (print-ready)
+- **BC 2.0 Import Declaration**
 - Approval workflow
 - Vendor performance tracking
 
@@ -242,6 +250,7 @@ graph TB
 **Fitur**:
 
 - BC 2.0 (PIB) document creation & tracking
+  - Field tambahan: **Nomor Pendaftaran** dan **Tanggal Dokumen** PIB
 - HS Code management
 - **Dual Billing System**:
   - Vendor billing (CIF payment)
@@ -308,9 +317,29 @@ graph TB
 
 ### 8. 💰 Finance (`/finance`)
 
-**Fungsi**: Financial management, accounting, dan tax asset tracking
+**Fungsi**: Financial management, accounting, jurnal, dan tax asset tracking
 
 **Fitur**:
+
+#### Jurnal Umum (`/finance/journal`) 🆕
+
+- Input jurnal kas/bank dan jurnal umum manual
+- Multi-line debit/kredit per entri
+- Tipe: Kas Masuk / Kas Keluar / Jurnal Umum
+- Daftar semua entri jurnal dengan filter periode
+- Data disimpan di localStorage (`jkj_journal`) via `useJournal`
+
+#### Saldo Akun (`/finance/accounts`) 🆕
+
+- Tampilan real-time saldo semua akun dari jurnal
+- Diambil dari `useAccounts` (computed dari data jurnal)
+
+#### Laporan Keuangan (`/finance/reports`) 🆕
+
+- **Laporan Laba Rugi** — revenue vs COGS vs expenses → net profit/loss per periode
+- **Neraca (Balance Sheet)** — assets, liabilities, equity
+- **Arus Kas** — operating, investing, financing activities
+- **Rekap Jurnal** — semua entri jurnal per periode dengan filter
 
 #### Accounts Receivable (`/finance/ar`)
 
@@ -500,8 +529,26 @@ graph TB
   - Production (WO references)
   - Export (PEB references - optional linkage)
   - Waste/Scrap
-- Detailed transaction table with optional lot tracking
+- Detailed transaction table dengan kolom **Kode Barang** (bukan "Lot Number")
 - Export to Excel
+
+#### 🏭 KITE IT Inventory (`/reports/kite-inventory`)
+
+**8 Laporan Wajib** sesuai Lampiran XXII PER-5/BC/2023 — semua **otomatis terisi** dari transaksi sistem:
+
+| No | Laporan | Sumber Data |
+|----|---------|-------------|
+| 1 | Pemasukan Bahan Baku | `useStock` movements IMPORT/GR |
+| 2 | Pemakaian Bahan Baku | `useStock` movements PRODUCTION_OUT |
+| 3 | Pemakaian BB Subkontrak | `useSubkontrak` records |
+| 4 | Pemasukan Hasil Produksi | `useFGReceipts` |
+| 5 | Pengeluaran Hasil Produksi | `usePEB` (status Submitted/Approved/Exported) |
+| 6 | Mutasi Bahan Baku | `useStock` + saldo computed |
+| 7 | Mutasi Hasil Produksi | `useStock` FG + saldo computed |
+| 8 | Waste / Scrap | `useWaste` |
+
+- **"Export Semua"** → 1 file Excel 8 sheet (format Lampiran XXII)
+- Export per laporan tersedia di tiap tab
 
 #### 🏭 Production Yield (`/reports/production`)
 
@@ -1088,9 +1135,23 @@ A: Verify BOM standard ratio dan actual quantity di WO.
 - **Charts & Visualization** (Recharts integration)
 - **BC 2.0 Forms** (Create/Edit with auto-calculations)
 
-### Phase 3 📋 (Planned)
+### Phase 3 ✅ (Completed — Mei 2026)
 
-- User management & permissions
+- **KITE IT Inventory** — 8 laporan wajib PER-5/BC/2023, live dari transaksi sistem
+- **Modul Akunting** — Jurnal Umum, Saldo Akun, Laporan Keuangan (Laba Rugi, Neraca, Arus Kas, Rekap Jurnal)
+- **Subkontrak KITE** — hanya SUBK KITE 1.1/1.2 (Pembebasan)
+- **PO Lokal/Impor** — badge tipe di list, selector di form create
+- **BC 2.0** — tambah field Nomor Pendaftaran & Tanggal Dokumen
+- **Gudang WIP & Hasil Subkon** — section tersendiri di halaman warehouse
+- **Surat Jalan Ekspor** — store + tab di outbound warehouse, export Excel
+- **Filter Fasilitas KITE/Non-KITE** — di halaman inventori gudang
+- **Rename Lot Number → Kode Barang** — semua label UI laporan & PEB
+- **BOM manual di SO** — BOM preview per line item di Sales Order
+- **Waste Management** — pencatatan waste/scrap dengan alert vs batas BCLKT
+
+### Phase 4 📋 (Planned)
+
+- User management & permissions (role-based access, halaman read-only DJBC)
 - CEISA integration (real customs API)
 - Mobile app
 - Advanced analytics & AI
