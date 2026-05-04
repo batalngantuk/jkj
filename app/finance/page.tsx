@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, FileText, AlertCircle, ArrowRight } from 'lucide-react'
+import { ArrowLeft, TrendingUp, TrendingDown, DollarSign, FileText, AlertCircle, ArrowRight, BookOpen, Landmark } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -165,7 +165,7 @@ export default function FinanceDashboardPage() {
                   <TrendingUp className="h-5 w-5 text-green-600" />
                   Accounts Receivable
                 </CardTitle>
-                <CardDescription>Manage customer invoices & payments</CardDescription>
+                <CardDescription>Kelola invoice customer & penerimaan</CardDescription>
               </CardHeader>
             </Card>
           </Link>
@@ -177,7 +177,7 @@ export default function FinanceDashboardPage() {
                   <TrendingDown className="h-5 w-5 text-red-600" />
                   Accounts Payable
                 </CardTitle>
-                <CardDescription>Manage vendor bills & payments</CardDescription>
+                <CardDescription>Kelola tagihan vendor & pembayaran</CardDescription>
               </CardHeader>
             </Card>
           </Link>
@@ -189,7 +189,43 @@ export default function FinanceDashboardPage() {
                   <DollarSign className="h-5 w-5 text-blue-600" />
                   Payments
                 </CardTitle>
-                <CardDescription>Track all payment transactions</CardDescription>
+                <CardDescription>Rekap semua transaksi pembayaran</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/finance/journal">
+            <Card className="hover:bg-accent cursor-pointer transition-colors">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-blue-700" />
+                  Jurnal Kas & Bank
+                </CardTitle>
+                <CardDescription>Input gaji, utilitas, sewa, dan beban umum lainnya</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/finance/accounts">
+            <Card className="hover:bg-accent cursor-pointer transition-colors">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Landmark className="h-5 w-5 text-indigo-600" />
+                  Saldo Akun
+                </CardTitle>
+                <CardDescription>Input saldo aset tetap, modal, dan hutang jangka panjang</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/finance/reports">
+            <Card className="hover:bg-accent cursor-pointer transition-colors">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-purple-600" />
+                  Laporan Keuangan
+                </CardTitle>
+                <CardDescription>Laba Rugi, Neraca, Arus Kas, Perubahan Ekuitas</CardDescription>
               </CardHeader>
             </Card>
           </Link>
