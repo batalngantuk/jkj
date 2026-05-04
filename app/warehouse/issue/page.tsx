@@ -72,7 +72,7 @@ const SEED_HISTORY: HistoryEntry[] = [
 
 export default function WarehouseIssuePage() {
   const { stock, deductStock } = useStock()
-  const { orders: workOrders } = useWorkOrders()
+  const { workOrders } = useWorkOrders()
   const { records: subkonRecords } = useSubkontrak()
 
   const [history, setHistory] = useState<HistoryEntry[]>(SEED_HISTORY)
