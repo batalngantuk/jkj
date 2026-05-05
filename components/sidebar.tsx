@@ -92,6 +92,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Inbound / Receiving', href: '/warehouse/inbound' },
         { label: 'Outbound / Shipping', href: '/warehouse/outbound' },
         { label: 'Gudang WIP', href: '/warehouse/wip' },
+        { label: 'Stok Sementara', href: '/warehouse/temp-storage' },
         { label: 'Waste / Scrap (BC 2.4)', href: '/warehouse/waste' },
       ]
     },

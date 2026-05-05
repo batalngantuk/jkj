@@ -13,7 +13,7 @@ export interface PurchaseOrder {
   totalAmount: number
   orderDate: string
   expectedDelivery: string
-  status: 'DRAFT' | 'APPROVED' | 'PARTIAL' | 'RECEIVED' | 'CANCELLED'
+  status: 'DRAFT' | 'APPROVED' | 'PARTIAL' | 'RECEIVED' | 'CANCELLED' | 'CANCELLED_WITH_STOCK'
   paymentStatus: 'UNPAID' | 'PARTIAL' | 'PAID'
 }
 
