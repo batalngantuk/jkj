@@ -21,7 +21,7 @@ export interface StockMovement {
   date: string
   materialCode: string
   materialName: string
-  transactionType: 'OPENING' | 'IMPORT' | 'LOCAL_PURCHASE' | 'PRODUCTION_OUT' | 'FG_IN' | 'EXPORT' | 'WASTE' | 'ADJUSTMENT'
+  transactionType: 'OPENING' | 'IMPORT' | 'LOCAL_PURCHASE' | 'PRODUCTION_OUT' | 'FG_IN' | 'WIP_IN' | 'WIP_OUT' | 'EXPORT' | 'WASTE' | 'ADJUSTMENT'
   referenceNumber: string
   referenceType: string
   quantityIn: number
@@ -39,6 +39,10 @@ const SEED_STOCK: StockItem[] = [
   { materialCode: 'PKG-CARTON', materialName: 'Carton Box', category: 'Packaging', unit: 'pc', qtyOnHand: 2000, qtyReserved: 200, qtyAvailable: 1800, location: 'Gudang PKG', lastUpdated: '2026-02-28', fasilitas: 'Non-KITE' },
   { materialCode: 'FG-LATEX-M', materialName: 'Latex Size M', category: 'FG', unit: 'cartons', qtyOnHand: 500, qtyReserved: 0, qtyAvailable: 500, location: 'Gudang FG-A', lastUpdated: '2026-02-28', fasilitas: 'KITE' },
   { materialCode: 'FG-NITRILE-S', materialName: 'Nitrile Size S', category: 'FG', unit: 'cartons', qtyOnHand: 2450, qtyReserved: 0, qtyAvailable: 2450, location: 'Gudang FG-A', lastUpdated: '2026-03-04', fasilitas: 'KITE' },
+  // WIP — bahan setengah jadi
+  { materialCode: 'WIP-COMPOUND-LATEX', materialName: 'Latex Compound (Post-Mixing)', category: 'WIP', unit: 'kg', qtyOnHand: 2000, qtyReserved: 500, qtyAvailable: 1500, location: 'Gudang WIP-1', lastUpdated: '2026-04-10', fasilitas: 'KITE' },
+  { materialCode: 'WIP-DIPPED-M', materialName: 'Sarung Tangan Dipped Size M', category: 'WIP', unit: 'batch', qtyOnHand: 8, qtyReserved: 2, qtyAvailable: 6, location: 'Gudang WIP-1', lastUpdated: '2026-04-12', fasilitas: 'KITE' },
+  { materialCode: 'WIP-COMPOUND-NITRILE', materialName: 'Nitrile Compound (Post-Mixing)', category: 'WIP', unit: 'kg', qtyOnHand: 1500, qtyReserved: 0, qtyAvailable: 1500, location: 'Gudang WIP-2', lastUpdated: '2026-04-11', fasilitas: 'KITE' },
 ]
 
 const SEED_MOVEMENTS: StockMovement[] = [
@@ -85,7 +89,7 @@ export function useStock() {
       id: `MOV-${Date.now()}`,
       date: new Date().toISOString().split('T')[0],
       materialCode, materialName,
-      transactionType: category === 'FG' ? 'FG_IN' : 'IMPORT',
+      transactionType: category === 'FG' ? 'FG_IN' : category === 'WIP' ? 'WIP_IN' : 'IMPORT',
       referenceNumber: ref, referenceType: refType,
       quantityIn: qty, quantityOut: 0, runningBalance: newBalance,
     }
