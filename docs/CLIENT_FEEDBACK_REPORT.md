@@ -2,8 +2,8 @@
 
 **Dokumen**: Response terhadap "komen program jkj.pdf"  
 **Tanggal Feedback Diterima**: April 17, 2026  
-**Tanggal Laporan Terakhir**: Mei 4, 2026  
-**Status**: ✅ Semua item (F1–F9) selesai | ✅ Semua revisi KITE (K1–K9) selesai
+**Tanggal Laporan Terakhir**: Mei 5, 2026  
+**Status**: ✅ Semua item (F1–F9) selesai | ✅ Semua revisi KITE (K1–K9) selesai | ✅ Semua revisi lanjutan (M1–M5) selesai
 
 ---
 
@@ -11,7 +11,9 @@
 
 Klien memberikan feedback melalui dokumen review setelah demo sistem. Terdapat **9 area revisi** (F1–F9) yang mencakup warehouse, purchasing, production, sales, dan logistics — semua selesai April 2026.
 
-Pada sesi lanjutan (Mei 2026), dilakukan **9 revisi tambahan khusus KITE** (K1–K9) mencakup modul akunting, laporan KITE, PO tipe, BC 2.0 fields, subkontrak, warehouse, dan UX — semua selesai.
+Pada sesi lanjutan pertama (Mei 2026), dilakukan **9 revisi tambahan khusus KITE** (K1–K9) mencakup modul akunting, laporan KITE, PO tipe, BC 2.0 fields, subkontrak, warehouse, dan UX — semua selesai.
+
+Pada sesi lanjutan kedua (Mei 2026), dilakukan **5 revisi baru** (M1–M5) mencakup traceability bahan baku, BOM manual di SO, penyimpanan WIP, cancel PO + stok sementara — semua selesai.
 
 ---
 
@@ -382,6 +384,128 @@ Tombol "Export Semua" → 1 file Excel 8 sheet (format Lampiran XXII PER-5/BC/20
 
 ---
 
+## Revisi Lanjutan — M1–M5 (Mei 2026)
+
+Revisi batch kedua bulan Mei 2026, fokus pada traceability, inventory WIP, dan workflow cancel PO.
+
+---
+
+### M1 — BOM Manual di Sales Order
+
+**Yang Diminta:** BOM di form SO sebelumnya berupa dropdown pilih dari daftar — kurang fleksibel. Perlu input manual bahan baku langsung per PO customer.
+
+**Update yang Dilakukan (`/sales/new`):**
+
+- Hapus BOM picker (dropdown) dari tiap line item SO
+- Ganti dengan **Section 3 "Kebutuhan Material (BOM)"** — tabel input manual dengan kolom: No, Nama Material, Spesifikasi, Warna, Konsumsi, Satuan, Penggunaan, Asal Material (Lokal/Impor)
+- Section bisa disembunyikan/ditampilkan (collapsible)
+- Tambah/hapus baris material secara dinamis
+- Data BOM disimpan bersama SO (`bomItems[]` pada interface `SalesOrder`)
+- Tambah interface `BOMItem` di `lib/mock-data/sales.ts`
+
+**Commit:** `ecea732`
+
+---
+
+### M2 — Traceability Bahan Baku: Trace FG → RM → PO → Status Bayar
+
+**Yang Diminta:** Dari produk jadi (misal sarung tangan A), bisa melihat bahan baku apa yang dipakai, dokumen PO pembeliannya, dan status pembayaran bahan baku tersebut.
+
+**Update yang Dilakukan (`/reports/material-usage` — Tab "Trace Produk Jadi"):**
+
+- Halaman baru dengan 2 tab
+- **Tab 1 — "Trace Produk Jadi"**: pilih FG/WO dari daftar → tampil chain: BC 2.0 → GR → WO → Lot FG → PEB
+- Tabel bahan baku yang digunakan: Material, Kode, Qty Pakai, Harga Satuan, **Total Nilai**, No. PO, Supplier, **Status Bayar** (Lunas/Partial/Belum)
+- Ringkasan bawah: total sudah dibayar vs belum/partial vs total keseluruhan
+- Data nilai bahan baku diambil dari `materialsUsed[]` di `TraceabilityRecord`
+- Tambah field `materialsUsed: MaterialUsed[]` ke interface `TraceabilityRecord`
+- Tambah PO-2026-004 (Nitrile Latex, Global Chemicals, PARTIAL) ke mock PO
+
+**Commit:** `dc323b6`
+
+---
+
+### M3 — Pemakaian Bahan Baku: RM → FG + Nilai
+
+**Yang Diminta:** Dari suatu bahan baku, bisa melihat digunakan untuk produk jadi apa saja, berapa kuantiti FG yang dihasilkan, dan berapa nilai bahan tersebut.
+
+**Update yang Dilakukan (`/reports/material-usage` — Tab "Pemakaian Bahan Baku"):**
+
+- **Tab 2 — "Pemakaian Bahan Baku"**: pilih bahan baku dari dropdown → tampil semua FG yang menggunakannya
+- Tabel: Produk FG, WO, Lot FG, Qty FG, **Qty Bahan Dipakai**, **Nilai Bahan**, Tanggal Produksi, PEB
+- Ringkasan bawah: total qty RM terpakai, total FG diproduksi, total nilai terpakai (semua dalam 3 card)
+- Helper functions baru: `getTracesByMaterial()` dan `getAllMaterials()` di `traceability.ts`
+- Menu sidebar: "Traceability Bahan Baku" ditambah di bawah "Material Traceability"
+
+**Commit:** `dc323b6`
+
+---
+
+### M4 — Gudang WIP: Penyimpanan Bahan Setengah Jadi
+
+**Yang Diminta:** Perlu sistem penyimpanan tersendiri untuk bahan setengah jadi (misal kain setelah di-printing), terpisah dari bahan baku mentah dan produk jadi.
+
+**Update yang Dilakukan (`/warehouse/wip`):**
+
+- Halaman baru **Gudang WIP** dengan:
+  - Stats: total item WIP, qty tersedia, qty direservasi
+  - Tabel stok WIP: kode, nama, qty on hand / reserved / available, satuan, lokasi, fasilitas, status
+- **Form "Terima dari Produksi"** — input: nama barang setengah jadi, kode (opsional), tahap proses (Post-Mixing / Post-Dipping / Post-Leaching / Post-Vulcanizing / Post-Stripping / dll), qty, satuan, lokasi, referensi WO
+- **Form "Keluarkan ke Proses Berikutnya"** — pilih item WIP, lihat saldo tersedia, input qty (validasi tidak boleh melebihi tersedia), link ke WO tujuan
+- Riwayat transaksi WIP IN / WIP OUT
+- Tambah 2 transaction types baru di `useStock`: `WIP_IN` dan `WIP_OUT`
+- Tambah 3 seed WIP items: Latex Compound (Post-Mixing), Sarung Tangan Dipped Size M, Nitrile Compound (Post-Mixing)
+- Menu sidebar: "Gudang WIP" ditambah di bawah Outbound
+
+**Commit:** `cb8795c`
+
+---
+
+### M5 — Cancel PO + Stok Sementara + Rilis untuk Ekspor
+
+**Yang Diminta:** Ketika PO di-cancel setelah barang sudah diterima, barang harus tersimpan sementara dan bisa dikeluarkan lagi untuk ekspor jika ada permintaan serupa.
+
+**Update yang Dilakukan:**
+
+_Halaman PO (`/purchasing/po`):_
+- Tambah tombol **Cancel** (ikon X merah) per PO — hanya muncul jika status bukan CANCELLED
+- Dialog konfirmasi cancel:
+  - Info PO (nomor, supplier, total, status saat ini)
+  - Warning kuning jika status RECEIVED/PARTIAL: "barang sudah diterima"
+  - Checkbox **"Pindahkan barang ke stok sementara"** — muncul hanya jika barang sudah diterima
+  - Pilih lokasi penyimpanan (Gudang Sementara A/B, Gudang WIP-1/2)
+  - Input alasan cancel
+- Setelah konfirmasi: PO status → `CANCELLED` atau `CANCELLED_WITH_STOCK` (badge oranye jika ada stok)
+
+_Halaman Stok Sementara (`/warehouse/temp-storage`):_
+- Halaman baru dengan 2 tab:
+  - **"Dalam Penyimpanan"**: tabel semua item dari PO dibatalkan — material, qty, nilai, lokasi, asal PO, supplier, tgl cancel, alasan + tombol **"Rilis"**
+  - **"Sudah Dirilis"**: riwayat barang yang sudah dikeluarkan ke SO/PEB
+- Dialog **Rilis**: input no. SO/PEB tujuan + qty (validasi ≤ tersedia) → status jadi RELEASED
+
+_Support files:_
+- Store baru `lib/store/useTempStorage.ts` — localStorage-backed, interface `TempStorageItem`
+- Tambah `TEMP_STORAGE` ke `STORE_KEYS` di `lib/store/index.ts`
+- Tambah `CANCELLED_WITH_STOCK` ke status PurchaseOrder
+- Update `StatusBadge`: CANCELLED → merah, CANCELLED_WITH_STOCK → oranye
+- Menu sidebar: "Stok Sementara" ditambah di bawah Gudang WIP
+
+**Commit:** `1164e16`
+
+---
+
+## Ringkasan Status — Revisi Lanjutan M1–M5 (Mei 2026)
+
+| #  | Area                                          | Status     | Commit    |
+| -- | --------------------------------------------- | ---------- | --------- |
+| M1 | BOM manual input di form Sales Order          | ✅ Selesai | `ecea732` |
+| M2 | Traceability FG → RM → PO → Status Bayar      | ✅ Selesai | `dc323b6` |
+| M3 | Pemakaian Bahan Baku RM → FG + Nilai          | ✅ Selesai | `dc323b6` |
+| M4 | Gudang WIP — penyimpanan bahan setengah jadi  | ✅ Selesai | `cb8795c` |
+| M5 | Cancel PO → Stok Sementara → Rilis Ekspor     | ✅ Selesai | `1164e16` |
+
+---
+
 ## Catatan Teknis
 
 - Semua perubahan menggunakan **mock data** (tidak ada backend/database nyata) — data hanya untuk demo/presentasi
@@ -393,4 +517,5 @@ Tombol "Export Semua" → 1 file Excel 8 sheet (format Lampiran XXII PER-5/BC/20
 ---
 
 _Laporan pertama dibuat: April 17, 2026_  
-_Diperbarui: Mei 4, 2026 (tambah revisi KITE K1–K9)_
+_Diperbarui: Mei 4, 2026 (tambah revisi KITE K1–K9)_  
+_Diperbarui: Mei 5, 2026 (tambah revisi lanjutan M1–M5)_

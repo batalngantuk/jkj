@@ -1,6 +1,6 @@
 # Panduan Pengguna — Sistem ERP JKJ (KITE)
 
-**Versi:** Mei 2026  
+**Versi:** Mei 2026 (rev. 2)  
 **Untuk:** PT JKJ — Perusahaan Penerima Fasilitas KITE (Kemudahan Impor Tujuan Ekspor)
 
 ---
@@ -84,9 +84,9 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 2. **Buat Sales Order** → `/sales/new`
    - Nama customer bebas (free-text, tidak perlu master customer)
    - Nama produk bebas (free-text)
-   - Tambah BOM preview per line item untuk estimasi kebutuhan BB
    - Pilih currency (IDR/USD/EUR) dan kurs
    - Multi-line item dengan subtotal per baris
+   - **Section "Kebutuhan Material (BOM)"** — input manual bahan baku per PO: Nama Material, Spesifikasi, Warna, Konsumsi, Satuan, Penggunaan, Asal Material (Lokal/Impor). Tambah/hapus baris secara dinamis.
 3. **Pantau status SO** → `/sales`
    - Lihat SO: Draft → Approved → In Production → Completed
 4. **Cek WO terkait** → `/sales/[id]`
@@ -106,6 +106,12 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
    - Isi supplier, item, qty, harga, kurs
    - Sistem otomatis hitung DPP (×11/12) dan PPN 12%
    - Preview blok tanda tangan (Dibuat / Diperiksa / Disetujui / Supplier)
+1a. **Cancel PO** → `/purchasing/po` → tombol ikon X merah pada baris PO
+   - Muncul dialog konfirmasi dengan info PO dan daftar item
+   - Jika barang **sudah diterima** (status RECEIVED/PARTIAL): centang *"Pindahkan barang ke stok sementara"* + pilih lokasi
+   - Isi alasan cancel → klik *Konfirmasi Cancel*
+   - PO status: `CANCELLED` (belum terima barang) atau `CANCELLED_WITH_STOCK` — badge oranye (barang masuk stok sementara)
+   - Barang tersimpan di `/warehouse/temp-storage` dan bisa dirilis ke ekspor/SO baru saat ada permintaan serupa
 2. **Input BC 2.0** saat barang tiba di pelabuhan → `/purchasing/bc20/new`
    - Nomor PIB, **Nomor Pendaftaran**, **Tanggal Dokumen**, supplier, deskripsi barang, HS Code
    - Nilai CIF (USD), kurs, bea masuk, PPN import, PPh 22
@@ -136,6 +142,16 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
    - Lihat status stok: OK / Low Stock / Out of Stock
    - Section **Gudang WIP** — live dari stok kategori WIP
    - Section **Gudang Hasil Subkon** — live dari job subkontrak (status Hasil Diterima/Selesai)
+3a. **Kelola Gudang WIP** → `/warehouse/wip`
+   - Lihat semua stok bahan setengah jadi (terpisah dari BB dan FG)
+   - **Terima dari Produksi**: input nama barang setengah jadi, tahap proses (Post-Mixing / Post-Dipping / dll), qty, satuan, lokasi, referensi WO
+   - **Keluarkan ke Proses Berikutnya**: pilih item WIP, cek saldo tersedia, input qty + WO tujuan
+   - Riwayat transaksi WIP IN / WIP OUT
+3b. **Kelola Stok Sementara** → `/warehouse/temp-storage`
+   - Lihat barang dari PO yang dibatalkan setelah barang diterima
+   - Tab **"Dalam Penyimpanan"**: tabel item dengan info asal PO, supplier, tgl cancel, alasan
+   - Klik **"Rilis"** untuk mengeluarkan ke SO atau PEB ekspor baru — input nomor SO/PEB + qty
+   - Tab **"Sudah Dirilis"**: riwayat barang yang sudah dikeluarkan
 4. **Terima FG dari produksi** → `/warehouse/outbound` → Tab *Input Barang Jadi*
    - Pilih WO yang sudah selesai
    - Input qty diterima, qty reject, lokasi gudang FG, nama penerima
@@ -260,6 +276,9 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 7. **Traceability material KITE** → `/reports/traceability`
    - Lacak satu lot: BC 2.3 → GR → WO → FG → PEB
    - Generate sertifikat keterlacakan untuk keperluan audit
+8. **Traceability Bahan Baku** → `/reports/material-usage`
+   - **Tab "Trace Produk Jadi"**: pilih produk jadi / WO → lihat semua bahan baku yang dipakai + No. PO + Supplier + **Status Bayar** (Lunas/Partial/Belum) + **Nilai Bahan Baku**. Ringkasan: total sudah dibayar vs belum.
+   - **Tab "Pemakaian Bahan Baku"**: pilih bahan baku → lihat semua FG yang menggunakannya, qty FG, qty RM dipakai, nilai, dan PEB terkait. Cocok untuk audit penggunaan material impor.
 
 ---
 
@@ -293,6 +312,8 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 | Purchasing / PO | ✅ | — | ✅ | — | — | — | — | — |
 | BC 2.0 | ✅ | — | ✅ | — | — | — | Lihat | ✅ |
 | Gudang (stok, inbound, outbound) | ✅ | — | — | ✅ | — | — | — | — |
+| Gudang WIP | ✅ | — | — | ✅ | ✅ | — | — | — |
+| Stok Sementara | ✅ | — | ✅ | ✅ | — | — | — | — |
 | Waste | ✅ | — | — | ✅ | ✅ | — | Lihat | ✅ |
 | Work Order | ✅ | Lihat | — | Lihat | ✅ | — | — | — |
 | Subkontrak KITE | ✅ | — | — | — | ✅ | — | Lihat | ✅ |
@@ -305,6 +326,7 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 | Laporan Mutasi Stok | ✅ | — | — | — | — | — | ✅ | ✅ |
 | Laporan Konversi / Produksi | ✅ | — | — | — | ✅ | — | ✅ | ✅ |
 | Traceability KITE | ✅ | — | — | — | — | — | ✅ | ✅ |
+| Traceability Bahan Baku | ✅ | — | — | — | — | — | ✅ | ✅ |
 | Laporan Sales / Inventory | ✅ | ✅ | — | — | — | ✅ | — | — |
 
 ---
@@ -326,6 +348,7 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 | Laporan Mutasi Stok | Staff KITE | `/reports/stock-movement` | BB + FG movements, gabung data live |
 | Laporan Konversi BB | Staff KITE | `/reports/production` | Rasio konversi + waste untuk audit |
 | Sertifikat Traceability | Staff KITE | `/reports/traceability` | Keterlacakan lot BC 2.3 → PEB |
+| Traceability Bahan Baku | Staff KITE | `/reports/material-usage` | Trace FG→RM→PO→status bayar + pemakaian RM→FG + nilai |
 | Faktur Pajak | Staff Keuangan | `/finance/faktur` | PPN keluaran, upload ke e-Faktur DJP |
 
 ---
