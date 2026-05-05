@@ -73,7 +73,20 @@ export const MOCK_PURCHASE_ORDERS: PurchaseOrder[] = [
     totalAmount: 60000000,
     orderDate: '2026-01-25',
     expectedDelivery: '2026-01-30',
-    status: 'RECEIVED', // Already received
+    status: 'RECEIVED',
     paymentStatus: 'PAID'
+  },
+  {
+    id: 'PO-2026-004',
+    poType: 'Impor',
+    supplier: 'Global Chemicals Ltd',
+    items: [
+      { code: 'RM-NITRILE', name: 'Nitrile Latex', quantity: 15000, unit: 'kg', unitPrice: 18000, total: 270000000 }
+    ],
+    totalAmount: 270000000,
+    orderDate: '2026-01-28',
+    expectedDelivery: '2026-02-03',
+    status: 'RECEIVED',
+    paymentStatus: 'PARTIAL'
   }
 ]

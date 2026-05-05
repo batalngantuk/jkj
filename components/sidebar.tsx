@@ -139,6 +139,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: 'Production Yield', href: '/reports/production' },
         { label: 'Inventory Value', href: '/reports/inventory' },
         { label: 'Material Traceability', href: '/reports/traceability' },
+        { label: 'Traceability Bahan Baku', href: '/reports/material-usage' },
         { label: 'Conversion Analysis', href: '/reports/conversion-analysis' },
         { label: 'Stock Movement', href: '/reports/stock-movement' },
         { label: 'Traceability BC 2.0', href: '/reports/traceability-bc20', groupLabel: 'BC 2.0' },
