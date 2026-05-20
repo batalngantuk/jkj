@@ -56,6 +56,9 @@ export interface APInvoice {
   paidAmount: number
   balance: number
   status: 'DRAFT' | 'VERIFIED' | 'APPROVED' | 'SCHEDULED' | 'PAID'
+  currency?: 'IDR' | 'USD' | 'KRW'
+  exchangeRate?: number
+  originalAmount?: number
   bc20Id?: string
   bc20Number?: string
   lineItems: InvoiceLineItem[]
