@@ -2,8 +2,8 @@
 
 **Dokumen**: Response terhadap "komen program jkj.pdf"  
 **Tanggal Feedback Diterima**: April 17, 2026  
-**Tanggal Laporan Terakhir**: Mei 5, 2026  
-**Status**: ✅ Semua item (F1–F9) selesai | ✅ Semua revisi KITE (K1–K9) selesai | ✅ Semua revisi lanjutan (M1–M5) selesai
+**Tanggal Laporan Terakhir**: Mei 19, 2026  
+**Status**: ✅ Semua item (F1–F9) selesai | ✅ Semua revisi KITE (K1–K9) selesai | ✅ Semua revisi lanjutan (M1–M5) selesai | 🔄 Batch 3 (B1–B3, P1–P5, S1–S3, E1, A1–A4, W1) — dalam perencanaan
 
 ---
 
@@ -516,6 +516,329 @@ _Support files:_
 
 ---
 
+---
+
+## Revisi Batch 3 — B/P/S/E/A (Mei 2026)
+
+Feedback ketiga dari klien diterima 16/05/2026. Terdapat **16 item** dari dua sumber — Notes Purchasing dan Mb Santi — mencakup bug kritis, fitur Purchasing yang belum lengkap, revisi alur Subkontrak, tambahan field PEB, dan pengembangan modul Akunting.
+
+---
+
+### GRUP B — Bug Kritis (Data Tidak Tersimpan / Tidak Tampil)
+
+---
+
+#### B1 — Supplier Baru Tidak Tersimpan
+
+**Komentar Klien:**
+
+> Buat supplier baru ketika sudah di-save tidak tersimpan.
+
+**Yang Diminta:**
+
+- Supplier yang baru dibuat harus langsung tersimpan dan muncul di daftar supplier
+- Setelah save, data supplier tampil di list tanpa perlu refresh manual
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+#### B2 — PO Setelah Submit Tidak Tampil
+
+**Komentar Klien:**
+
+> Hasil dari submit persetujuan Purchase tidak muncul. Untuk purchase order setelah submit untuk persetujuan juga ingin melihat data yang baru diinput tidak terlihat.
+
+**Yang Diminta:**
+
+- Setelah PO disubmit untuk persetujuan, data PO tersebut langsung terlihat di daftar PO dengan status yang sesuai
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+#### B3 — Penerimaan Material Tidak Terlihat Setelah Save
+
+**Komentar Klien:**
+
+> Untuk gudang pada saat penerimaan material bahan baku ketika sudah disimpan tidak terlihat inputannya.
+
+**Yang Diminta:**
+
+- Input penerimaan bahan baku yang sudah disimpan harus langsung tampil di riwayat penerimaan gudang
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+### GRUP P — Purchasing: Fitur Hilang / Belum Lengkap
+
+---
+
+#### P1 — Purchase Order: Mata Uang USD (Multi-Currency)
+
+**Komentar Klien:**
+
+> Untuk purchase order mata uang USD belum ada.
+
+**Yang Diminta:**
+
+- Field mata uang di form PO: IDR, USD, KRW (minimal)
+- Nilai PO ditampilkan dalam mata uang asal + konversi IDR menggunakan kurs yang diinput
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+#### P2 — Purchase Order: Kode Material / Kode Barang
+
+**Komentar Klien:**
+
+> Untuk purchase order belum ada kode material / kode barang.
+
+**Yang Diminta:**
+
+- Kolom kode material / kode barang di line item Purchase Order
+- Bisa diisi manual atau dipilih dari daftar material yang sudah ada
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+#### P3 — Purchase Order: Kolom Nomor PO
+
+**Komentar Klien:**
+
+> Pada saat buat PO material tidak ada kolom untuk mengisi nomor PO nya. Jika nomor PO material otomatis berurutan, minta bisa ditambahkan untuk nomor PO nya, dikarenakan saat input data masuk gudang yang dicari material ini berasal dari PO mana.
+
+**Yang Diminta:**
+
+- Nomor PO tampil di form dan bisa dilihat oleh bagian gudang
+- Jika auto-increment, nomor tetap ditampilkan di form agar bisa direferensikan saat penerimaan barang di gudang
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+#### P4 — Purchase Order: Upload Gambar / Attachment
+
+**Komentar Klien:**
+
+> Add images pada kolom Purchase Order belum ada.
+
+**Yang Diminta:**
+
+- Fitur upload gambar atau attachment dokumen pada form Purchase Order
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+#### P5 — Purchase Order: Print Preview
+
+**Komentar Klien:**
+
+> Print preview Form Purchase apakah bisa?
+
+**Yang Diminta:**
+
+- Tombol Print Preview di halaman detail PO
+- Tampilan print-friendly: header perusahaan, tabel item, kolom harga, tanda tangan
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+### GRUP S — Subkontrak: Revisi Alur
+
+---
+
+#### S1 — Form Subkontrak: Kolom Qty, No SO, Satuan
+
+**Komentar Klien:**
+
+> Pada saat pembuatan subkontrak tidak ada qty, no SO, dan satuan yang akan di-subkonkan.
+
+**Yang Diminta:**
+
+- Tambah kolom di form pembuatan job subkontrak: Qty yang disubkonkan, No SO referensi, Satuan
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+#### S2 — Kirim BB ke Subkon Tidak Bisa
+
+**Komentar Klien:**
+
+> Buat nama subkon dimana? Pada saat pengeluaran material subkon apakah di daftar menu job subkon, jika iya (untuk kirim BB subkon tidak bisa).
+
+**Yang Diminta:**
+
+- Alur kirim bahan baku ke subkontraktor dari menu Job Subkon harus berfungsi
+- Perlu ada field nama subkontraktor yang bisa diisi / dipilih saat membuat job subkon
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+#### S3 — WIP "Keluarkan ke Proses": Tidak Ada Nama Supplier
+
+**Komentar Klien:**
+
+> Pengeluaran material yang disubkonkan apakah di gudang WIP di menu keluarkan ke proses itu? Jika iya tidak ada nama supplier-nya. Atau menu ini dipakai untuk mengeluarkan material ke produksi.
+
+**Klarifikasi dari Klien (19/05/2026):**
+
+Menu "Keluarkan ke Proses" di Gudang WIP dipakai untuk **keduanya** — pengeluaran ke CMT/maklon (subkontrak) maupun pengeluaran ke produksi JKJ sendiri. Ini adalah satu menu terpadu.
+
+**Yang Diminta:**
+
+- Tambah field **"Tujuan Pengeluaran"**: dropdown pilihan antara `Produksi Internal` / `CMT` / `Maklon`
+- Jika dipilih `CMT` atau `Maklon`: muncul field nama supplier / subkontraktor (wajib diisi)
+- Jika dipilih `Produksi Internal`: field supplier disembunyikan
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+### GRUP E — PEB: Field Tambahan
+
+---
+
+#### E1 — PEB: No Invoice dan Tanggal Invoice
+
+**Komentar Klien:**
+
+> Di PEB tidak ada No Invoice dan tanggal invoice.
+
+**Yang Diminta:**
+
+- Tambah field "No Invoice" dan "Tanggal Invoice" di form PEB
+- Field ini penting untuk dokumen ekspor yang lengkap
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+### GRUP A — Akunting: Pengembangan Modul
+
+---
+
+#### A1 — AR/AP: Input Pembayaran & Detail View
+
+**Komentar Klien:**
+
+> Tidak diketemukan icon untuk menginput pembayaran hutang / penerimaan piutang, tidak bisa melihat detail pembayaran hutang piutangnya, hanya ada icon untuk input new invoice.
+
+**Yang Diminta:**
+
+- Tombol / icon untuk **input pembayaran** di halaman AR (penerimaan piutang) dan AP (pembayaran hutang)
+- Bisa melihat **detail pembayaran** per invoice: tanggal bayar, jumlah, sisa outstanding
+- Tampilan terpisah antara: input invoice baru vs record pembayaran
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+#### A2 — Transaksi: Kolom Mata Uang (USD, KRW)
+
+**Komentar Klien:**
+
+> Penginputan transaksi: tidak ada kolom currencynya, padahal sebagian transaksi menggunakan USD dan KRW.
+
+**Yang Diminta:**
+
+- Tambah field mata uang di form input transaksi kas/bank
+- Minimal: IDR, USD, KRW
+- Tampilkan nilai asli + nilai IDR (dari kurs yang diinput)
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+#### A3 — Chart of Accounts: Form Input Akun Baru
+
+**Komentar Klien:**
+
+> Penginputan Akun: akun yang diinput belum ada tempatnya, hanya ada saldo akun, tambahkan untuk icon penambahan akun.
+
+**Yang Diminta:**
+
+- Tambah tombol / form untuk **menambah akun baru** di halaman Chart of Accounts / Saldo Akun
+- Saat ini halaman hanya menampilkan saldo akun yang sudah ada — perlu bisa tambah akun baru secara manual
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+#### A4 — Stock Valuation di Tab Akunting dan Reports
+
+**Komentar Klien:**
+
+> STOCK: untuk melihat stock bahan & barang (qty, nilai satuan dan total nilai barang) belum ada di tab acc, atau memang letaknya bukan di tab acc?
+
+**Klarifikasi dari Klien (19/05/2026):**
+
+Stock valuation perlu ada di **dua tempat**:
+1. **Tab Akunting** — ringkasan nilai inventori (card/widget) untuk gambaran cepat
+2. **Tab Reports** — laporan lengkap yang bisa difilter per kategori, per material, dan di-export
+
+**Yang Diminta:**
+
+- Di `/finance` (tab Akunting): card/widget "Nilai Inventori" — total nilai RM, WIP, FG secara ringkas
+- Di `/reports` (tab Reports): halaman laporan Stock Valuation lengkap — kolom: kode, nama, kategori, qty on hand, nilai satuan, total nilai; bisa filter & export Excel
+
+**Update yang Dilakukan:** ⏳ Pending
+
+---
+
+### GRUP W — Warehouse Outbound
+
+---
+
+#### W1 — Input Hasil Barang Jadi di Outbound Belum Bisa
+
+**Komentar Klien:**
+
+> Belum bisa input hasil barang jadi di warehouse outbound (mungkin karena proses sebelumnya belum selesai jadi belum tampil).
+
+**Yang Diminta:**
+
+- Form input barang jadi ke Warehouse Outbound harus bisa digunakan
+- Kemungkinan besar bergantung pada perbaikan B3 (penerimaan material tidak tampil)
+
+**Catatan:** Periksa dulu apakah ini resolved setelah B3 diperbaiki.
+
+**Update yang Dilakukan:** ⏳ Pending — investigasi setelah B3 selesai
+
+---
+
+## Ringkasan Status — Revisi Batch 3 (Mei 2026)
+
+| #  | Area                                              | Prioritas | Status     |
+| -- | ------------------------------------------------- | --------- | ---------- |
+| B1 | Supplier baru tidak tersimpan                     | Kritis    | ⏳ Pending |
+| B2 | PO setelah submit tidak tampil                    | Kritis    | ⏳ Pending |
+| B3 | Penerimaan material tidak terlihat setelah save   | Kritis    | ⏳ Pending |
+| P1 | PO multi-currency (USD, KRW)                      | Tinggi    | ⏳ Pending |
+| P2 | PO kode material / kode barang                    | Tinggi    | ⏳ Pending |
+| P3 | PO nomor PO (kolom + visibility ke gudang)        | Tinggi    | ⏳ Pending |
+| P4 | PO upload gambar / attachment                     | Sedang    | ⏳ Pending |
+| P5 | PO print preview                                  | Sedang    | ⏳ Pending |
+| S1 | Subkontrak: tambah qty, no SO, satuan             | Tinggi    | ⏳ Pending |
+| S2 | Subkontrak: kirim BB ke subkon tidak bisa         | Tinggi    | ⏳ Pending |
+| S3 | WIP keluarkan ke proses: field Tujuan + nama supplier (CMT/Maklon/Internal) | Sedang | ⏳ Pending |
+| E1 | PEB: tambah No Invoice & Tanggal Invoice          | Tinggi    | ⏳ Pending |
+| A1 | AR/AP: input pembayaran & detail view             | Tinggi    | ⏳ Pending |
+| A2 | Transaksi: kolom mata uang (USD, KRW)             | Tinggi    | ⏳ Pending |
+| A3 | Chart of Accounts: form input akun baru           | Sedang    | ⏳ Pending |
+| A4 | Stock valuation: widget di tab Akunting + laporan lengkap di Reports | Sedang | ⏳ Pending |
+| W1 | Warehouse Outbound: input BJ                      | Sedang    | ⏳ Pending — cek setelah B3 |
+
+---
+
 _Laporan pertama dibuat: April 17, 2026_  
 _Diperbarui: Mei 4, 2026 (tambah revisi KITE K1–K9)_  
-_Diperbarui: Mei 5, 2026 (tambah revisi lanjutan M1–M5)_
+_Diperbarui: Mei 5, 2026 (tambah revisi lanjutan M1–M5)_  
+_Diperbarui: Mei 19, 2026 (tambah revisi Batch 3 B1–B3, P1–P5, S1–S3, E1, A1–A4, W1)_

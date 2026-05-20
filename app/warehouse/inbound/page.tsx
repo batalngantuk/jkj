@@ -22,28 +22,8 @@ import {
 } from '@/components/ui/dialog'
 import AppLayout from '@/components/app-layout'
 import { MOCK_PURCHASE_ORDERS, type PurchaseOrder } from '@/lib/mock-data/purchasing'
-
-// Mock GR history
-const MOCK_GR_HISTORY = [
-  {
-    id: 'GR-2026-001', tglMasuk: '2026-01-20', noPIB: 'PIB-2026-001234', noPO: 'PO-2026-001',
-    supplier: 'Baosteel Co., Ltd', jenisDoc: 'BC 2.0',
-    items: [{ kode: 'BB-HRC-001', nama: 'Hot Rolled Coil (HRC)', satuan: 'KG', qtyPO: 100000, qtyDiterima: 100000 }],
-    gudang: 'Gudang RM-A', penerima: 'Ahmad Fauzi', noSuratJalan: 'SJ-2026-001', status: 'Selesai'
-  },
-  {
-    id: 'GR-2026-002', tglMasuk: '2026-01-28', noPIB: 'PIB-2026-001567', noPO: 'PO-2026-002',
-    supplier: 'Korea Petrochemical', jenisDoc: 'BC 2.0',
-    items: [{ kode: 'BB-HDPE-001', nama: 'Polyethylene Resin HDPE', satuan: 'KG', qtyPO: 10000, qtyDiterima: 10000 }],
-    gudang: 'Gudang RM-B', penerima: 'Budi Santoso', noSuratJalan: 'SJ-2026-002', status: 'Selesai'
-  },
-  {
-    id: 'GR-2026-003', tglMasuk: '2026-02-15', noPIB: '-', noPO: 'PO-2026-003',
-    supplier: 'PT. Supplier Lokal Jaya', jenisDoc: 'PO Lokal',
-    items: [{ kode: 'BB-LOCAL-001', nama: 'Cat Primer Anti Karat', satuan: 'LITER', qtyPO: 500, qtyDiterima: 490 }],
-    gudang: 'Gudang RM-B', penerima: 'Siti Rahayu', noSuratJalan: 'SJ-2026-003', status: 'Selesai'
-  },
-]
+import { useGoodsReceipts } from '@/lib/store/useGoodsReceipts'
+import { useStock } from '@/lib/store/useStock'
 
 interface MaterialLineGR {
   id: string
@@ -65,6 +45,8 @@ function newLineGR(): MaterialLineGR {
 }
 
 export default function InboundPage() {
+  const { receipts, createReceipt } = useGoodsReceipts()
+  const { addStock } = useStock()
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null)
   const [showManualForm, setShowManualForm] = useState(false)
 
@@ -81,6 +63,14 @@ export default function InboundPage() {
   const [catatan, setCatatan] = useState('')
   const [lines, setLines] = useState<MaterialLineGR[]>([newLineGR()])
   const [expandedLine, setExpandedLine] = useState<string | null>(lines[0]?.id)
+
+  // State untuk dialog terima dari PO
+  const [poSuratJalan, setPoSuratJalan] = useState('')
+  const [poKendaraan, setPoKendaraan] = useState('')
+  const [poTanggal, setPoTanggal] = useState('')
+  const [poGudang, setPoGudang] = useState('')
+  const [poPenerima, setPoPenerima] = useState('')
+  const [poQtyReceived, setPoQtyReceived] = useState<Record<string, number>>({})
 
   const incomingPOs = MOCK_PURCHASE_ORDERS.filter(po =>
     po.status === 'APPROVED' || po.status === 'PARTIAL'
@@ -165,7 +155,7 @@ export default function InboundPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {MOCK_GR_HISTORY.map(gr => (
+                    {receipts.map(gr => (
                       <TableRow key={gr.id} className="cursor-pointer hover:bg-muted/30">
                         <TableCell className="font-mono text-xs font-medium">{gr.id}</TableCell>
                         <TableCell className="whitespace-nowrap">{gr.tglMasuk}</TableCell>
@@ -460,7 +450,36 @@ export default function InboundPage() {
             <Button
               className="gap-2 bg-green-600 hover:bg-green-700"
               disabled={!jenisDoc || !supplier || !tglMasuk || !gudang}
-              onClick={() => { setShowManualForm(false); resetManualForm() }}
+              onClick={() => {
+                createReceipt({
+                  tglMasuk,
+                  noPIB: noPIB || '-',
+                  noPO: noRefDoc || '-',
+                  supplier,
+                  jenisDoc,
+                  items: lines.map(l => ({
+                    kode: l.kodeBarang,
+                    nama: l.namaBarang,
+                    satuan: l.satuan,
+                    qtyPO: Number(l.qtyDipesan) || 0,
+                    qtyDiterima: Number(l.qtyDiterima) || 0,
+                  })),
+                  gudang,
+                  penerima,
+                  noSuratJalan,
+                  noKendaraan,
+                  catatan,
+                  status: 'Selesai',
+                })
+                lines.forEach(l => {
+                  const qty = Number(l.qtyDiterima) || 0
+                  if (qty > 0 && l.kodeBarang) {
+                    addStock(l.kodeBarang, l.namaBarang, qty, noRefDoc || jenisDoc, 'GR', 'BB', l.satuan, gudang)
+                  }
+                })
+                setShowManualForm(false)
+                resetManualForm()
+              }}
             >
               <CheckCircle className="h-4 w-4" />
               Konfirmasi Penerimaan
@@ -482,19 +501,19 @@ export default function InboundPage() {
               <p className="font-semibold text-sm border-b pb-2">Detail Pengiriman</p>
               <div className="space-y-2">
                 <Label className="text-xs">No. Surat Jalan</Label>
-                <Input placeholder="cth: SJ-2026-010" />
+                <Input placeholder="cth: SJ-2026-010" value={poSuratJalan} onChange={e => setPoSuratJalan(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">No. Kendaraan</Label>
-                <Input placeholder="cth: B 1234 XY" />
+                <Input placeholder="cth: B 1234 XY" value={poKendaraan} onChange={e => setPoKendaraan(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Tanggal Diterima</Label>
-                <Input type="datetime-local" />
+                <Input type="date" value={poTanggal} onChange={e => setPoTanggal(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Gudang Tujuan</Label>
-                <Select>
+                <Select value={poGudang} onValueChange={setPoGudang}>
                   <SelectTrigger><SelectValue placeholder="Pilih gudang..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Gudang RM-A">Gudang RM-A</SelectItem>
@@ -504,7 +523,7 @@ export default function InboundPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Penerima</Label>
-                <Input placeholder="Nama penerima di gudang" />
+                <Input placeholder="Nama penerima di gudang" value={poPenerima} onChange={e => setPoPenerima(e.target.value)} />
               </div>
             </div>
 
@@ -525,7 +544,12 @@ export default function InboundPage() {
                       <div>
                         <Label className="text-xs mb-1 block">Qty Diterima</Label>
                         <div className="flex items-center gap-1">
-                          <Input type="number" defaultValue={item.quantity} className="h-8 text-sm" />
+                          <Input
+                            type="number"
+                            defaultValue={item.quantity}
+                            className="h-8 text-sm"
+                            onChange={e => setPoQtyReceived(prev => ({ ...prev, [item.code]: Number(e.target.value) }))}
+                          />
                           <span className="text-xs text-muted-foreground">{item.unit}</span>
                         </div>
                       </div>
@@ -538,7 +562,38 @@ export default function InboundPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedPO(null)}>Batal</Button>
-            <Button className="bg-green-600 hover:bg-green-700 gap-2" onClick={() => setSelectedPO(null)}>
+            <Button
+              className="bg-green-600 hover:bg-green-700 gap-2"
+              onClick={() => {
+                if (!selectedPO) return
+                const today = poTanggal || new Date().toISOString().split('T')[0]
+                createReceipt({
+                  tglMasuk: today,
+                  noPIB: '-',
+                  noPO: selectedPO.id,
+                  supplier: selectedPO.supplier,
+                  jenisDoc: selectedPO.poType === 'Impor' ? 'BC 2.0' : 'PO Lokal',
+                  items: selectedPO.items.map(item => ({
+                    kode: item.code,
+                    nama: item.name,
+                    satuan: item.unit,
+                    qtyPO: item.quantity,
+                    qtyDiterima: poQtyReceived[item.code] ?? item.quantity,
+                  })),
+                  gudang: poGudang || 'Gudang RM-A',
+                  penerima: poPenerima,
+                  noSuratJalan: poSuratJalan,
+                  noKendaraan: poKendaraan,
+                  status: 'Selesai',
+                })
+                selectedPO.items.forEach(item => {
+                  const qty = poQtyReceived[item.code] ?? item.quantity
+                  addStock(item.code, item.name, qty, selectedPO.id, 'GR', 'BB', item.unit, poGudang || 'Gudang RM-A')
+                })
+                setSelectedPO(null)
+                setPoSuratJalan(''); setPoKendaraan(''); setPoTanggal(''); setPoGudang(''); setPoPenerima(''); setPoQtyReceived({})
+              }}
+            >
               <CheckCircle className="h-4 w-4" />
               Konfirmasi Penerimaan
             </Button>

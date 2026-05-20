@@ -13,7 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import AppLayout from '@/components/app-layout'
-import { MOCK_SUPPLIERS } from '@/lib/mock-data/purchasing'
+import { useSuppliers } from '@/lib/store/useSuppliers'
+import { usePurchaseOrders } from '@/lib/store/usePurchaseOrders'
 
 interface POItem {
   id: number
@@ -28,6 +29,8 @@ const DPP_FACTOR = 11 / 12     // DPP = Total × 11/12
 
 export default function CreatePOPage() {
   const router = useRouter()
+  const { suppliers } = useSuppliers()
+  const { createOrder } = usePurchaseOrders()
   const [items, setItems] = useState<POItem[]>([{ id: 1, name: '', qty: 0, unit: '', price: 0 }])
   const [loading, setLoading] = useState(false)
   const [poType, setPoType] = useState<'Lokal' | 'Impor'>('Lokal')
@@ -62,10 +65,25 @@ export default function CreatePOPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      router.push('/purchasing/po')
-    }, 1000)
+    createOrder({
+      poType,
+      supplier,
+      items: items.map(item => ({
+        code: item.name.toUpperCase().replace(/\s+/g, '-').slice(0, 12),
+        name: item.name,
+        quantity: item.qty,
+        unit: item.unit,
+        unitPrice: item.price,
+        total: item.qty * item.price,
+      })),
+      totalAmount: grandTotalCalc,
+      orderDate: new Date().toISOString().split('T')[0],
+      expectedDelivery: deliveryDate || new Date().toISOString().split('T')[0],
+      status: 'APPROVED',
+      paymentStatus: 'UNPAID',
+    })
+    setLoading(false)
+    router.push('/purchasing/po')
   }
 
   return (
@@ -123,8 +141,8 @@ export default function CreatePOPage() {
                       <SelectValue placeholder="Pilih Supplier" />
                     </SelectTrigger>
                     <SelectContent>
-                      {MOCK_SUPPLIERS.map(s => (
-                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      {suppliers.map(s => (
+                        <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

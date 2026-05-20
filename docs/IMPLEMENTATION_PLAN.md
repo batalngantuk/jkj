@@ -1791,10 +1791,128 @@ IT Inventory mengambil data real-time dari semua alur di atas
 **© 2026 JKJ Manufacturing ERP**
 _Implementation Plan v1.0 - BC 2.0 Regular Import System_
 
-**Status**: 🎉 Phase 1–6 COMPLETE — KITE Revisions COMPLETE — Client Feedback F1–F9 COMPLETE
-**Progress**: Phase 1–6 100% | KITE: R1 ✅ R2 ✅ R3 ✅ | Client Feedback: F1 ✅ F2 ✅ F3 ✅ F4 ✅ F5 ✅ F6 ✅ F7 ✅ F8 ✅ F9 ✅
-**Last Updated**: April 17, 2026
-**Next Milestone**: Demo ke klien — semua revisi F1–F9 selesai. Lihat docs/CLIENT_FEEDBACK_REPORT.md
+**Status**: 🎉 Phase 1–6 COMPLETE — KITE Revisions COMPLETE — Client Feedback F1–F9 COMPLETE — M1–M5 COMPLETE | 🔄 Batch 3 dalam perencanaan
+**Progress**: Phase 1–6 100% | KITE: R1 ✅ R2 ✅ R3 ✅ | F1–F9 ✅ | M1–M5 ✅ | Batch 3: B/P/S/E/A — ⏳ Pending
+**Last Updated**: Mei 19, 2026
+**Next Milestone**: Implementasi Batch 3 — lihat section "Client Feedback Batch 3" di bawah dan docs/CLIENT_FEEDBACK_REPORT.md
+
+---
+
+---
+
+## 🔄 Client Feedback Batch 3 — Mei 2026
+
+> **Sumber**: "komen jkj.pdf" — Notes Purchasing + Mb Santi 16/05/2026
+> **Diterima**: 16 Mei 2026
+> **Total Item**: 16
+> **Status**: ⏳ Dalam perencanaan
+
+Feedback mencakup bug kritis (data tidak tersimpan), fitur Purchasing yang belum lengkap, revisi alur Subkontrak, tambahan field PEB, dan pengembangan besar modul Akunting.
+
+---
+
+### Daftar Item & Prioritas
+
+| # | Area | Isu | Prioritas | Sprint |
+|---|------|-----|-----------|--------|
+| B1 | Purchasing | Supplier baru tidak tersimpan setelah save | Kritis | 1 |
+| B2 | Purchasing | PO setelah submit tidak tampil di daftar | Kritis | 1 |
+| B3 | Gudang | Penerimaan material tidak terlihat setelah save | Kritis | 1 |
+| P1 | Purchasing | PO multi-currency: USD, KRW | Tinggi | 2 |
+| P2 | Purchasing | PO kode material / kode barang per line item | Tinggi | 2 |
+| P3 | Purchasing | PO nomor PO tampil & bisa direferensikan ke gudang | Tinggi | 2 |
+| E1 | PEB | Tambah field No Invoice & Tanggal Invoice | Tinggi | 2 |
+| P4 | Purchasing | Upload gambar / attachment di form PO | Sedang | 3 |
+| P5 | Purchasing | Print preview form Purchase Order | Sedang | 3 |
+| S1 | Subkontrak | Form subkon: tambah kolom qty, no SO, satuan | Tinggi | 3 |
+| S2 | Subkontrak | Kirim BB ke subkon dari menu Job Subkon tidak bisa | Tinggi | 3 |
+| S3 | Subkontrak/WIP | "Keluarkan ke proses" WIP — tidak ada nama supplier | Sedang | 3 |
+| A3 | Akunting | Chart of Accounts: form input / tambah akun baru | Sedang | 4 |
+| A1 | Akunting | AR/AP: tombol input pembayaran + detail view per invoice | Tinggi | 4 |
+| A2 | Akunting | Transaksi: kolom mata uang (USD, KRW) + konversi IDR | Tinggi | 4 |
+| A4 | Akunting | Stock valuation (qty, nilai satuan, total) di tab Akunting | Sedang | 4 |
+| W1 | Gudang | Input BJ di Warehouse Outbound | Sedang | — |
+
+> W1 kemungkinan resolved setelah B3 diperbaiki — investigasi dulu sebelum dikerjakan.
+
+---
+
+### Rencana Sprint
+
+#### Sprint 1 — Bug Fix Kritis (Estimasi: 1 hari)
+
+**Target:** Semua data tersimpan dan tampil dengan benar setelah operasi save/submit.
+
+| Task | Detail |
+|------|--------|
+| B1 — Supplier tidak tersimpan | Periksa state management / store mutation di halaman tambah supplier. Kemungkinan: `createSupplier()` dipanggil tapi list tidak di-refresh. |
+| B2 — PO setelah submit tidak tampil | Periksa query invalidation / reactive update setelah `submitPO()`. Kemungkinan: filter status list memotong PO yang baru disubmit. |
+| B3 — Penerimaan material tidak terlihat | Periksa store persistence di `useStock` / `useGoodsReceipt` setelah form submit. Cek apakah data disimpan ke localStorage. |
+| W1 — Investigasi Warehouse Outbound | Jalankan setelah B3 — kemungkinan besar resolved sendiri. |
+
+---
+
+#### Sprint 2 — Purchasing: Fitur Inti + PEB (Estimasi: 2–3 hari)
+
+**Target:** PO memiliki multi-currency, kode material, nomor PO yang terlihat; PEB memiliki field invoice.
+
+| Task | Detail |
+|------|--------|
+| P1 — PO multi-currency | Tambah dropdown mata uang (IDR/USD/KRW) + field kurs di form PO. Hitung total dalam mata uang asal dan IDR. |
+| P2 — PO kode material | Tambah kolom "Kode Material" di line items form PO. Free-text atau pilih dari daftar material. |
+| P3 — PO nomor PO | Pastikan nomor PO auto-generate dan tampil di form (read-only). Tambah ke tampilan list dan detail agar gudang bisa referensikan. |
+| E1 — PEB No Invoice & Tgl Invoice | Tambah 2 field di form `/logistics/peb/new` dan tampilkan di detail page. |
+
+---
+
+#### Sprint 3 — PO Attachment + Subkontrak (Estimasi: 2 hari)
+
+**Target:** PO bisa attach gambar dan diprint; alur subkontrak lengkap.
+
+| Task | Detail |
+|------|--------|
+| P4 — PO upload gambar | Tambah komponen file upload di form PO. Simpan di localStorage sebagai base64 atau URL referensi. |
+| P5 — PO print preview | Tambah halaman/mode print di detail PO: hide sidebar/header, tampilkan blok tanda tangan, tombol print. |
+| S1 — Form subkon: qty, no SO, satuan | Tambah 3 field di form pembuatan job subkontrak. |
+| S2 — Kirim BB ke subkon | Debug dan perbaiki tombol/alur "kirim BB" dari halaman Job Subkon. Tambah field nama subkontraktor jika belum ada. |
+| S3 — WIP: field Tujuan + nama supplier | Menu "Keluarkan ke Proses" dipakai untuk semua jenis pengeluaran (Produksi Internal / CMT / Maklon). Tambah dropdown "Tujuan Pengeluaran". Jika CMT/Maklon dipilih: tampilkan field nama supplier (wajib). Jika Produksi Internal: sembunyikan field supplier. |
+
+---
+
+#### Sprint 4 — Modul Akunting (Estimasi: 3–5 hari)
+
+**Target:** Modul akunting memiliki AR/AP payment workflow, multi-currency, chart of accounts yang bisa diedit, dan stock valuation.
+
+| Task | Detail |
+|------|--------|
+| A3 — Chart of Accounts: tambah akun | Tambah tombol "+ Tambah Akun" di halaman `/finance/accounts`. Form: kode akun, nama akun, tipe (Aktiva/Kewajiban/Modal/Pendapatan/Beban). |
+| A1 — AR/AP: input pembayaran | Di halaman AR (`/finance/ar`): tambah tombol "Catat Pembayaran" per invoice → form: tanggal, jumlah, referensi. Tampilkan riwayat pembayaran per invoice dengan sisa outstanding. Di AP: alur serupa untuk catat pembayaran hutang. |
+| A2 — Transaksi multi-currency | Tambah dropdown mata uang + field kurs di form "Input Transaksi Kas/Bank". Simpan nilai asli + nilai IDR. |
+| A4 — Stock valuation (dua tempat) | (1) Di `/finance`: tambah card/widget "Nilai Inventori" — total nilai RM, WIP, FG secara ringkas. (2) Di `/reports`: halaman baru "Stock Valuation" — tabel lengkap kode, nama, kategori, qty, nilai satuan, total nilai per material; dengan filter kategori dan export Excel. Data diambil dari `useStock`. |
+
+---
+
+### Dependensi Antar Item
+
+```
+B3 (penerimaan material tersimpan)
+  └→ W1 mungkin resolved otomatis
+
+P1 (multi-currency PO)
+  └→ A2 (multi-currency transaksi) — konsisten gunakan komponen currency yang sama
+
+A3 (tambah akun baru)
+  └→ A1 (AR/AP payment) — perlu akun kas/bank tersedia
+
+S3 — menunggu klarifikasi klien sebelum dikerjakan
+```
+
+---
+
+### Klarifikasi Klien (19/05/2026) — Sudah Dijawab
+
+1. **S3** ✅ — Menu "Keluarkan ke Proses" di Gudang WIP dipakai untuk **keduanya**: ke CMT/maklon (subkontrak) maupun ke produksi JKJ sendiri. Solusi: tambah dropdown "Tujuan Pengeluaran" (Produksi Internal / CMT / Maklon) + field nama supplier yang muncul kondisional.
+2. **A4** ✅ — Stock valuation perlu ada di **dua tempat**: widget ringkas di tab Akunting, dan laporan lengkap (filter + export) di tab Reports.
 
 ---
 

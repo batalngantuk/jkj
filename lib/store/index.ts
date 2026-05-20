@@ -8,6 +8,7 @@ export const STORE_KEYS = {
   PEB: 'jkj_peb',
   BC20: 'jkj_bc20',
   PURCHASE_ORDERS: 'jkj_purchase_orders',
+  SUPPLIERS: 'jkj_suppliers',
   GR: 'jkj_goods_receipts',            // BB masuk gudang dari impor
   STOCK: 'jkj_stock',                  // saldo stok BB & FG
   WASTE: 'jkj_waste',
