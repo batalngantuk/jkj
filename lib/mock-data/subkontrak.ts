@@ -31,6 +31,7 @@ export interface SubkonRecord {
   // Job
   jobNo: string
   jobTgl: string
+  noSO?: string
   deskripsiPekerjaan: string
   targetSelesai: string
   tglSelesaiAktual: string

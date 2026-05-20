@@ -51,7 +51,7 @@ export default function WIPWarehousePage() {
   // Keluarkan WIP dialog
   const [showKeluar, setShowKeluar] = useState(false)
   const [keluarForm, setKeluarForm] = useState({
-    kode: '', qty: '', woTujuan: '', catatan: '',
+    kode: '', qty: '', woTujuan: '', supplier: '', catatan: '',
   })
 
   function handleTerima() {
@@ -69,7 +69,7 @@ export default function WIPWarehousePage() {
     if (!keluarForm.kode || !qty) return
     deductStock(keluarForm.kode, qty, keluarForm.woTujuan || '-', 'WO', 'WIP_OUT')
     setShowKeluar(false)
-    setKeluarForm({ kode: '', qty: '', woTujuan: '', catatan: '' })
+    setKeluarForm({ kode: '', qty: '', woTujuan: '', supplier: '', catatan: '' })
     refresh()
   }
 
@@ -371,6 +371,17 @@ export default function WIPWarehousePage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* S3: Nama Supplier / Subkon */}
+            <div className="space-y-1.5">
+              <Label>Nama Supplier / Subkon Tujuan <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+              <Input
+                placeholder="cth: PT. Presisi Komponen Indonesia"
+                value={keluarForm.supplier}
+                onChange={e => setKeluarForm(p => ({ ...p, supplier: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground">Isi jika WIP dikirim ke subkontraktor</p>
             </div>
 
             <div className="space-y-1.5">
