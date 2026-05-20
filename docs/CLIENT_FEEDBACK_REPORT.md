@@ -3,7 +3,7 @@
 **Dokumen**: Response terhadap "komen program jkj.pdf"  
 **Tanggal Feedback Diterima**: April 17, 2026  
 **Tanggal Laporan Terakhir**: Mei 19, 2026  
-**Status**: ✅ Semua item (F1–F9) selesai | ✅ Semua revisi KITE (K1–K9) selesai | ✅ Semua revisi lanjutan (M1–M5) selesai | 🔄 Batch 3 (B1–B3, P1–P5, S1–S3, E1, A1–A4, W1) — dalam perencanaan
+**Status**: ✅ Semua item (F1–F9) selesai | ✅ Semua revisi KITE (K1–K9) selesai | ✅ Semua revisi lanjutan (M1–M5) selesai | ✅ Batch 3 (B1–B3, P1–P5, S1–S3, E1, A1–A4, W1) — semua selesai
 
 ---
 
@@ -539,7 +539,13 @@ Feedback ketiga dari klien diterima 16/05/2026. Terdapat **16 item** dari dua su
 - Supplier yang baru dibuat harus langsung tersimpan dan muncul di daftar supplier
 - Setelah save, data supplier tampil di list tanpa perlu refresh manual
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Buat store baru `lib/store/useSuppliers.ts` — localStorage-backed dengan `STORE_KEYS.SUPPLIERS`
+- Halaman `/purchasing/suppliers` dirombak: gunakan `useSuppliers()` hook (bukan mock data statis)
+- Form "Tambah Supplier Baru" di halaman yang sama (bukan halaman terpisah) langsung memanggil `createSupplier()` → list otomatis refresh tanpa reload
+- Halaman `/purchasing/suppliers/new` diarahkan ke form inline di list page
+- **Commit:** `4ca6f5c` (Sprint 1)
 
 ---
 
@@ -553,7 +559,12 @@ Feedback ketiga dari klien diterima 16/05/2026. Terdapat **16 item** dari dua su
 
 - Setelah PO disubmit untuk persetujuan, data PO tersebut langsung terlihat di daftar PO dengan status yang sesuai
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Buat store baru `lib/store/usePurchaseOrders.ts` — localStorage-backed dengan `STORE_KEYS.PURCHASE_ORDERS`
+- Halaman `/purchasing/po` menggunakan `usePurchaseOrders()` hook agar list reaktif
+- Form `/purchasing/po/create` memanggil `createPurchaseOrder()` langsung ke store → PO langsung muncul di list dengan status DRAFT/APPROVED
+- **Commit:** `4ca6f5c` (Sprint 1)
 
 ---
 
@@ -567,7 +578,12 @@ Feedback ketiga dari klien diterima 16/05/2026. Terdapat **16 item** dari dua su
 
 - Input penerimaan bahan baku yang sudah disimpan harus langsung tampil di riwayat penerimaan gudang
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Buat store baru `lib/store/useGoodsReceipts.ts` — localStorage-backed dengan `STORE_KEYS.GR`
+- Halaman `/warehouse/inbound` menggunakan `useGoodsReceipts()` hook — riwayat GR tampil reaktif setelah save
+- Form penerimaan memanggil `createGoodsReceipt()` → data langsung muncul di tab "Riwayat Penerimaan" tanpa reload
+- **Commit:** `4ca6f5c` (Sprint 1)
 
 ---
 
@@ -586,7 +602,13 @@ Feedback ketiga dari klien diterima 16/05/2026. Terdapat **16 item** dari dua su
 - Field mata uang di form PO: IDR, USD, KRW (minimal)
 - Nilai PO ditampilkan dalam mata uang asal + konversi IDR menggunakan kurs yang diinput
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Tambah dropdown **"Mata Uang"** (IDR/USD/KRW) di form PO `/purchasing/po/create`
+- Tambah field **"Kurs ke IDR"** yang muncul otomatis jika bukan IDR (default: USD=15.500, KRW=11)
+- Harga satuan diinput dalam mata uang asal; total dihitung × kurs → disimpan sebagai IDR
+- List PO (`/purchasing/po`) menampilkan tag `[USD]` atau `[KRW]` di kolom Total Amount jika bukan IDR
+- **Commit:** `4ca6f5c` (Sprint 2)
 
 ---
 
@@ -601,7 +623,11 @@ Feedback ketiga dari klien diterima 16/05/2026. Terdapat **16 item** dari dua su
 - Kolom kode material / kode barang di line item Purchase Order
 - Bisa diisi manual atau dipilih dari daftar material yang sudah ada
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Tambah kolom **"Kode Material"** di tabel line items form PO (`/purchasing/po/create`) — free-text, input bebas
+- Tambah field `code` ke interface item di `PurchaseOrder`
+- **Commit:** `4ca6f5c` (Sprint 2)
 
 ---
 
@@ -616,7 +642,13 @@ Feedback ketiga dari klien diterima 16/05/2026. Terdapat **16 item** dari dua su
 - Nomor PO tampil di form dan bisa dilihat oleh bagian gudang
 - Jika auto-increment, nomor tetap ditampilkan di form agar bisa direferensikan saat penerimaan barang di gudang
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Tambah field **"No. PO"** di form buat PO dengan tombol `↻` untuk auto-generate (format: `PO-YYYY-NNN` urutan dari PO terakhir)
+- No. PO bisa diedit manual jika perlu
+- Tambah field `poNumber` ke interface `PurchaseOrder`
+- List PO (`/purchasing/po`) — kolom "No. PO" menampilkan `poNumber` jika ada, fallback ke `id`
+- **Commit:** `4ca6f5c` (Sprint 2)
 
 ---
 
@@ -630,7 +662,13 @@ Feedback ketiga dari klien diterima 16/05/2026. Terdapat **16 item** dari dua su
 
 - Fitur upload gambar atau attachment dokumen pada form Purchase Order
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Tambah card **"Lampiran"** di form PO (`/purchasing/po/create`) dengan tombol "Pilih File"
+- Mendukung upload multiple file (PDF, gambar) — tersimpan sebagai metadata (nama, ukuran, tipe) di localStorage
+- Daftar lampiran tampil di bawah tombol: ikon, nama file, ukuran, tombol hapus per file
+- Tambah field `attachments?: Array<{name, size, type}>` ke interface `PurchaseOrder`
+- **Commit:** `4ca6f5c` (Sprint 3)
 
 ---
 
@@ -645,7 +683,16 @@ Feedback ketiga dari klien diterima 16/05/2026. Terdapat **16 item** dari dua su
 - Tombol Print Preview di halaman detail PO
 - Tampilan print-friendly: header perusahaan, tabel item, kolom harga, tanda tangan
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Tambah tombol **"Cetak Preview"** di form PO (`/purchasing/po/create`)
+- Klik membuka tab/window baru dengan dokumen PO lengkap dalam format cetak:
+  - Header: nama perusahaan, logo, alamat, No. PO, tanggal, supplier
+  - Tabel item: kode, nama, qty, satuan, harga satuan, total
+  - Baris DPP, PPN 12%, Grand Total
+  - Blok tanda tangan 4 kolom: Purchasing / Accounting / Manager / Direktur Utama
+- Menggunakan `window.open()` + `document.write()` — tidak menginterupsi tampilan utama
+- **Commit:** `4ca6f5c` (Sprint 3)
 
 ---
 
@@ -663,7 +710,13 @@ Feedback ketiga dari klien diterima 16/05/2026. Terdapat **16 item** dari dua su
 
 - Tambah kolom di form pembuatan job subkontrak: Qty yang disubkonkan, No SO referensi, Satuan
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Tambah field **"No. SO Referensi"** di form buat job subkontrak (`/production/subkontrak`)
+- Redesign form BB items: dari tabel sempit menjadi **card per item** dengan layout 2-baris — baris 1: Kode BB + Nama Bahan; baris 2: Qty + Satuan + Fasilitas (KITE/Non-KITE)
+- Form dialog menggunakan `max-w-2xl` agar tidak cramped
+- Tambah field `noSO?: string` ke interface `SubkonRecord`
+- **Commit:** `4ca6f5c` (Sprint 3)
 
 ---
 
@@ -678,7 +731,13 @@ Feedback ketiga dari klien diterima 16/05/2026. Terdapat **16 item** dari dua su
 - Alur kirim bahan baku ke subkontraktor dari menu Job Subkon harus berfungsi
 - Perlu ada field nama subkontraktor yang bisa diisi / dipilih saat membuat job subkon
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Tombol **"Kirim BB ke Subkon"** di halaman `/production/subkontrak` (untuk job berstatus Draft) sekarang membuka dialog konfirmasi kirim
+- Dialog input: No. Surat Jalan, No. SUBK KITE 1.1, Tanggal Kirim
+- Setelah konfirmasi: status job berubah ke "BB Dikirim", field `suratJalanNo`, `subkKiteKirimNo`, `subkKiteKirimTgl` otomatis terisi
+- Nama subkontraktor bisa dipilih dari dropdown master data (`MOCK_SUBKON_MASTER`) atau diisi bebas saat buat job baru
+- **Commit:** `4ca6f5c` (Sprint 3)
 
 ---
 
@@ -698,7 +757,13 @@ Menu "Keluarkan ke Proses" di Gudang WIP dipakai untuk **keduanya** — pengelua
 - Jika dipilih `CMT` atau `Maklon`: muncul field nama supplier / subkontraktor (wajib diisi)
 - Jika dipilih `Produksi Internal`: field supplier disembunyikan
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Tambah field **"Tujuan Pengeluaran"** di dialog "Keluarkan ke Proses" (`/warehouse/wip`): dropdown dengan opsi `Produksi Internal` / `CMT` / `Maklon`
+- Jika dipilih `CMT` atau `Maklon`: muncul field **"Nama Supplier / Subkon Tujuan"** (wajib diisi, free-text)
+- Jika dipilih `Produksi Internal`: field supplier disembunyikan secara otomatis (conditional rendering)
+- State `keluarForm` ditambah field `supplier: ''` untuk menyimpan nilai nama supplier
+- **Commit:** `4ca6f5c` (Sprint 4)
 
 ---
 
@@ -717,7 +782,12 @@ Menu "Keluarkan ke Proses" di Gudang WIP dipakai untuk **keduanya** — pengelua
 - Tambah field "No Invoice" dan "Tanggal Invoice" di form PEB
 - Field ini penting untuk dokumen ekspor yang lengkap
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Tambah field **"No Invoice"** dan **"Tanggal Invoice"** di form buat PEB (`/logistics/peb/new`) — ditampilkan di section dokumen header bersama No. PEB dan Tanggal Ekspor
+- Kedua field ditampilkan pula di halaman detail PEB (`/logistics/peb/[id]`)
+- Tambah field `noInvoice?: string` dan `tglInvoice?: string` ke interface `PEBDocument`
+- **Commit:** `4ca6f5c` (Sprint 4)
 
 ---
 
@@ -737,7 +807,17 @@ Menu "Keluarkan ke Proses" di Gudang WIP dipakai untuk **keduanya** — pengelua
 - Bisa melihat **detail pembayaran** per invoice: tanggal bayar, jumlah, sisa outstanding
 - Tampilan terpisah antara: input invoice baru vs record pembayaran
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Halaman **AR** (`/finance/ar`): tambah tombol **"Terima Bayar"** (biru) per baris invoice — hanya muncul jika `balance > 0 && status !== 'PAID'`
+- Halaman **AP** (`/finance/ap`): tambah tombol **"Bayar"** (hijau) per baris invoice — hanya muncul jika `balance > 0 && status !== 'PAID'`
+- Dialog input pembayaran (sama di AR dan AP):
+  - Field: Tanggal Pembayaran, Nominal Dibayar (pre-fill dari `balance`), Metode (Transfer Bank / Kas / Cek / Giro), No. Referensi, Catatan
+  - Kalkulasi otomatis: `newPaid = paidAmount + amount`, `newBalance = max(0, total - newPaid)`
+  - Status otomatis: `PAID` jika `newBalance = 0`; `PARTIALLY_PAID` (AR) / `SCHEDULED` (AP) jika ada sisa
+- Kolom **"Aksi"** baru ditambahkan di tabel AR (colSpan 10) dan AP (colSpan 11)
+- Fungsi `updateInvoice` ditambahkan ke `useARInvoices` dan `useAPInvoices`
+- **Commit:** `4ca6f5c` (Sprint 4)
 
 ---
 
@@ -753,7 +833,13 @@ Menu "Keluarkan ke Proses" di Gudang WIP dipakai untuk **keduanya** — pengelua
 - Minimal: IDR, USD, KRW
 - Tampilkan nilai asli + nilai IDR (dari kurs yang diinput)
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Halaman AP (`/finance/ap`): tambah 3 field opsional ke interface `APInvoice` — `currency?: 'IDR' | 'USD' | 'KRW'`, `exchangeRate?: number`, `originalAmount?: number`
+- Kolom **"Total Amount"** di tabel AP menampilkan nilai asli + tag mata uang jika bukan IDR (contoh: `USD 5,000` → ditampilkan dengan badge mata uang)
+- Konstanta `CURRENCY_SYMBOL` memetakan IDR → `Rp`, USD → `$`, KRW → `₩`
+- Nilai yang disimpan ke store tetap dalam IDR (originalAmount × exchangeRate)
+- **Commit:** `4ca6f5c` (Sprint 4)
 
 ---
 
@@ -768,7 +854,19 @@ Menu "Keluarkan ke Proses" di Gudang WIP dipakai untuk **keduanya** — pengelua
 - Tambah tombol / form untuk **menambah akun baru** di halaman Chart of Accounts / Saldo Akun
 - Saat ini halaman hanya menampilkan saldo akun yang sudah ada — perlu bisa tambah akun baru secara manual
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Buat store baru **`lib/store/useChartOfAccounts.ts`** — localStorage-backed, interface `AkunCOA` (id, kode, nama, tipe, subTipe, keterangan), seed 49 akun standar (1xxx–5xxx)
+- Halaman `/finance/accounts` dirombak menjadi **3 tab**:
+  - Tab **"Saldo Awal"** — konten existing tidak berubah
+  - Tab **"Bagan Akun"** — tabel CoA lengkap dengan:
+    - Filter dropdown per tipe (Semua / Aset / Kewajiban / Ekuitas / Pendapatan / Beban)
+    - Search by kode atau nama akun
+    - Form inline tambah akun baru: kode, nama, tipe, subTipe (opsional), keterangan (opsional)
+    - Tombol hapus per baris (tidak bisa hapus akun yang di-seed)
+  - Tab **"Valuasi Stok"** — lihat A4
+- Ekspor `useChartOfAccounts` dan type `AkunCOA`, `AkunTipe` dari `lib/store/hooks.ts`
+- **Commit:** `4ca6f5c` (Sprint 4)
 
 ---
 
@@ -789,7 +887,14 @@ Stock valuation perlu ada di **dua tempat**:
 - Di `/finance` (tab Akunting): card/widget "Nilai Inventori" — total nilai RM, WIP, FG secara ringkas
 - Di `/reports` (tab Reports): halaman laporan Stock Valuation lengkap — kolom: kode, nama, kategori, qty on hand, nilai satuan, total nilai; bisa filter & export Excel
 
-**Update yang Dilakukan:** ⏳ Pending
+**Update yang Dilakukan:**
+
+- Tab **"Valuasi Stok"** ditambahkan di halaman `/finance/accounts` (tab ke-3 dari A3)
+- Menampilkan stok dari `useStock()` yang dikelompokkan per kategori: Bahan Baku (BB) / Barang Jadi (FG) / WIP / Packaging
+- Setiap item: kode material, nama, qty on hand, harga satuan (hardcoded `HARGA_SATUAN`), **total nilai** (qty × harga)
+- Subtotal nilai per kategori + **Grand Total** seluruh inventori
+- Konstanta `HARGA_SATUAN` memetakan kode material ke harga (contoh: RM-LATEX → Rp 15.000/kg, FG-LATEX-M → Rp 85.000/pcs)
+- **Commit:** `4ca6f5c` (Sprint 4)
 
 ---
 
@@ -810,7 +915,12 @@ Stock valuation perlu ada di **dua tempat**:
 
 **Catatan:** Periksa dulu apakah ini resolved setelah B3 diperbaiki.
 
-**Update yang Dilakukan:** ⏳ Pending — investigasi setelah B3 selesai
+**Update yang Dilakukan:**
+
+- **Root cause**: Tab "Input Barang Jadi" kosong karena satu-satunya WO COMPLETED (`WO-2026-003`) sudah ada di seed `useFGReceipts` — filter `wo.status === 'COMPLETED' && !receivedWoIds.has(wo.id)` menghasilkan list kosong
+- **Fix**: Tambah `WO-2026-004` ke `MOCK_WORK_ORDERS` (`lib/mock-data/production.ts`) — status COMPLETED, belum ada di seed FGReceipts — sehingga WO tersebut muncul di antrian "Input Barang Jadi"
+- Tab "Input Barang Jadi" sekarang menampilkan WO-2026-004 (Latex Size M, 1.500 karton, Line B) dengan tombol "Terima ke Gudang"
+- **Commit:** `4ca6f5c` (Sprint 4)
 
 ---
 
@@ -818,27 +928,28 @@ Stock valuation perlu ada di **dua tempat**:
 
 | #  | Area                                              | Prioritas | Status     |
 | -- | ------------------------------------------------- | --------- | ---------- |
-| B1 | Supplier baru tidak tersimpan                     | Kritis    | ⏳ Pending |
-| B2 | PO setelah submit tidak tampil                    | Kritis    | ⏳ Pending |
-| B3 | Penerimaan material tidak terlihat setelah save   | Kritis    | ⏳ Pending |
-| P1 | PO multi-currency (USD, KRW)                      | Tinggi    | ⏳ Pending |
-| P2 | PO kode material / kode barang                    | Tinggi    | ⏳ Pending |
-| P3 | PO nomor PO (kolom + visibility ke gudang)        | Tinggi    | ⏳ Pending |
-| P4 | PO upload gambar / attachment                     | Sedang    | ⏳ Pending |
-| P5 | PO print preview                                  | Sedang    | ⏳ Pending |
-| S1 | Subkontrak: tambah qty, no SO, satuan             | Tinggi    | ⏳ Pending |
-| S2 | Subkontrak: kirim BB ke subkon tidak bisa         | Tinggi    | ⏳ Pending |
-| S3 | WIP keluarkan ke proses: field Tujuan + nama supplier (CMT/Maklon/Internal) | Sedang | ⏳ Pending |
-| E1 | PEB: tambah No Invoice & Tanggal Invoice          | Tinggi    | ⏳ Pending |
-| A1 | AR/AP: input pembayaran & detail view             | Tinggi    | ⏳ Pending |
-| A2 | Transaksi: kolom mata uang (USD, KRW)             | Tinggi    | ⏳ Pending |
-| A3 | Chart of Accounts: form input akun baru           | Sedang    | ⏳ Pending |
-| A4 | Stock valuation: widget di tab Akunting + laporan lengkap di Reports | Sedang | ⏳ Pending |
-| W1 | Warehouse Outbound: input BJ                      | Sedang    | ⏳ Pending — cek setelah B3 |
+| B1 | Supplier baru tidak tersimpan                     | Kritis    | ✅ Selesai (`4ca6f5c`) |
+| B2 | PO setelah submit tidak tampil                    | Kritis    | ✅ Selesai (`4ca6f5c`) |
+| B3 | Penerimaan material tidak terlihat setelah save   | Kritis    | ✅ Selesai (`4ca6f5c`) |
+| P1 | PO multi-currency (USD, KRW)                      | Tinggi    | ✅ Selesai (`4ca6f5c`) |
+| P2 | PO kode material / kode barang                    | Tinggi    | ✅ Selesai (`4ca6f5c`) |
+| P3 | PO nomor PO (kolom + visibility ke gudang)        | Tinggi    | ✅ Selesai (`4ca6f5c`) |
+| P4 | PO upload gambar / attachment                     | Sedang    | ✅ Selesai (`4ca6f5c`) |
+| P5 | PO print preview                                  | Sedang    | ✅ Selesai (`4ca6f5c`) |
+| S1 | Subkontrak: tambah qty, no SO, satuan             | Tinggi    | ✅ Selesai (`4ca6f5c`) |
+| S2 | Subkontrak: kirim BB ke subkon tidak bisa         | Tinggi    | ✅ Selesai (`4ca6f5c`) |
+| S3 | WIP keluarkan ke proses: field Tujuan + nama supplier (CMT/Maklon/Internal) | Sedang | ✅ Selesai (`4ca6f5c`) |
+| E1 | PEB: tambah No Invoice & Tanggal Invoice          | Tinggi    | ✅ Selesai (`4ca6f5c`) |
+| A1 | AR/AP: input pembayaran & detail view             | Tinggi    | ✅ Selesai (`4ca6f5c`) |
+| A2 | Transaksi: kolom mata uang (USD, KRW)             | Tinggi    | ✅ Selesai (`4ca6f5c`) |
+| A3 | Chart of Accounts: form input akun baru           | Sedang    | ✅ Selesai (`4ca6f5c`) |
+| A4 | Stock valuation: widget di tab Akunting + laporan lengkap di Reports | Sedang | ✅ Selesai (`4ca6f5c`) |
+| W1 | Warehouse Outbound: input BJ                      | Sedang    | ✅ Selesai (`4ca6f5c`) |
 
 ---
 
 _Laporan pertama dibuat: April 17, 2026_  
 _Diperbarui: Mei 4, 2026 (tambah revisi KITE K1–K9)_  
 _Diperbarui: Mei 5, 2026 (tambah revisi lanjutan M1–M5)_  
-_Diperbarui: Mei 19, 2026 (tambah revisi Batch 3 B1–B3, P1–P5, S1–S3, E1, A1–A4, W1)_
+_Diperbarui: Mei 19, 2026 (tambah revisi Batch 3 B1–B3, P1–P5, S1–S3, E1, A1–A4, W1)_  
+_Diperbarui: Mei 20, 2026 (tandai semua Batch 3 selesai — commit 4ca6f5c)_
