@@ -23,6 +23,8 @@ export interface PEBDocument {
   soNumber?: string
   woId?: string
   fgrId?: string              // FGReceipt id
+  invoiceNo?: string
+  invoiceDate?: string
   customerName: string
   destinationCountry: string
   portOfLoading: string

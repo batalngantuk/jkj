@@ -1,7 +1,10 @@
 export interface PurchaseOrder {
   id: string
+  poNumber?: string
   poType: 'Lokal' | 'Impor'
   supplier: string
+  currency?: 'IDR' | 'USD' | 'KRW'
+  exchangeRate?: number
   items: Array<{
     code: string
     name: string

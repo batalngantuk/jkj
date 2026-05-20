@@ -32,6 +32,8 @@ export default function PEBCreatePage() {
   const [npeNumber, setNpeNumber] = useState('NPE-123456') // Default NPE
   const [customerId, setCustomerId] = useState('')
   const [customerName, setCustomerName] = useState('')
+  const [invoiceNo, setInvoiceNo] = useState('')
+  const [invoiceDate, setInvoiceDate] = useState('')
   const [destinationCountry, setDestinationCountry] = useState('')
   const [destinationPort, setDestinationPort] = useState('')
   const [portOfLoading, setPortOfLoading] = useState('Tanjung Priok')
@@ -152,6 +154,8 @@ export default function PEBCreatePage() {
   const buildPayload = (status: 'DRAFT' | 'SUBMITTED') => ({
     documentDate: new Date().toISOString().split('T')[0],
     status,
+    invoiceNo: invoiceNo || undefined,
+    invoiceDate: invoiceDate || undefined,
     customerName,
     destinationCountry,
     portOfLoading,
@@ -272,6 +276,28 @@ export default function PEBCreatePage() {
                     <SelectItem value="3">EuroTech GmbH</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            {/* E1: No Invoice & Tanggal Invoice */}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="invoiceNo">No. Invoice</Label>
+                <Input
+                  id="invoiceNo"
+                  value={invoiceNo}
+                  onChange={(e) => setInvoiceNo(e.target.value)}
+                  placeholder="INV-2026-001"
+                />
+              </div>
+              <div>
+                <Label htmlFor="invoiceDate">Tanggal Invoice</Label>
+                <Input
+                  id="invoiceDate"
+                  type="date"
+                  value={invoiceDate}
+                  onChange={(e) => setInvoiceDate(e.target.value)}
+                />
               </div>
             </div>
           </CardContent>

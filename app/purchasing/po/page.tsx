@@ -71,9 +71,16 @@ export default function POListPage() {
 
   const columns = [
     {
-      header: 'PO Number',
+      header: 'No. PO',
       accessorKey: 'id' as keyof PurchaseOrder,
-      cell: (item: PurchaseOrder) => <span className="font-medium text-primary">{item.id}</span>
+      cell: (item: PurchaseOrder) => (
+        <div>
+          <span className="font-medium text-primary">{item.poNumber || item.id}</span>
+          {item.poNumber && item.poNumber !== item.id && (
+            <p className="text-xs text-muted-foreground">{item.id}</p>
+          )}
+        </div>
+      )
     },
     {
       header: 'Tipe',
@@ -88,7 +95,14 @@ export default function POListPage() {
     { header: 'Order Date', accessorKey: 'orderDate' as keyof PurchaseOrder },
     {
       header: 'Total Amount',
-      cell: (item: PurchaseOrder) => <span className="font-medium">Rp {item.totalAmount.toLocaleString()}</span>
+      cell: (item: PurchaseOrder) => (
+        <div>
+          <span className="font-medium">Rp {item.totalAmount.toLocaleString()}</span>
+          {item.currency && item.currency !== 'IDR' && (
+            <p className="text-xs text-muted-foreground">{item.currency}</p>
+          )}
+        </div>
+      )
     },
     {
       header: 'Status',
