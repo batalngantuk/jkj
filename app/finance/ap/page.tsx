@@ -32,6 +32,7 @@ export default function APPage() {
   const [payForm, setPayForm] = useState({
     tanggal: '',
     nominal: '',
+    kurs: '',
     metode: 'BANK_TRANSFER',
     referensi: '',
     catatan: '',
@@ -64,6 +65,7 @@ export default function APPage() {
     setPayForm({
       tanggal: new Date().toISOString().split('T')[0],
       nominal: inv.balance.toString(),
+      kurs: inv.exchangeRate ? inv.exchangeRate.toString() : '',
       metode: 'BANK_TRANSFER',
       referensi: '',
       catatan: '',
@@ -274,6 +276,9 @@ export default function APPage() {
               <div>
                 <p className="text-muted-foreground text-xs">Total Tagihan</p>
                 <p className="font-semibold">{payTarget ? formatCurrency(payTarget.totalAmount) : '-'}</p>
+                {payTarget?.currency && payTarget.currency !== 'IDR' && payTarget.originalAmount && (
+                  <p className="text-xs text-blue-600">{CURRENCY_SYMBOL[payTarget.currency]}{payTarget.originalAmount.toLocaleString('id-ID')} {payTarget.currency}</p>
+                )}
               </div>
               <div>
                 <p className="text-muted-foreground text-xs">Sisa Hutang</p>
@@ -285,6 +290,47 @@ export default function APPage() {
               <Label>Tanggal Bayar <span className="text-red-500">*</span></Label>
               <Input type="date" value={payForm.tanggal} onChange={e => setPayForm(p => ({ ...p, tanggal: e.target.value }))} />
             </div>
+
+            {/* Currency & Kurs — hanya tampil jika invoice non-IDR */}
+            {payTarget?.currency && payTarget.currency !== 'IDR' && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Mata Uang Invoice</Label>
+                  <div className="h-9 flex items-center px-3 rounded-md border bg-muted text-sm font-medium">{payTarget.currency}</div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Kurs Bayar ({payTarget.currency}/IDR)</Label>
+                  <Input
+                    type="number"
+                    placeholder={payTarget.exchangeRate?.toString()}
+                    value={payForm.kurs}
+                    onChange={e => {
+                      const k = e.target.value
+                      setPayForm(p => ({
+                        ...p,
+                        kurs: k,
+                        nominal: payTarget.originalAmount
+                          ? String(Math.round(payTarget.originalAmount * (parseFloat(k) || 0)))
+                          : p.nominal
+                      }))
+                    }}
+                  />
+                </div>
+                {payTarget.exchangeRate && payForm.kurs && payTarget.originalAmount && (
+                  <div className="col-span-2 rounded-md bg-yellow-50 border border-yellow-200 p-2 text-xs space-y-0.5">
+                    <p className="text-muted-foreground">Kurs invoice: <strong>{payTarget.exchangeRate.toLocaleString('id-ID')}</strong> | Kurs bayar: <strong>{parseFloat(payForm.kurs).toLocaleString('id-ID')}</strong></p>
+                    {(() => {
+                      const selisih = (payTarget.exchangeRate - parseFloat(payForm.kurs)) * payTarget.originalAmount
+                      return selisih !== 0 ? (
+                        <p className={selisih > 0 ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}>
+                          Selisih kurs: {selisih > 0 ? '+' : ''}{formatCurrency(selisih)} ({selisih > 0 ? 'Rugi kurs' : 'Untung kurs'})
+                        </p>
+                      ) : <p className="text-green-600">Tidak ada selisih kurs</p>
+                    })()}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Nominal Bayar (IDR) <span className="text-red-500">*</span></Label>

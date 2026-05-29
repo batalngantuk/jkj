@@ -39,6 +39,9 @@ export interface ARInvoice {
   lineItems: InvoiceLineItem[]
   paymentIds: string[]
   notes?: string
+  currency?: 'IDR' | 'USD' | 'KRW'
+  exchangeRate?: number
+  originalAmount?: number
 }
 
 export interface APInvoice {

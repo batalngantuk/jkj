@@ -147,7 +147,23 @@ export default function SalesOrderDetailPage() {
               )}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2" onClick={() => {
+                const items = order.lineItems && order.lineItems.length > 0
+                  ? order.lineItems.map(i => `<tr><td style="padding:8px;border:1px solid #ddd">${i.namaBarang}</td><td style="padding:8px;border:1px solid #ddd;text-align:center">${i.qty.toLocaleString('id-ID')} ${i.satuan}</td><td style="padding:8px;border:1px solid #ddd;text-align:right">${i.hargaSatuan.toLocaleString('id-ID')}</td><td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold">${(i.qty*i.hargaSatuan).toLocaleString('id-ID')}</td></tr>`).join('')
+                  : `<tr><td style="padding:8px;border:1px solid #ddd">${order.product}</td><td style="padding:8px;border:1px solid #ddd;text-align:center">${order.quantity.toLocaleString('id-ID')} carton</td><td style="padding:8px;border:1px solid #ddd;text-align:right">${order.unitPrice.toLocaleString('id-ID')}</td><td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold">${order.total.toLocaleString('id-ID')}</td></tr>`
+                const win = window.open('', '_blank')
+                if (!win) return
+                win.document.write(`<!DOCTYPE html><html><head><title>Sales Order ${order.id}</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#111}table{width:100%;border-collapse:collapse}th{background:#f3f4f6;padding:8px;border:1px solid #ddd;text-align:left}.header{display:flex;justify-content:space-between;margin-bottom:24px}.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}.info-label{font-size:12px;color:#6b7280}.info-value{font-weight:600}.total-section{text-align:right;margin-top:16px;font-size:18px;font-weight:bold}.sign-table{width:100%;margin-top:48px;border-collapse:collapse}.sign-table td{width:25%;border:1px solid #ddd;padding:12px;text-align:center;height:80px;vertical-align:top;font-size:13px}.priority-urgent{color:#dc2626;font-weight:bold}@media print{button{display:none}}</style></head><body>
+                <div class="header"><div><h2 style="margin:0">PT. JKJ MANUFACTURING</h2><p style="margin:4px 0;color:#6b7280;font-size:13px">SALES ORDER</p></div><div style="text-align:right"><h3 style="margin:0">${order.id}</h3><p style="margin:4px 0;font-size:13px">Status: ${order.status}</p><p style="margin:4px 0;font-size:13px">Prioritas: <span class="${order.priority==='Urgent'?'priority-urgent':''}">${order.priority}</span></p></div></div>
+                <div class="info-grid"><div><div class="info-label">Customer</div><div class="info-value">${order.customer}</div></div><div><div class="info-label">No. PO Customer</div><div class="info-value">${order.poNumber}</div></div><div><div class="info-label">Tanggal Pengiriman</div><div class="info-value">${order.deliveryDate}</div></div><div><div class="info-label">Dibuat oleh</div><div class="info-value">${order.createdBy}</div></div></div>
+                <table><thead><tr><th>Produk</th><th style="text-align:center">Qty</th><th style="text-align:right">Harga Satuan</th><th style="text-align:right">Subtotal</th></tr></thead><tbody>${items}</tbody></table>
+                <div class="total-section">Grand Total: ${order.total.toLocaleString('id-ID')}</div>
+                ${order.notes ? `<p style="margin-top:16px;font-size:13px;color:#6b7280">Catatan: ${order.notes}</p>` : ''}
+                <table class="sign-table"><tr><td>Sales<br><br><br></td><td>Manager<br><br><br></td><td>Accounting<br><br><br></td><td>Direktur Utama<br><br><br></td></tr></table>
+                <p style="text-align:center;margin-top:24px;font-size:12px;color:#9ca3af">Dicetak ${new Date().toLocaleString('id-ID')}</p>
+                <script>window.print()</script></body></html>`)
+                win.document.close()
+              }}>
                 <Printer className="h-4 w-4" />
                 Cetak Order
               </Button>

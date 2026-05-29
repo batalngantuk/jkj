@@ -115,6 +115,15 @@ export default function SubkontrakPage() {
   const [kirimSubkNo, setKirimSubkNo] = useState('')
   const [kirimTgl, setKirimTgl] = useState(new Date().toISOString().slice(0, 10))
 
+  // Terima Hasil CMT dialog state
+  const [showTerima, setShowTerima] = useState(false)
+  const [terimaTarget, setTerimaTarget] = useState<SubkonRecord | null>(null)
+  const [terimaKiteNo, setTerimaKiteNo] = useState('')
+  const [terimaTgl, setTerimaTgl] = useState(new Date().toISOString().slice(0, 10))
+  const [terimaQtys, setTerimaQtys] = useState<Record<number, string>>({})
+  const [terimaNoSJ, setTerimaNoSJ] = useState('')
+  const [terimaCatatan, setTerimaCatatan] = useState('')
+
   const filtered = records.filter(r =>
     filterStatus === 'all' ? true : r.status === filterStatus
   )
@@ -156,6 +165,35 @@ export default function SubkontrakPage() {
     setKirimSJNo(`SJ-${year}-${String(next).padStart(3, '0')}`)
     setKirimTgl(new Date().toISOString().slice(0, 10))
     setShowKirimBB(true)
+  }
+
+  function openTerima(rec: SubkonRecord) {
+    setTerimaTarget(rec)
+    const year = new Date().getFullYear()
+    const next = Math.max(0, ...records.map(r => { const m = r.subkKiteTerimaNo.match(/(\d+)$/); return m ? parseInt(m[1]) : 0 })) + 1
+    setTerimaKiteNo(`SUBK-1.2-${year}-${String(next).padStart(3, '0')}`)
+    setTerimaNoSJ(`SJ-IN-${year}-${String(next).padStart(3, '0')}`)
+    setTerimaTgl(new Date().toISOString().slice(0, 10))
+    setTerimaQtys(Object.fromEntries(rec.items.map((item, i) => [i, String(item.qtyKirim)])))
+    setTerimaCatatan('')
+    setShowTerima(true)
+  }
+
+  function handleConfirmTerima() {
+    if (!terimaTarget) return
+    const updatedItems = terimaTarget.items.map((item, i) => ({
+      ...item,
+      qtyKembali: parseFloat(terimaQtys[i] ?? item.qtyKirim) || 0,
+    }))
+    updateSubkon(terimaTarget.id, {
+      status: 'Hasil Diterima',
+      subkKiteTerimaNo: terimaKiteNo,
+      subkKiteTerimaTgl: terimaTgl,
+      items: updatedItems,
+    })
+    setShowTerima(false)
+    setTerimaTarget(null)
+    setSelectedRecord(null)
   }
 
   function handleConfirmKirim() {
@@ -540,10 +578,10 @@ export default function SubkontrakPage() {
                   Kirim BB ke Subkon
                 </Button>
               )}
-              {selectedRecord.status === 'Dalam Proses' && (
-                <Button className="gap-2">
+              {(selectedRecord.status === 'BB Dikirim' || selectedRecord.status === 'Dalam Proses') && (
+                <Button className="gap-2 bg-green-600 hover:bg-green-700" onClick={() => { openTerima(selectedRecord); setSelectedRecord(null) }}>
                   <Package className="h-4 w-4" />
-                  Terima Hasil dari Subkon
+                  Terima Hasil dari CMT
                 </Button>
               )}
               {selectedRecord.status === 'Hasil Diterima' && (
@@ -604,6 +642,81 @@ export default function SubkontrakPage() {
               className="gap-2"
             >
               <Send className="h-4 w-4" />Konfirmasi Kirim BB
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: Terima Hasil dari CMT ── */}
+      <Dialog open={showTerima} onOpenChange={v => { if (!v) { setShowTerima(false); setTerimaTarget(null) } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-700">
+              <Package className="h-5 w-5" />
+              Terima Hasil dari CMT — {terimaTarget?.namaSubkon}
+            </DialogTitle>
+            <DialogDescription>
+              Input qty barang jadi yang diterima kembali dari subkontraktor/CMT
+            </DialogDescription>
+          </DialogHeader>
+          {terimaTarget && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Tanggal Terima</Label>
+                  <Input type="date" value={terimaTgl} onChange={e => setTerimaTgl(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>No. Surat Jalan Masuk</Label>
+                  <Input placeholder="SJ-IN-2026-001" value={terimaNoSJ} onChange={e => setTerimaNoSJ(e.target.value)} />
+                </div>
+                <div className="space-y-1.5 col-span-2">
+                  <Label>No. SUBK KITE 1.2</Label>
+                  <Input placeholder="SUBK-1.2-2026-001" value={terimaKiteNo} onChange={e => setTerimaKiteNo(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase">Qty Hasil Diterima per BB/Item</Label>
+                {terimaTarget.items.map((item, i) => (
+                  <div key={i} className="grid grid-cols-3 gap-3 items-center rounded border px-3 py-2">
+                    <div className="col-span-2">
+                      <p className="text-sm font-medium">{item.namaBB}</p>
+                      <p className="text-xs text-muted-foreground">{item.kodeBB} · Dikirim: {item.qtyKirim.toLocaleString('id-ID')} {item.satuanBB}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Qty kembali</Label>
+                      <Input
+                        type="number"
+                        value={terimaQtys[i] ?? item.qtyKirim}
+                        onChange={e => setTerimaQtys(prev => ({ ...prev, [i]: e.target.value }))}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {terimaTarget.qtyCMT && (
+                <div className="rounded-md bg-blue-50 border border-blue-200 p-3 text-sm">
+                  <p className="text-blue-700">Target BJ: <strong>{terimaTarget.qtyCMT.toLocaleString('id-ID')} {terimaTarget.satuanCMT}</strong></p>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label>Catatan</Label>
+                <Input placeholder="Kondisi barang, catatan QC, dll..." value={terimaCatatan} onChange={e => setTerimaCatatan(e.target.value)} />
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setShowTerima(false)}>Batal</Button>
+            <Button
+              className="gap-2 bg-green-600 hover:bg-green-700"
+              disabled={!terimaTgl || !terimaKiteNo}
+              onClick={handleConfirmTerima}
+            >
+              <Package className="h-4 w-4" />Konfirmasi Terima Hasil CMT
             </Button>
           </div>
         </DialogContent>

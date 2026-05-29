@@ -68,15 +68,15 @@ export default function FinanceReportsPage() {
       .reduce((s, i) => s + (i.totalAmount - i.taxAmount), 0)
   }, [apInvoices, filterPeriode, filterBulan])
 
-  // ── Beban operasional dari jurnal ──
+  // ── Beban operasional dari jurnal (pakai akunLawan COA atau kategori Pengeluaran) ──
   const bebanJurnal = useMemo(() => {
     const filtered = journal.filter(e => e.tipe === 'KELUAR' && inPeriode(e.tanggal))
-    const gaji = filtered.filter(e => e.kategori === 'Beban Gaji').reduce((s, e) => s + e.nominal, 0)
-    const utilitas = filtered.filter(e => e.kategori === 'Beban Listrik & Utilitas').reduce((s, e) => s + e.nominal, 0)
-    const sewa = filtered.filter(e => e.kategori === 'Beban Sewa').reduce((s, e) => s + e.nominal, 0)
-    const angkut = filtered.filter(e => e.kategori === 'Beban Angkut').reduce((s, e) => s + e.nominal, 0)
-    const lainlain = filtered.filter(e => e.kategori === 'Beban Lain-lain').reduce((s, e) => s + e.nominal, 0)
-    const total = gaji + utilitas + sewa + angkut + lainlain
+    const gaji = filtered.filter(e => e.akunLawan === '5-0100').reduce((s, e) => s + e.nominal, 0)
+    const utilitas = filtered.filter(e => e.akunLawan === '5-9000' && e.keterangan?.toLowerCase().includes('listrik')).reduce((s, e) => s + e.nominal, 0)
+    const sewa = filtered.filter(e => e.akunLawan === '5-9000' && e.keterangan?.toLowerCase().includes('sewa')).reduce((s, e) => s + e.nominal, 0)
+    const angkut = filtered.filter(e => e.akunLawan === '5-0400').reduce((s, e) => s + e.nominal, 0)
+    const lainlain = filtered.filter(e => !e.akunLawan || (e.akunLawan === '5-9000' && !e.keterangan?.toLowerCase().includes('listrik') && !e.keterangan?.toLowerCase().includes('sewa'))).reduce((s, e) => s + e.nominal, 0)
+    const total = filtered.reduce((s, e) => s + e.nominal, 0)
     return { gaji, utilitas, sewa, angkut, lainlain, total }
   }, [journal, filterPeriode, filterBulan])
 

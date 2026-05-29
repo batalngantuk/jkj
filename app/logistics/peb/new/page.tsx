@@ -20,12 +20,15 @@ import {
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import { useRouter } from 'next/navigation'
-import { usePEB } from '@/lib/store/hooks'
+import { usePEB, useSalesOrders } from '@/lib/store/hooks'
+import { AlertTriangle } from 'lucide-react'
 
 export default function PEBCreatePage() {
   const router = useRouter()
   const { createPEB } = usePEB()
+  const { orders: salesOrders } = useSalesOrders()
   const [loading, setLoading] = useState(false)
+  const [soRef, setSoRef] = useState('')
 
   // Form State
   const [pebNumber, setPebNumber] = useState('')
@@ -486,6 +489,41 @@ export default function PEBCreatePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* SO Reference + Warning */}
+            <div>
+              <Label>No. Sales Order Referensi (Opsional)</Label>
+              <Select value={soRef} onValueChange={setSoRef}>
+                <SelectTrigger>
+                  <SelectValue placeholder="— Pilih SO yang terkait —" />
+                </SelectTrigger>
+                <SelectContent>
+                  {salesOrders.map(so => (
+                    <SelectItem key={so.id} value={so.id}>
+                      {so.id} — {so.customer} ({so.quantity.toLocaleString('id-ID')} {so.lineItems && so.lineItems.length > 1 ? 'multi-item' : 'carton'})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {soRef && (() => {
+                const so = salesOrders.find(s => s.id === soRef)
+                const totalPEBQty = items.reduce((s: number, i: {quantity: string|number}) => s + (parseFloat(String(i.quantity)) || 0), 0)
+                if (!so) return null
+                return (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs text-muted-foreground">
+                      Qty SO: <strong>{so.quantity.toLocaleString('id-ID')}</strong> | Total Qty PEB ini: <strong>{totalPEBQty.toLocaleString('id-ID')}</strong>
+                    </p>
+                    {totalPEBQty > so.quantity && (
+                      <div className="flex items-center gap-2 text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded px-2 py-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                        <span>⚠ Total qty PEB ({totalPEBQty.toLocaleString()}) melebihi qty SO ({so.quantity.toLocaleString()}). Pertimbangkan revisi SO sebelum lanjut.</span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+            </div>
+
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="bc20Reference">BC 2.0 Reference (Optional)</Label>

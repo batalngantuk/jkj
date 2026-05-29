@@ -13,14 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import AppLayout from '@/components/app-layout'
-
-// Mock Purchase Orders for selection
-const MOCK_PURCHASE_ORDERS = [
-  { id: 'po-001', poNumber: 'PO-2026-001', vendorName: 'PT. Supplier Material Utama', hasBC20: true, bc20Number: 'PIB-2026-001' },
-  { id: 'po-002', poNumber: 'PO-2026-002', vendorName: 'CV. Packaging Solutions', hasBC20: false },
-  { id: 'po-003', poNumber: 'PO-2026-003', vendorName: 'PT. Supplier Material Utama', hasBC20: true, bc20Number: 'PIB-2026-002' },
-  { id: 'po-004', poNumber: 'PO-2026-004', vendorName: 'PT. Chemical Indo', hasBC20: false },
-]
+import { usePurchaseOrders } from '@/lib/store/hooks'
 
 // Mock BC 2.0 Documents
 const MOCK_BC20_DOCUMENTS = [
@@ -43,6 +36,7 @@ const CURRENCY_SYMBOL: Record<string, string> = { IDR: 'Rp', USD: '$', KRW: '₩
 
 export default function NewAPBillPage() {
   const router = useRouter()
+  const { orders: purchaseOrders } = usePurchaseOrders()
 
   // Form state
   const [selectedPO, setSelectedPO] = useState('')
@@ -66,18 +60,12 @@ export default function NewAPBillPage() {
   // Handle PO selection
   const handlePOChange = (poId: string) => {
     setSelectedPO(poId)
-    const po = MOCK_PURCHASE_ORDERS.find(p => p.id === poId)
+    const po = purchaseOrders.find(p => p.id === poId)
     if (po) {
-      setVendorName(po.vendorName)
-      setShowBC20(po.hasBC20)
-      if (po.hasBC20 && po.bc20Number) {
-        const bc23 = MOCK_BC20_DOCUMENTS.find(bc => bc.bcNumber === po.bc20Number)
-        if (bc23) {
-          setSelectedBC20(bc23.id)
-        }
-      } else {
-        setSelectedBC20('')
-      }
+      setVendorName(po.supplier)
+      const isImpor = po.poType === 'Impor'
+      setShowBC20(isImpor)
+      if (!isImpor) setSelectedBC20('')
       // Auto-calculate due date based on payment terms
       updateDueDate(invoiceDate, paymentTerms)
     }
@@ -211,9 +199,9 @@ export default function NewAPBillPage() {
                       <SelectValue placeholder="Select Purchase Order" />
                     </SelectTrigger>
                     <SelectContent>
-                      {MOCK_PURCHASE_ORDERS.map(po => (
+                      {purchaseOrders.map(po => (
                         <SelectItem key={po.id} value={po.id}>
-                          {po.poNumber} - {po.vendorName}
+                          {po.poNumber || po.id} — {po.supplier}
                         </SelectItem>
                       ))}
                     </SelectContent>
