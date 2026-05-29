@@ -97,9 +97,12 @@ export default function SubkontrakPage() {
   const [selectedRecord, setSelectedRecord] = useState<SubkonRecord | null>(null)
   const [showFormDialog, setShowFormDialog] = useState(false)
 
-  // Form state (S1: tambah noSO + bbItems)
+  // Form state
   const [formSubkon, setFormSubkon] = useState('')
+  const [formSubkonText, setFormSubkonText] = useState('') // manual entry if not in master
   const [formNoSO, setFormNoSO] = useState('')
+  const [formQtyCMT, setFormQtyCMT] = useState('')
+  const [formSatuanCMT, setFormSatuanCMT] = useState('carton')
   const [formDeskripsi, setFormDeskripsi] = useState('')
   const [formTarget, setFormTarget] = useState('')
   const [formCatatan, setFormCatatan] = useState('')
@@ -124,7 +127,9 @@ export default function SubkontrakPage() {
   }
 
   function resetForm() {
-    setFormSubkon(''); setFormNoSO(''); setFormDeskripsi(''); setFormTarget('')
+    setFormSubkon(''); setFormSubkonText(''); setFormNoSO('')
+    setFormQtyCMT(''); setFormSatuanCMT('carton')
+    setFormDeskripsi(''); setFormTarget('')
     setFormCatatan('')
     setFormBBItems([{ kodeBB: '', namaBB: '', qty: 0, satuan: 'KG', isKITE: true }])
   }
@@ -365,6 +370,12 @@ export default function SubkontrakPage() {
                       <p className="text-xs text-muted-foreground">Target Selesai</p>
                       <p className="font-medium">{selectedRecord.targetSelesai}</p>
                     </div>
+                    {selectedRecord.qtyCMT && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Qty Barang Jadi CMT</p>
+                        <p className="font-medium text-blue-700">{selectedRecord.qtyCMT.toLocaleString('id-ID')} {selectedRecord.satuanCMT}</p>
+                      </div>
+                    )}
                     <div>
                       <p className="text-xs text-muted-foreground">Tanggal Selesai Aktual</p>
                       <p className={`font-medium ${selectedRecord.tglSelesaiAktual === '-' ? 'text-muted-foreground' : ''}`}>
@@ -618,15 +629,25 @@ export default function SubkontrakPage() {
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Info Job</p>
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label>Subkontraktor <span className="text-red-500">*</span></Label>
-                  <Select value={formSubkon} onValueChange={setFormSubkon}>
+                  <Label>Subkontraktor / CMT <span className="text-red-500">*</span></Label>
+                  <Select value={formSubkon} onValueChange={v => { setFormSubkon(v); if (v !== 'custom') setFormSubkonText('') }}>
                     <SelectTrigger><SelectValue placeholder="Pilih subkontraktor..." /></SelectTrigger>
                     <SelectContent>
                       {MOCK_SUBKON_MASTER.map(s => (
                         <SelectItem key={s.id} value={s.id}>{s.nama}</SelectItem>
                       ))}
+                      <SelectItem value="custom">+ Input nama baru (manual)...</SelectItem>
                     </SelectContent>
                   </Select>
+                  {formSubkon === 'custom' && (
+                    <Input
+                      placeholder="Ketik nama subkontraktor / CMT baru"
+                      value={formSubkonText}
+                      onChange={e => setFormSubkonText(e.target.value)}
+                      className="mt-1.5"
+                      autoFocus
+                    />
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -637,6 +658,31 @@ export default function SubkontrakPage() {
                   <div className="space-y-1.5">
                     <Label>Target Selesai <span className="text-red-500">*</span></Label>
                     <Input type="date" value={formTarget} onChange={e => setFormTarget(e.target.value)} />
+                  </div>
+                </div>
+
+                {/* Qty Total CMT */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Qty Barang Jadi CMT</Label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={formQtyCMT}
+                      onChange={e => setFormQtyCMT(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Total qty BJ yang akan diproduksi CMT</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Satuan BJ CMT</Label>
+                    <Select value={formSatuanCMT} onValueChange={setFormSatuanCMT}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {['carton', 'pcs', 'prs', 'box', 'kg', 'mtr', 'yard', 'roll'].map(s => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -694,7 +740,7 @@ export default function SubkontrakPage() {
                         <Select value={bb.satuan} onValueChange={v => updateBBItem(i, 'satuan', v)}>
                           <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {['KG', 'LITER', 'PCS', 'ROLL', 'CTN'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                            {['KG', 'MTR', 'LITER', 'PCS', 'ROLL', 'CTN', 'YARD', 'SF'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
@@ -728,16 +774,19 @@ export default function SubkontrakPage() {
               Batal
             </Button>
             <Button
-              disabled={!formSubkon || !formDeskripsi || !formTarget}
+              disabled={!formSubkon || (formSubkon === 'custom' && !formSubkonText) || !formDeskripsi || !formTarget}
               onClick={() => {
                 const master = MOCK_SUBKON_MASTER.find(s => s.id === formSubkon)
+                const namaFinal = formSubkon === 'custom' ? formSubkonText : (master?.nama ?? formSubkon)
                 createSubkon({
-                  namaSubkon: master?.nama ?? formSubkon,
+                  namaSubkon: namaFinal,
                   alamatSubkon: '-',
                   npwpSubkon: master?.npwp ?? '-',
                   jobNo: '-',
                   jobTgl: new Date().toISOString().slice(0, 10),
                   noSO: formNoSO || undefined,
+                  qtyCMT: formQtyCMT ? parseFloat(formQtyCMT) : undefined,
+                  satuanCMT: formQtyCMT ? formSatuanCMT : undefined,
                   deskripsiPekerjaan: formDeskripsi,
                   targetSelesai: formTarget,
                   tglSelesaiAktual: '-',
