@@ -3,7 +3,7 @@
 **Dokumen**: Response terhadap "komen program jkj.pdf"  
 **Tanggal Feedback Diterima**: April 17, 2026  
 **Tanggal Laporan Terakhir**: Mei 19, 2026  
-**Status**: ✅ Semua item (F1–F9) selesai | ✅ Semua revisi KITE (K1–K9) selesai | ✅ Semua revisi lanjutan (M1–M5) selesai | ✅ Batch 3 (B1–B3, P1–P5, S1–S3, E1, A1–A4, W1) — semua selesai
+**Status**: ✅ F1–F9 selesai | ✅ K1–K9 selesai | ✅ M1–M5 selesai | ✅ Batch 3 (B/P/S/E/A/W) selesai | ✅ Batch 4 (F/SO/PO/W/CMT) — semua selesai
 
 ---
 
@@ -952,4 +952,273 @@ _Laporan pertama dibuat: April 17, 2026_
 _Diperbarui: Mei 4, 2026 (tambah revisi KITE K1–K9)_  
 _Diperbarui: Mei 5, 2026 (tambah revisi lanjutan M1–M5)_  
 _Diperbarui: Mei 19, 2026 (tambah revisi Batch 3 B1–B3, P1–P5, S1–S3, E1, A1–A4, W1)_  
-_Diperbarui: Mei 20, 2026 (tandai semua Batch 3 selesai — commit 4ca6f5c)_
+_Diperbarui: Mei 20, 2026 (tandai semua Batch 3 selesai — commit 4ca6f5c)_  
+_Diperbarui: Mei 29, 2026 (tambah revisi Batch 4 — PDF 21/05 & 26/05 — semua selesai)_
+
+---
+
+---
+
+## Revisi Batch 4 — Mei 2026 (PDF 21/05 & 26/05)
+
+Feedback keempat diterima 21–26 Mei 2026 melalui 4 dokumen PDF. Mencakup **22 item** dari 5 area: Akunting lanjutan, Sales Order, Purchase Order, Validasi Qty, dan Subkontrak/CMT.
+
+**Commits:** `8595fd0`, `0394485`, `da5bdb9`, `f4e05dc`
+
+---
+
+### GRUP F — Akunting Lanjutan
+
+---
+
+#### F1 — Jurnal: Kategori 3 Tipe + Akun COA + Currency
+
+**Yang Diminta:** Kategori jurnal terlalu banyak dan campur dengan nama akun. Perlu dipisah. Transaksi USD juga perlu bisa dicatat.
+
+**Update yang Dilakukan:**
+- `JournalCategory` disederhanakan jadi 3: `Penerimaan Kas/Bank` / `Pengeluaran Kas/Bank` / `Transaksi Umum`
+- Tambah field **"Akun Lawan"** — pilih dari Chart of Accounts (49 akun, dikelompokkan per tipe Aset/Kewajiban/Ekuitas/Pendapatan/Beban)
+- Tambah field **Currency** (IDR/USD/KRW) + **Kurs** + **Nominal Asli** untuk transaksi valas
+- Tabel jurnal: kolom "Akun Lawan" baru menampilkan kode + nama akun
+- Tipe (MASUK/KELUAR) otomatis untuk Penerimaan/Pengeluaran, manual untuk Transaksi Umum
+- Store key diubah ke `jkj_journal_v2` untuk flush data lama
+
+**Commit:** `8595fd0`
+
+---
+
+#### F2 — AR/AP New Invoice: Tambah Currency + Kurs
+
+**Yang Diminta:** Form new invoice ekspor/impor perlu field mata uang dan kurs.
+
+**Update yang Dilakukan:**
+- Dropdown **Mata Uang** (IDR/USD/KRW) di Invoice Details
+- Field **Kurs ke IDR** muncul saat non-IDR (default USD=15.500, KRW=11)
+- Header kolom Unit Price berubah sesuai mata uang
+- Grand Total menampilkan nilai valas + konversi IDR (`≈ Rp xxx`)
+
+**Commit:** `8595fd0`
+
+---
+
+#### F3 — AR/AP Payment Dialog: Currency + Kurs + Selisih Kurs
+
+**Yang Diminta:** Dialog input pembayaran belum menampilkan currency dan kurs. Perlu kolom selisih kurs antara AR/AP dengan nominal terima/bayar.
+
+**Update yang Dilakukan:**
+- Dialog "Catat Pembayaran" (AP) dan "Catat Penerimaan" (AR): jika invoice non-IDR:
+  - Tampil mata uang invoice + field **Kurs Bayar/Terima** saat ini
+  - Nominal IDR auto-calc dari `originalAmount × kurs`
+  - **Selisih kurs** dihitung otomatis: rugi kurs (merah) / untung kurs (hijau)
+- `ARInvoice` interface: tambah `currency?`, `exchangeRate?`, `originalAmount?`
+
+**Commit:** `f4e05dc`
+
+---
+
+#### F4 — Tax Assets: Interaktif + Koneksi ke Dual Billing
+
+**Yang Diminta:** Mengapa ada kata "available"? Apakah pembayaran PPh 22 impor di Dual Billing bisa terkoneksi dengan Tax Assets?
+
+**Update yang Dilakukan:**
+- Tombol **"Catat Pemakaian"** per asset (PPN Import & PPh 22 Import)
+- Dialog: tanggal, jumlah terpakai, keterangan — disimpan ke localStorage
+- Used / Remaining / Progress bar update secara dinamis
+- Riwayat pemakaian tampil di bawah tiap asset
+- Link langsung ke halaman Dual Billing BC 2.0 sebagai referensi
+
+**Commit:** `f4e05dc`
+
+---
+
+### GRUP SO — Sales Order Lanjutan
+
+---
+
+#### SO1 — SO Multi-Line Item (2+ Satuan Berbeda)
+
+**Yang Diminta:** SO kadang memiliki 2 item dengan satuan berbeda (misal: 100 pce + 50 prs). Saat ini SO hanya mendukung 1 produk 1 satuan.
+
+**Update yang Dilakukan:**
+- `SalesOrder` interface: tambah `lineItems?: SOLineItem[]` — backward compatible
+- Form SO baru: semua baris disimpan ke `lineItems` saat submit
+- Detail SO: tabel multi-baris jika `lineItems` ada (kolom: Produk, Kode, Qty, Satuan, Harga Satuan, Subtotal)
+- List SO: badge "X item" dan qty per baris untuk SO multi-item
+
+**Commit:** `da5bdb9`
+
+---
+
+#### SO2 — Edit Order SO Tidak Bisa Diklik
+
+**Yang Diminta:** Tombol "Edit Order" di halaman detail SO tidak berfungsi.
+
+**Update yang Dilakukan:**
+- Tombol Edit Order sekarang membuka **dialog inline** dengan field: Qty, Harga Satuan, Tanggal Pengiriman
+- Total otomatis dihitung ulang dan history SO diupdate setelah simpan
+- Hanya muncul untuk SO status DRAFT
+
+**Commit:** `8595fd0`
+
+---
+
+#### SO3 — Print Preview SO
+
+**Yang Diminta:** Sebelum cetak ada print preview (PO sudah ada, SO belum).
+
+**Update yang Dilakukan:**
+- Tombol "Cetak Order" di detail SO membuka window baru dengan format cetak:
+  - Header perusahaan, info SO & customer, tabel item (support multi-line)
+  - Grand total + blok tanda tangan 4 kolom
+  - Auto-print saat window terbuka
+
+**Commit:** `f4e05dc`
+
+---
+
+### GRUP PO — Purchase Order Lanjutan
+
+---
+
+#### PO1 — Satuan PRS, MTR, SF, YD
+
+**Yang Diminta:** Satuan PRS tidak ada di form SO/PO. BOM satuan SF dan YD (Yard) tidak ada.
+
+**Update yang Dilakukan:**
+- SO item: tambah `Prs`, `Roll`, `Yard (yd)`, `SF`
+- SO BOM: tambah `prs`, `yard`, `sf`
+- PO create: tambah `prs`, `yard (yd)`, `sf`
+- Subkon BB: tambah `MTR`, `YARD`, `SF`
+- WIP Terima: tambah `mtr`, `sf`, `yard`
+- Mix satuan per PO/SO sudah didukung (tiap item punya dropdown sendiri)
+
+**Commit:** `8595fd0`, `0394485`
+
+---
+
+#### PO2 — Revisi Qty PO yang Sudah Berjalan
+
+**Yang Diminta:** Jika qty PO perlu direvisi sedangkan PO sudah berjalan, bisa tidak?
+
+**Update yang Dilakukan:**
+- Tombol **pensil kuning** di kolom Aksi PO list — muncul untuk status `APPROVED` atau `PARTIAL`
+- Dialog: tampil semua item PO + input qty baru per item + field alasan revisi
+- Simpan: recalculate total per item + grand total PO
+
+**Commit:** `8595fd0`
+
+---
+
+#### PO3 — Lampiran PO Tidak Muncul Setelah Approved
+
+**Yang Diminta:** File yang dimasukan di PO tidak muncul setelah di-approved.
+
+**Update yang Dilakukan:**
+- Root cause: attachment tersimpan di store (metadata: nama, ukuran, tipe) tapi tidak ada cara melihatnya setelah PO dibuat
+- Fix: ikon **paperclip biru** dengan badge count di kolom Aksi PO list
+- Klik → dialog daftar lampiran (nama, ukuran, tipe)
+
+**Commit:** `8595fd0`
+
+---
+
+#### PO4 — Link PO Tidak Muncul di AP New Invoice
+
+**Yang Diminta:** PO JAM0202126 terlihat di halaman Purchasing tapi tidak di tempat lain (termasuk AP invoice).
+
+**Update yang Dilakukan:**
+- Root cause: `app/finance/ap/new` menggunakan `MOCK_PURCHASE_ORDERS` hardcoded — PO baru tidak masuk ke sana
+- Fix: ganti ke `usePurchaseOrders()` dari store — PO langsung muncul di dropdown AP new invoice setelah dibuat
+
+**Commit:** `f4e05dc`
+
+---
+
+### GRUP W — Warning Validasi Qty
+
+---
+
+#### W1–W4 — Warning Qty Melebihi di Berbagai Form
+
+**Yang Diminta:** Apakah ada warning jika qty yang diinput melebihi qty referensi (PO, WO, SO)?
+
+**Update yang Dilakukan:**
+
+| # | Form | Warning |
+|---|------|---------|
+| W1 | Inbound penerimaan manual | Merah jika qty diterima > qty dipesan |
+| W2 | Outbound Input BJ | Oranye jika qty accepted > qty WO |
+| W3 | Outbound Kirim ke Customer | Merah jika qty dikirim > qty SO |
+| W4 | PEB new | Oranye jika total PEB qty > qty SO referensi |
+
+Semua warning bersifat **informatif** (tidak memblokir) — user tetap bisa lanjut setelah membaca warning.
+
+**Commit:** `da5bdb9`, `f4e05dc`
+
+---
+
+### GRUP CMT — Subkontrak/CMT Lanjutan
+
+---
+
+#### CMT1 — Nama Subkon Bisa Input Manual
+
+**Yang Diminta:** Dropdown subkontraktor tidak bisa ketik nama baru. Di mana membuat nama CMT baru?
+
+**Update yang Dilakukan:**
+- Dropdown subkontraktor: tambah opsi **"+ Input nama baru (manual)..."**
+- Saat dipilih: muncul input free-text untuk nama CMT/subkon baru
+- Nama manual langsung tersimpan di record job
+
+**Commit:** `0394485`
+
+---
+
+#### CMT2 — Qty Total Barang Jadi yang Akan di-CMT-kan
+
+**Yang Diminta:** Belum ada field untuk jumlah qty total yang akan di-CMT-kan di form job subkon.
+
+**Update yang Dilakukan:**
+- Form "Buat Job Subkontrak Baru": tambah field **"Qty Barang Jadi CMT"** + **"Satuan BJ CMT"**
+- Di detail job: qty CMT ditampilkan dengan warna biru sebagai referensi target produksi
+- `SubkonRecord` interface: tambah `qtyCMT?` dan `satuanCMT?`
+
+**Commit:** `0394485`
+
+---
+
+#### CMT3 — Input Barang Jadi dari CMT
+
+**Yang Diminta:** Dimana input barang jadi yang diterima kembali dari CMT?
+
+**Update yang Dilakukan:**
+- Tombol **"Terima Hasil dari CMT"** (hijau) di detail job subkon — muncul untuk status `BB Dikirim` atau `Dalam Proses`
+- Dialog: tanggal terima, No. Surat Jalan masuk, No. SUBK KITE 1.2, qty kembali per item BB
+- Setelah konfirmasi: status job → `Hasil Diterima`, field `qtyKembali` terisi di tiap item
+
+**Commit:** `f4e05dc`
+
+---
+
+## Ringkasan Status — Revisi Batch 4 (Mei 2026)
+
+| #    | Area                                              | Prioritas | Status     |
+| ---- | ------------------------------------------------- | --------- | ---------- |
+| F1   | Jurnal: 3 kategori + Akun COA + currency/kurs     | Tinggi    | ✅ Selesai (`8595fd0`) |
+| F2   | AR/AP new invoice: currency + kurs                | Tinggi    | ✅ Selesai (`8595fd0`) |
+| F3   | AR/AP payment dialog: currency + kurs + selisih   | Tinggi    | ✅ Selesai (`f4e05dc`) |
+| F4   | Tax Assets: interaktif + link Dual Billing        | Rendah    | ✅ Selesai (`f4e05dc`) |
+| SO1  | SO multi-line item (2+ satuan berbeda per SO)     | Tinggi    | ✅ Selesai (`da5bdb9`) |
+| SO2  | Edit Order SO tombol tidak bisa diklik            | Tinggi    | ✅ Selesai (`8595fd0`) |
+| SO3  | Print preview SO                                  | Rendah    | ✅ Selesai (`f4e05dc`) |
+| PO1  | Satuan PRS, MTR, SF, YD di semua form             | Sedang    | ✅ Selesai (`8595fd0`, `0394485`) |
+| PO2  | Revisi qty PO yang sudah berjalan (amend dialog)  | Sedang    | ✅ Selesai (`8595fd0`) |
+| PO3  | Lampiran PO: tampil setelah save (paperclip icon) | Sedang    | ✅ Selesai (`8595fd0`) |
+| PO4  | Link fix: PO tidak muncul di AP new invoice       | Sedang    | ✅ Selesai (`f4e05dc`) |
+| W1   | Warning GR terima > qty PO                        | Sedang    | ✅ Selesai (`da5bdb9`) |
+| W2   | Warning BJ diterima > qty WO                      | Sedang    | ✅ Selesai (`da5bdb9`) |
+| W3   | Warning pengiriman > qty SO                       | Sedang    | ✅ Selesai (`da5bdb9`) |
+| W4   | Warning PEB qty > qty SO referensi                | Sedang    | ✅ Selesai (`f4e05dc`) |
+| CMT1 | Nama subkon bisa input manual (free-text)         | Tinggi    | ✅ Selesai (`0394485`) |
+| CMT2 | Qty total BJ yang akan di-CMT-kan                 | Tinggi    | ✅ Selesai (`0394485`) |
+| CMT3 | Input barang jadi dari CMT (Terima Hasil dialog)  | Tinggi    | ✅ Selesai (`f4e05dc`) |
