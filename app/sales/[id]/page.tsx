@@ -2,10 +2,14 @@
 
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Printer, FileText, Factory, Truck, CreditCard, AlertTriangle } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowLeft, Printer, FileText, Factory, Truck, AlertTriangle, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { MOCK_CUSTOMERS } from '@/lib/mock-data/sales'
 import { useSalesOrders } from '@/lib/store/hooks'
 import { useWorkOrders } from '@/lib/store/hooks'
@@ -21,6 +25,13 @@ export default function SalesOrderDetailPage() {
   const id = params.id as string
   const { getById, updateOrder } = useSalesOrders()
   const { getBySoNumber } = useWorkOrders()
+
+  // Edit dialog state
+  const [showEdit, setShowEdit] = useState(false)
+  const [editQty, setEditQty] = useState('')
+  const [editUnitPrice, setEditUnitPrice] = useState('')
+  const [editDelivery, setEditDelivery] = useState('')
+  const [editNotes, setEditNotes] = useState('')
 
   const order = getById(id)
 
@@ -85,6 +96,32 @@ export default function SalesOrderDetailPage() {
     updateOrder(order.id, { status: 'REJECTED' })
   }
 
+  function openEdit() {
+    if (!order) return
+    setEditQty(String(order.quantity))
+    setEditUnitPrice(String(order.unitPrice))
+    setEditDelivery(order.deliveryDate)
+    setEditNotes('')
+    setShowEdit(true)
+  }
+
+  function saveEdit() {
+    if (!order) return
+    const qty = parseInt(editQty) || order.quantity
+    const price = parseInt(editUnitPrice) || order.unitPrice
+    updateOrder(order.id, {
+      quantity: qty,
+      unitPrice: price,
+      total: qty * price,
+      deliveryDate: editDelivery || order.deliveryDate,
+      history: [
+        ...order.history,
+        { date: new Date().toLocaleString('id-ID'), action: `Revisi: qty=${qty}, harga=${price.toLocaleString()}`, user: 'Sales Admin', status: order.status }
+      ]
+    })
+    setShowEdit(false)
+  }
+
   return (
     <AppLayout>
       <div className="p-6">
@@ -115,7 +152,9 @@ export default function SalesOrderDetailPage() {
                 Cetak Order
               </Button>
               {order.status === 'DRAFT' && (
-                <Button className="bg-primary hover:bg-primary/90">Edit Order</Button>
+                <Button className="gap-2 bg-primary hover:bg-primary/90" onClick={openEdit}>
+                  <Pencil className="h-4 w-4" />Edit Order
+                </Button>
               )}
               {order.status === 'APPROVED' && (
                 <Link href={`/production/wo/new?so=${order.id}`}>
@@ -354,6 +393,43 @@ export default function SalesOrderDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Order Dialog */}
+      <Dialog open={showEdit} onOpenChange={v => { if (!v) setShowEdit(false) }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-4 w-4" />Edit Order — {order.id}
+            </DialogTitle>
+            <DialogDescription>Revisi data Sales Order (hanya untuk status DRAFT)</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Qty</Label>
+                <Input type="number" value={editQty} onChange={e => setEditQty(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>Harga Satuan (USD)</Label>
+                <Input type="number" value={editUnitPrice} onChange={e => setEditUnitPrice(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Tanggal Pengiriman</Label>
+              <Input type="text" placeholder="e.g. 15 Feb 2026" value={editDelivery} onChange={e => setEditDelivery(e.target.value)} />
+            </div>
+            {editQty && editUnitPrice && (
+              <div className="rounded-md bg-muted/50 p-3 text-sm">
+                <p className="text-muted-foreground">Total baru: <strong>USD {(parseInt(editQty) * parseInt(editUnitPrice)).toLocaleString('id-ID')}</strong></p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setShowEdit(false)}>Batal</Button>
+            <Button onClick={saveEdit} className="gap-2"><Pencil className="h-4 w-4" />Simpan Perubahan</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   )
 }

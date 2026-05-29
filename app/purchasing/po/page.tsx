@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Search, Filter, Eye, XCircle, AlertTriangle, Package } from 'lucide-react'
+import { ArrowLeft, Plus, Search, Filter, Eye, XCircle, AlertTriangle, Package, Pencil, Paperclip, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -29,7 +29,34 @@ export default function POListPage() {
   const [toTempStorage, setToTempStorage] = useState(false)
   const [tempLokasi, setTempLokasi] = useState('Gudang Sementara A')
 
+  // Amend PO qty
+  const [amendTarget, setAmendTarget] = useState<PurchaseOrder | null>(null)
+  const [amendQtys, setAmendQtys] = useState<Record<number, string>>({})
+  const [amendReason, setAmendReason] = useState('')
+
+  // Attachment viewer
+  const [attachTarget, setAttachTarget] = useState<PurchaseOrder | null>(null)
+
   const goodsReceived = cancelTarget?.status === 'RECEIVED' || cancelTarget?.status === 'PARTIAL'
+
+  function openAmend(po: PurchaseOrder) {
+    setAmendTarget(po)
+    setAmendQtys(Object.fromEntries(po.items.map((item, i) => [i, String(item.quantity)])))
+    setAmendReason('')
+  }
+
+  function saveAmend() {
+    if (!amendTarget) return
+    const updatedItems = amendTarget.items.map((item, i) => ({
+      ...item,
+      quantity: parseInt(amendQtys[i]) || item.quantity,
+      total: (parseInt(amendQtys[i]) || item.quantity) * item.unitPrice,
+    }))
+    const newTotal = updatedItems.reduce((s, it) => s + it.total, 0)
+    updateOrder(amendTarget.id, { items: updatedItems, totalAmount: newTotal })
+    setAmendTarget(null)
+    refresh()
+  }
 
   function openCancel(po: PurchaseOrder) {
     setCancelTarget(po)
@@ -121,11 +148,35 @@ export default function POListPage() {
       header: 'Aksi',
       cell: (item: PurchaseOrder) => {
         const cancellable = !['CANCELLED', 'CANCELLED_WITH_STOCK'].includes(item.status)
+        const amendable = ['APPROVED', 'PARTIAL'].includes(item.status)
+        const hasAttachments = (item.attachments?.length ?? 0) > 0
         return (
           <div className="flex gap-1">
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <Eye className="h-4 w-4" />
-            </Button>
+            {hasAttachments && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-50 relative"
+                onClick={() => setAttachTarget(item)}
+                title={`${item.attachments!.length} lampiran`}
+              >
+                <Paperclip className="h-4 w-4" />
+                <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[9px] rounded-full w-3.5 h-3.5 flex items-center justify-center leading-none">
+                  {item.attachments!.length}
+                </span>
+              </Button>
+            )}
+            {amendable && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50"
+                onClick={() => openAmend(item)}
+                title="Revisi Qty PO"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
             {cancellable && (
               <Button
                 variant="ghost"
@@ -174,6 +225,83 @@ export default function POListPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ── Dialog Amend PO Qty ── */}
+      <Dialog open={!!amendTarget} onOpenChange={open => { if (!open) setAmendTarget(null) }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-yellow-700">
+              <Pencil className="h-5 w-5" />Revisi Qty — {amendTarget?.poNumber || amendTarget?.id}
+            </DialogTitle>
+          </DialogHeader>
+          {amendTarget && (
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">Ubah qty item di bawah. PO yang sudah berjalan tetap bisa direvisi qty-nya.</p>
+              <div className="space-y-2">
+                {amendTarget.items.map((item, i) => (
+                  <div key={i} className="grid grid-cols-3 gap-3 items-center rounded border px-3 py-2">
+                    <div className="col-span-2">
+                      <p className="text-sm font-medium">{item.name || '—'}</p>
+                      <p className="text-xs text-muted-foreground">{item.code} · {item.unit}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Qty baru</Label>
+                      <Input
+                        type="number"
+                        value={amendQtys[i] ?? item.quantity}
+                        onChange={e => setAmendQtys(prev => ({ ...prev, [i]: e.target.value }))}
+                        className="h-8 text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground mt-0.5">Saat ini: {item.quantity.toLocaleString()}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-1">
+                <Label>Alasan Revisi</Label>
+                <Textarea placeholder="Alasan perubahan qty..." rows={2} value={amendReason} onChange={e => setAmendReason(e.target.value)} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAmendTarget(null)}>Batal</Button>
+            <Button className="bg-yellow-600 hover:bg-yellow-700 text-white" onClick={saveAmend}>
+              <Pencil className="h-4 w-4 mr-2" />Simpan Revisi
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog Lampiran PO ── */}
+      <Dialog open={!!attachTarget} onOpenChange={open => { if (!open) setAttachTarget(null) }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Paperclip className="h-5 w-5 text-blue-600" />Lampiran — {attachTarget?.poNumber || attachTarget?.id}
+            </DialogTitle>
+          </DialogHeader>
+          {attachTarget && (
+            <div className="space-y-2 py-2">
+              {(attachTarget.attachments ?? []).length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Tidak ada lampiran</p>
+              ) : (
+                (attachTarget.attachments ?? []).map((f, i) => (
+                  <div key={i} className="flex items-center gap-3 rounded border px-3 py-2">
+                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{f.name}</p>
+                      <p className="text-xs text-muted-foreground">{f.size < 1024 ? `${f.size} B` : `${(f.size / 1024).toFixed(1)} KB`} · {f.type}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAttachTarget(null)}>Tutup</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Dialog Cancel PO ── */}
       <Dialog open={!!cancelTarget} onOpenChange={open => { if (!open) setCancelTarget(null) }}>

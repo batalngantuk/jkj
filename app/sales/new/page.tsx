@@ -301,8 +301,12 @@ export default function NewSalesOrderPage() {
                                   <SelectItem value="carton">Carton</SelectItem>
                                   <SelectItem value="box">Box</SelectItem>
                                   <SelectItem value="pcs">Pcs</SelectItem>
+                                  <SelectItem value="prs">Prs</SelectItem>
                                   <SelectItem value="kg">KG</SelectItem>
                                   <SelectItem value="unit">Unit</SelectItem>
+                                  <SelectItem value="roll">Roll</SelectItem>
+                                  <SelectItem value="yard">Yard (yd)</SelectItem>
+                                  <SelectItem value="sf">SF</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -447,7 +451,7 @@ export default function NewSalesOrderPage() {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {['kg', 'gram', 'liter', 'pcs', 'm', 'm²', 'roll', 'unit'].map(s => (
+                                  {['kg', 'gram', 'liter', 'pcs', 'prs', 'm', 'm²', 'roll', 'unit', 'yard', 'sf'].map(s => (
                                     <SelectItem key={s} value={s}>{s}</SelectItem>
                                   ))}
                                 </SelectContent>

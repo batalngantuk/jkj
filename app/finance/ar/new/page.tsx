@@ -29,9 +29,12 @@ interface LineItem {
   taxRate: number
 }
 
+const DEFAULT_KURS: Record<string, number> = { USD: 15500, KRW: 11 }
+const CURRENCY_SYMBOL: Record<string, string> = { IDR: 'Rp', USD: '$', KRW: '₩' }
+
 export default function NewARInvoicePage() {
   const router = useRouter()
-  
+
   // Form state
   const [selectedSO, setSelectedSO] = useState('')
   const [customerName, setCustomerName] = useState('')
@@ -40,6 +43,8 @@ export default function NewARInvoicePage() {
   const [paymentTerms, setPaymentTerms] = useState('30')
   const [fakturPajak, setFakturPajak] = useState('')
   const [notes, setNotes] = useState('')
+  const [currency, setCurrency] = useState<'IDR' | 'USD' | 'KRW'>('IDR')
+  const [exchangeRate, setExchangeRate] = useState<string>('')
   
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { id: 1, description: '', quantity: 0, unitPrice: 0, taxRate: 11 }
@@ -119,6 +124,8 @@ export default function NewARInvoicePage() {
     return calculateSubtotal() + calculateTotalTax()
   }
 
+  const kursNum = parseInt(exchangeRate) || DEFAULT_KURS[currency] || 1
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -126,6 +133,12 @@ export default function NewARInvoicePage() {
       minimumFractionDigits: 0
     }).format(amount)
   }
+
+  const formatForeign = (amount: number) => {
+    return `${CURRENCY_SYMBOL[currency]} ${amount.toLocaleString('id-ID')}`
+  }
+
+  const toIDR = (foreignAmount: number) => foreignAmount * kursNum
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -224,12 +237,39 @@ export default function NewARInvoicePage() {
 
                 <div className="space-y-2">
                   <Label>Faktur Pajak Number (Optional)</Label>
-                  <Input 
+                  <Input
                     placeholder="FP-XXX-YY-ZZZZZ"
                     value={fakturPajak}
                     onChange={(e) => setFakturPajak(e.target.value)}
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label>Mata Uang Invoice</Label>
+                  <Select value={currency} onValueChange={v => { setCurrency(v as 'IDR' | 'USD' | 'KRW'); setExchangeRate('') }}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="IDR">IDR — Rupiah (Lokal)</SelectItem>
+                      <SelectItem value="USD">USD — Dolar AS (Ekspor/Impor)</SelectItem>
+                      <SelectItem value="KRW">KRW — Won Korea (Ekspor/Impor)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {currency !== 'IDR' && (
+                  <div className="space-y-2">
+                    <Label>Kurs {currency}/IDR <span className="text-red-500">*</span></Label>
+                    <Input
+                      type="number"
+                      placeholder={String(DEFAULT_KURS[currency])}
+                      value={exchangeRate}
+                      onChange={e => setExchangeRate(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Kurs pada tanggal invoice. Default: {DEFAULT_KURS[currency].toLocaleString('id-ID')}</p>
+                  </div>
+                )}
 
               </CardContent>
             </Card>
@@ -248,7 +288,7 @@ export default function NewARInvoicePage() {
                     <TableRow>
                       <TableHead className="w-[35%]">Description</TableHead>
                       <TableHead>Quantity</TableHead>
-                      <TableHead>Unit Price (Rp)</TableHead>
+                      <TableHead>Unit Price ({currency})</TableHead>
                       <TableHead>Tax (%)</TableHead>
                       <TableHead className="text-right">Subtotal</TableHead>
                       <TableHead className="text-right">Tax Amount</TableHead>
@@ -330,17 +370,28 @@ export default function NewARInvoicePage() {
                 {/* Totals */}
                 <div className="p-4 bg-secondary/10 border-t">
                   <div className="flex flex-col items-end space-y-2">
-                    <div className="flex justify-between w-64">
+                    <div className="flex justify-between w-72">
                       <span className="text-sm text-muted-foreground">Subtotal:</span>
-                      <span className="font-medium">{formatCurrency(calculateSubtotal())}</span>
+                      <span className="font-medium">
+                        {currency !== 'IDR' ? formatForeign(calculateSubtotal()) : formatCurrency(calculateSubtotal())}
+                      </span>
                     </div>
-                    <div className="flex justify-between w-64">
+                    <div className="flex justify-between w-72">
                       <span className="text-sm text-muted-foreground">Total Tax (PPN):</span>
-                      <span className="font-medium">{formatCurrency(calculateTotalTax())}</span>
+                      <span className="font-medium">
+                        {currency !== 'IDR' ? formatForeign(calculateTotalTax()) : formatCurrency(calculateTotalTax())}
+                      </span>
                     </div>
-                    <div className="flex justify-between w-64 pt-2 border-t">
+                    <div className="flex justify-between w-72 pt-2 border-t">
                       <span className="font-semibold">Grand Total:</span>
-                      <span className="text-2xl font-bold text-primary">{formatCurrency(calculateGrandTotal())}</span>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-primary">
+                          {currency !== 'IDR' ? formatForeign(calculateGrandTotal()) : formatCurrency(calculateGrandTotal())}
+                        </p>
+                        {currency !== 'IDR' && (
+                          <p className="text-sm text-muted-foreground">≈ {formatCurrency(toIDR(calculateGrandTotal()))}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

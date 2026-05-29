@@ -344,10 +344,13 @@ ${notes ? `<div style="margin-top:16px"><div class="label">Catatan</div><div>${n
                             <SelectContent>
                               <SelectItem value="kg">kg</SelectItem>
                               <SelectItem value="pcs">pcs</SelectItem>
+                              <SelectItem value="prs">prs</SelectItem>
                               <SelectItem value="ctn">ctn</SelectItem>
                               <SelectItem value="liter">liter</SelectItem>
                               <SelectItem value="unit">unit</SelectItem>
                               <SelectItem value="roll">roll</SelectItem>
+                              <SelectItem value="yard">yard (yd)</SelectItem>
+                              <SelectItem value="sf">sf</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>
