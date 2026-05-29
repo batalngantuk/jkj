@@ -224,24 +224,41 @@ export default function SalesOrderDetailPage() {
                       <thead className="bg-muted/50">
                         <tr className="border-b">
                           <th className="h-10 px-4 text-left font-medium">Produk</th>
+                          <th className="h-10 px-4 text-left font-medium">Kode</th>
                           <th className="h-10 px-4 text-right font-medium">Qty</th>
+                          <th className="h-10 px-4 text-right font-medium">Satuan</th>
                           <th className="h-10 px-4 text-right font-medium">Harga Satuan</th>
-                          <th className="h-10 px-4 text-right font-medium">Total</th>
+                          <th className="h-10 px-4 text-right font-medium">Subtotal</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td className="p-4">{order.product}</td>
-                          <td className="p-4 text-right">{order.quantity.toLocaleString()} carton</td>
-                          <td className="p-4 text-right">Rp {order.unitPrice.toLocaleString()}</td>
-                          <td className="p-4 text-right font-semibold">Rp {order.total.toLocaleString()}</td>
-                        </tr>
+                        {order.lineItems && order.lineItems.length > 0 ? (
+                          order.lineItems.map((item, i) => (
+                            <tr key={item.id} className={i % 2 === 0 ? '' : 'bg-muted/20'}>
+                              <td className="p-4 font-medium">{item.namaBarang}</td>
+                              <td className="p-4 text-muted-foreground font-mono text-xs">{item.kodeBarang || '—'}</td>
+                              <td className="p-4 text-right">{item.qty.toLocaleString()}</td>
+                              <td className="p-4 text-right text-muted-foreground">{item.satuan}</td>
+                              <td className="p-4 text-right">{item.hargaSatuan.toLocaleString()}</td>
+                              <td className="p-4 text-right font-semibold">{(item.qty * item.hargaSatuan).toLocaleString()}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td className="p-4 font-medium">{order.product}</td>
+                            <td className="p-4 text-muted-foreground">—</td>
+                            <td className="p-4 text-right">{order.quantity.toLocaleString()}</td>
+                            <td className="p-4 text-right text-muted-foreground">carton</td>
+                            <td className="p-4 text-right">{order.unitPrice.toLocaleString()}</td>
+                            <td className="p-4 text-right font-semibold">{order.total.toLocaleString()}</td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
                   <div className="flex justify-end mt-4">
                     <div className="text-lg font-bold">
-                      Total: Rp {order.total.toLocaleString()}
+                      Grand Total: {order.total.toLocaleString()}
                     </div>
                   </div>
                 </CardContent>

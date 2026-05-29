@@ -10,13 +10,23 @@ export interface BOMItem {
   asalMaterial: 'Lokal' | 'Impor' | ''
 }
 
+export interface SOLineItem {
+  id: string
+  namaBarang: string
+  kodeBarang?: string
+  satuan: string
+  qty: number
+  hargaSatuan: number
+  catatan?: string
+}
+
 export interface SalesOrder {
   id: string
   poNumber: string
   customer: string
-  product: string
-  quantity: number
-  unitPrice: number
+  product: string        // backward compat: first item or joined names
+  quantity: number       // backward compat: total qty
+  unitPrice: number      // backward compat: first item unit price
   total: number
   deliveryDate: string
   status: 'DRAFT' | 'PENDING APPROVAL' | 'APPROVED' | 'IN PRODUCTION' | 'READY TO SHIP' | 'COMPLETED' | 'REJECTED'
@@ -27,6 +37,7 @@ export interface SalesOrder {
   notes?: string
   poDocumentUrl?: string
   bomItems?: BOMItem[]
+  lineItems?: SOLineItem[]  // multi-line items support
   history: Array<{
     date: string
     action: string

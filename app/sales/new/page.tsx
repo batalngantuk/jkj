@@ -91,12 +91,13 @@ export default function NewSalesOrderPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    const validLines = lines.filter(l => l.namaBarang)
     createOrder({
       poNumber,
       customer,
-      product: lines.map(l => l.namaBarang).join(', '),
-      quantity: lines.reduce((s, l) => s + (Number(l.qty) || 0), 0),
-      unitPrice: Number(lines[0]?.hargaSatuan) || 0,
+      product: validLines.map(l => l.namaBarang).join(', '),
+      quantity: validLines.reduce((s, l) => s + (Number(l.qty) || 0), 0),
+      unitPrice: Number(validLines[0]?.hargaSatuan) || 0,
       total: totalIDR,
       deliveryDate,
       status: 'DRAFT',
@@ -105,6 +106,15 @@ export default function NewSalesOrderPage() {
       createdBy: 'Sales Admin',
       notes,
       bomItems: bomItems.filter(b => b.namaMaterial),
+      lineItems: validLines.map(l => ({
+        id: l.id,
+        namaBarang: l.namaBarang,
+        kodeBarang: l.kodeBarang || undefined,
+        satuan: l.satuan,
+        qty: Number(l.qty) || 0,
+        hargaSatuan: Number(l.hargaSatuan) || 0,
+        catatan: l.catatan || undefined,
+      })),
     })
     router.push('/sales')
   }

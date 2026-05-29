@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft, Truck, Package, PackageCheck, FileText, CheckCircle,
-  Search, ClipboardList, Warehouse, Download
+  Search, ClipboardList, Warehouse, Download, AlertTriangle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -493,6 +493,14 @@ export default function OutboundPage() {
                   )}
                 </div>
               )}
+              {selectedWO && qtyAcc > selectedWO.quantity && (
+                <div className="text-sm bg-orange-50 border border-orange-200 rounded px-3 py-2 flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5 shrink-0" />
+                  <span className="text-orange-700 font-medium">
+                    ⚠ Qty diterima ({qtyAcc.toLocaleString()}) melebihi qty WO ({selectedWO.quantity.toLocaleString()} carton). Periksa kembali sebelum menyimpan.
+                  </span>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>Gudang Tujuan</Label>
@@ -606,6 +614,12 @@ export default function OutboundPage() {
                     value={shipForm.qtyDikirim}
                     onChange={(e) => setShipForm(p => ({ ...p, qtyDikirim: e.target.value }))}
                   />
+                  {selectedSO && Number(shipForm.qtyDikirim) > selectedSO.quantity && (
+                    <p className="text-xs text-red-600 font-medium flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      ⚠ Melebihi qty SO ({selectedSO.quantity.toLocaleString()} carton). Pertimbangkan revisi SO.
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>No. Surat Jalan</Label>

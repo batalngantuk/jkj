@@ -411,7 +411,10 @@ export default function InboundPage() {
                           <Label className="text-xs">Qty Diterima <span className="text-red-500">*</span></Label>
                           <Input type="number" value={line.qtyDiterima} onChange={e => updateLine(line.id, 'qtyDiterima', e.target.value)} placeholder="0" />
                           {line.qtyDipesan && line.qtyDiterima && parseFloat(line.qtyDiterima) < parseFloat(line.qtyDipesan) && (
-                            <p className="text-xs text-orange-600">⚠ Kurang: {(parseFloat(line.qtyDipesan) - parseFloat(line.qtyDiterima)).toLocaleString('id-ID')} {line.satuan}</p>
+                            <p className="text-xs text-orange-600">⚠ Kurang dari pesanan: {(parseFloat(line.qtyDipesan) - parseFloat(line.qtyDiterima)).toLocaleString('id-ID')} {line.satuan}</p>
+                          )}
+                          {line.qtyDipesan && line.qtyDiterima && parseFloat(line.qtyDiterima) > parseFloat(line.qtyDipesan) && (
+                            <p className="text-xs text-red-600 font-medium">⚠ MELEBIHI pesanan: +{(parseFloat(line.qtyDiterima) - parseFloat(line.qtyDipesan)).toLocaleString('id-ID')} {line.satuan}</p>
                           )}
                         </div>
                         <div className="space-y-1">
