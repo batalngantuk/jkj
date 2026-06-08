@@ -853,7 +853,7 @@ export default function SubkontrakPage() {
                         <Select value={bb.satuan} onValueChange={v => updateBBItem(i, 'satuan', v)}>
                           <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {['KG', 'MTR', 'LITER', 'PCS', 'ROLL', 'CTN', 'YARD', 'SF'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                            {['KG', 'MTR', 'LITER', 'PCS', 'ROLL', 'CTN', 'YARD', 'SF', 'TNE', 'PCE', 'ST', 'FTK', 'KGM'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>

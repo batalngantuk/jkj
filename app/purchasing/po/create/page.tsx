@@ -351,6 +351,11 @@ ${notes ? `<div style="margin-top:16px"><div class="label">Catatan</div><div>${n
                               <SelectItem value="roll">roll</SelectItem>
                               <SelectItem value="yard">yard (yd)</SelectItem>
                               <SelectItem value="sf">sf</SelectItem>
+                              <SelectItem value="tne">TNE</SelectItem>
+                              <SelectItem value="pce">PCE</SelectItem>
+                              <SelectItem value="st">ST</SelectItem>
+                              <SelectItem value="ftk">FTK</SelectItem>
+                              <SelectItem value="kgm">KGM</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>

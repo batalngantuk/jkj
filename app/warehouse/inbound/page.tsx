@@ -400,6 +400,13 @@ export default function InboundPage() {
                               <SelectItem value="MTR">MTR</SelectItem>
                               <SelectItem value="LTR">LTR</SelectItem>
                               <SelectItem value="SET">SET</SelectItem>
+                              <SelectItem value="YARD">YARD</SelectItem>
+                              <SelectItem value="SF">SF</SelectItem>
+                              <SelectItem value="TNE">TNE</SelectItem>
+                              <SelectItem value="PCE">PCE</SelectItem>
+                              <SelectItem value="ST">ST</SelectItem>
+                              <SelectItem value="FTK">FTK</SelectItem>
+                              <SelectItem value="KGM">KGM</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>

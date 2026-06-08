@@ -91,6 +91,9 @@ export default function WasteManagementPage() {
   const [formDisposisi, setFormDisposisi] = useState('')
   const [formPembeli, setFormPembeli] = useState('')
   const [formNilai, setFormNilai] = useState('')
+  const [formMataUang, setFormMataUang] = useState('USD')
+  const [formBC24No, setFormBC24No] = useState('')
+  const [formBC24Tgl, setFormBC24Tgl] = useState('')
   const [formCatatan, setFormCatatan] = useState('')
   const [formSubmitted, setFormSubmitted] = useState(false)
 
@@ -106,6 +109,9 @@ export default function WasteManagementPage() {
     setFormDisposisi('')
     setFormPembeli('')
     setFormNilai('')
+    setFormMataUang('USD')
+    setFormBC24No('')
+    setFormBC24Tgl('')
     setFormCatatan('')
     setFormSubmitted(false)
   }
@@ -123,16 +129,16 @@ export default function WasteManagementPage() {
       wasteQty,
       wasteRatioBCLKT: selectedWO.wasteRatioBCLKT,
       wasteRatioAktual,
-      bc24No: '',
-      bc24Tgl: '',
+      bc24No: formBC24No || '-',
+      bc24Tgl: formBC24Tgl || '-',
       status: 'Draft',
       disposisi: (formDisposisi as any) || '-',
-      pembeli: formPembeli,
+      pembeli: formPembeli || '-',
       nilaiWaste: parseFloat(formNilai) || 0,
-      matauang: 'IDR',
-      tglVerifikasi: '',
-      petugasBC: '',
-      catatan: formCatatan,
+      matauang: formMataUang,
+      tglVerifikasi: '-',
+      petugasBC: '-',
+      catatan: formCatatan || '-',
     })
     setFormSubmitted(true)
     setShowFormDialog(false)
@@ -318,8 +324,8 @@ export default function WasteManagementPage() {
 
       {/* Form: Ajukan Waste Baru */}
       <Dialog open={showFormDialog} onOpenChange={(v) => { if (!v) { setShowFormDialog(false); resetForm() } }}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
+        <DialogContent className="max-w-xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5 text-primary" />
               Ajukan Waste Baru
@@ -329,7 +335,7 @@ export default function WasteManagementPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto flex-1 pr-1">
             {/* Pilih Work Order */}
             <div className="space-y-1">
               <Label>Work Order <span className="text-red-500">*</span></Label>
@@ -410,6 +416,29 @@ export default function WasteManagementPage() {
 
             <Separator />
 
+            {/* Dokumen BC 2.4 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>No. BC 2.4</Label>
+                <Input
+                  placeholder="BC24-2026-..."
+                  value={formBC24No}
+                  onChange={e => setFormBC24No(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Tanggal BC 2.4</Label>
+                <Input
+                  type="date"
+                  value={formBC24Tgl}
+                  onChange={e => setFormBC24Tgl(e.target.value)}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground -mt-1">Isi jika BC 2.4 sudah diterbitkan. Kosongkan jika belum.</p>
+
+            <Separator />
+
             {/* Disposisi */}
             <div className="space-y-1">
               <Label>Disposisi Waste <span className="text-red-500">*</span></Label>
@@ -425,7 +454,7 @@ export default function WasteManagementPage() {
             </div>
 
             {formDisposisi === 'Dijual' && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-3">
                 <div className="space-y-1">
                   <Label>Nama Pembeli</Label>
                   <Input
@@ -435,13 +464,26 @@ export default function WasteManagementPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>Nilai Waste (USD)</Label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={formNilai}
-                    onChange={e => setFormNilai(e.target.value)}
-                  />
+                  <Label>Nilai Waste</Label>
+                  <div className="flex gap-2">
+                    <Select value={formMataUang} onValueChange={setFormMataUang}>
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="IDR">IDR</SelectItem>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="KRW">KRW</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={formNilai}
+                      onChange={e => setFormNilai(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -458,7 +500,7 @@ export default function WasteManagementPage() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-2 shrink-0 border-t mt-2">
             <Button variant="outline" onClick={() => { setShowFormDialog(false); resetForm() }}>
               Batal
             </Button>

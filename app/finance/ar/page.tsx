@@ -246,8 +246,8 @@ export default function ARPage() {
 
       {/* Payment Dialog */}
       <Dialog open={payDialog} onOpenChange={setPayDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
+        <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Banknote className="h-5 w-5 text-blue-600" />
               Catat Penerimaan Pembayaran
@@ -257,7 +257,7 @@ export default function ARPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-2 overflow-y-auto flex-1 pr-1">
             <div className="grid grid-cols-2 gap-3 text-sm bg-muted/30 p-3 rounded-md">
               <div>
                 <p className="text-muted-foreground text-xs">Total Tagihan</p>
@@ -352,7 +352,7 @@ export default function ARPage() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="shrink-0">
             <Button variant="outline" onClick={() => setPayDialog(false)}>Batal</Button>
             <Button
               disabled={!payForm.tanggal || !payForm.nominal}

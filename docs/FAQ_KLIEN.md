@@ -1,7 +1,54 @@
 # FAQ — Pertanyaan Klien JKJ ERP
 
 **Dokumen ini menjawab pertanyaan-pertanyaan operasional yang sering muncul dari penggunaan sistem.**  
-**Terakhir diperbarui:** Mei 29, 2026
+**Terakhir diperbarui:** Juni 8, 2026
+
+---
+
+## Daftar Pertanyaan (Klik untuk Langsung ke Jawaban)
+
+### Purchasing & PO
+1. [Lampiran PO tidak muncul setelah di-approved — di mana?](#1-filelampiranpotidakmuncul)
+2. [Satuan "prs", "mtr", "sf", "yard", "tne", "pce" — di mana tambahnya?](#2-satuanprs-mtr-sf)
+3. [Revisi qty PO yang sudah berjalan — bisa?](#3-revisi-qty-po)
+
+### Sales Order
+4. [SO bisa punya 2 satuan berbeda dalam 1 order?](#4-so-2-satuan)
+5. [Tombol "Edit Order" tidak bisa diklik](#5-edit-order-so)
+
+### Keuangan (AR / AP / Jurnal)
+6. [AR & AP — "New Invoice" untuk ekspor/impor atau lokal saja?](#6-new-invoice-mata-uang)
+7. [Dialog pembayaran AR/AP — bagaimana dengan currency dan kurs?](#7-dialog-pembayaran-kurs)
+8. [Jurnal — apa perbedaan "Kategori" dan "Akun"?](#8-jurnal-kategori-akun)
+9. [Tax Assets — apa itu "Available"? Apakah terhubung ke Dual Billing?](#9-tax-assets-available)
+
+### Subkontrak / CMT
+10. [Nama subkontraktor tidak bisa input manual — di mana?](#10-nama-subkon-manual)
+11. [Section "Bahan Baku yang Dikirimkan" di form job subkon — wajib diisi?](#11-bb-form-job-subkon)
+12. ["Keluarkan WIP ke Proses" — apakah ini untuk kirim BB ke CMT?](#12-keluarkan-wip-vs-kirim-subkon)
+13. ["WO / Proses Tujuan" di Keluarkan WIP — apa yang diisi?](#13-wo-proses-tujuan)
+14. [Input barang jadi dari CMT — di mana?](#14-input-bj-dari-cmt)
+15. [Input BJ harus menunggu semua material diinput dulu?](#15-input-bj-tidak-tunggu-material)
+
+### Warning / Validasi Qty
+16. [Apakah ada warning jika qty melebihi batas?](#16-warning-qty)
+17. [Jika qty SO perlu direvisi setelah over-quantity — bisa?](#17-revisi-qty-so)
+
+### Laporan KITE
+18. [Laporan IT Inventory — perlu diinput ulang setiap bulan?](#18-it-inventory-otomatis)
+
+### Produksi & Work Order
+19. [Pengeluaran material gudang ke produksi dan CMT — di mana?](#19-pengeluaran-material)
+20. [Work Order — dibuat setelah SO? Apa itu "Produk" di WO?](#20-wo-setelah-so)
+21. [WO ada di Sales Order dan di Production — harus buat di keduanya?](#21-wo-di-so-vs-production)
+22. [Material subkon kembali jadi WIP — masuk laporan KITE nomor berapa?](#22-material-subkon-kite)
+
+### Logistics & Waste
+23. [Form penjualan material lokal (BC 4.0) — di mana?](#23-bc40-di-mana)
+24. [Di form waste — di mana field No. BC 2.4 dan Mata Uang?](#24-waste-bc24-matauang)
+
+### Troubleshooting
+25. [Dialog form tidak bisa di-scroll / konten terpotong](#25-dialog-scroll)
 
 ---
 
@@ -287,6 +334,126 @@ Yang perlu dilakukan hanya memastikan transaksi di modul masing-masing sudah dii
 | Input waste → status "Diajukan BC 2.4" | Lap 8 (Waste/Scrap) |
 
 Saat siap lapor ke DJBC: buka `/reports/kite-inventory` → klik **"Export Semua"** → 1 file Excel, 8 sheet.
+
+---
+
+## 🏭 PRODUKSI & WORK ORDER
+
+---
+
+### 19. Pengeluaran material gudang ke produksi dan CMT — di mana?
+
+Ada **dua tombol berbeda** di halaman Gudang WIP (`/warehouse/wip`):
+
+| Tombol | Fungsi |
+|--------|--------|
+| **"Terima dari Produksi"** | Mencatat **masuknya** WIP dari proses produksi sebelumnya ke gudang WIP |
+| **"Keluarkan ke Proses"** | Mencatat **keluarnya** WIP ke proses produksi berikutnya atau ke CMT |
+
+Untuk mengeluarkan material ke produksi atau CMT: klik **"Keluarkan ke Proses"** → pilih WIP item → isi qty → isi tujuan (pilih WO atau isi nama CMT secara manual).
+
+> **Catatan:** Tombol ini untuk WIP (bahan setengah jadi). Untuk BB (bahan baku) ke CMT, gunakan menu **Produksi → Subkontrak** → buka job → "Kirim BB ke Subkon".
+
+---
+
+### 20. Work Order — apakah dibuat setelah Sales Order? Apa itu "Produk" di WO?
+
+**Alur yang benar:**
+1. Sales menerima order → buat SO di `/sales/new`
+2. Manager approve SO
+3. Staff Produksi membuka SO yang sudah approved → klik tombol **"Buat Work Order"** (di pojok kanan detail SO)
+4. WO otomatis terisi: SO reference, produk dari SO, target qty
+5. Isi tanggal mulai/selesai, pilih Line Produksi, pilih Gudang BJ tujuan (FG-A atau FG-B)
+
+**"Produk" di WO = nama produk jadi** yang akan diproduksi. Contoh: `Latex Size M`, `Nitrile Size S`, dll. Ini bukan material, tapi nama finished goods-nya.
+
+**Gudang FG-A vs FG-B:** Pilih sesuai lokasi fisik gudang barang jadi di pabrik. FG-A dan FG-B adalah dua ruangan/area gudang yang berbeda.
+
+---
+
+### 21. WO ada di Sales Order dan di Production — apakah harus dibuat di keduanya?
+
+**Tidak, cukup satu kali.** Ada 2 cara membuat WO yang hasilnya sama:
+
+| Cara | Di mana |
+|------|---------|
+| Cara 1 (direkomendasikan) | Buka detail SO → klik **"Buat Work Order"** — WO langsung terhubung ke SO tersebut |
+| Cara 2 | Buka `/production/work-orders` → klik **"+ Buat WO Baru"** → isi SO reference secara manual |
+
+Pilih salah satu. WO yang muncul di `/production/work-orders` adalah daftar semua WO dari kedua cara di atas.
+
+---
+
+### 22. Material subkon kembali jadi bahan setengah jadi — masuk laporan KITE nomor berapa?
+
+Tergantung pada **jenis barang yang kembali dari CMT**:
+
+| Kondisi | Masuk laporan KITE |
+|---------|-------------------|
+| BB dikirim ke CMT (keluar dari gudang JKJ) | **Lap 3** (BB Subkontrak — Keluar) |
+| Hasil CMT kembali sebagai **WIP** (bahan setengah jadi) | **Lap 6** (Mutasi BB — Masuk WIP) |
+| Hasil CMT kembali sebagai **FG** (barang jadi siap ekspor) | **Lap 4** (Pemasukan HP / Barang Jadi) |
+
+Alur pencatatannya:
+1. Saat dikirim ke CMT → klik "Kirim BB ke Subkon" di job subkon → otomatis catat Lap 3
+2. Saat terima hasil dari CMT → klik "Terima Hasil dari CMT" → otomatis catat Lap 4 atau Lap 6 tergantung kategori item yang diterima
+
+---
+
+### 23. Form penjualan material lokal (BC 4.0) — di mana?
+
+Tersedia di menu **Logistics → BC 4.0** (`/logistics/bc40`).
+
+Klik **"Buat BC 4.0 Baru"** untuk membuka form yang mencakup:
+- Nomor dan tanggal BC 4.0
+- Kantor Pabean
+- Data Penjual (NPWP, nama, alamat)
+- Dokumen pendukung (No. Faktur Pajak, Packing List, Kontrak)
+- Data pengangkutan (jenis kendaraan, no. polisi, surat jalan)
+- Data barang (multi-baris: HS code, nama barang, satuan, qty, harga, nilai IDR)
+
+Form ini serupa dengan PEB tapi untuk pemasukan barang dari dalam negeri (lokal) ke kawasan TPB.
+
+---
+
+## 🗑️ WASTE
+
+---
+
+### 24. Di form "Ajukan Waste Baru" — di mana field No. BC 2.4 dan Mata Uang?
+
+**Field No. BC 2.4 dan Tanggal BC 2.4:**
+
+Kedua field ini **selalu muncul** di bagian atas form, di atas field Disposisi. Tidak bergantung pada pilihan disposisi apapun.
+
+**Field Mata Uang dan Nilai Waste:**
+
+Field ini **hanya muncul** ketika Disposisi dipilih **"Dijual"**. Jika disposisi bukan Dijual (misal: Dimusnahkan), field nilai dan mata uang tidak ditampilkan.
+
+Saat disposisi = Dijual:
+1. Isi **Nama Pembeli**
+2. Pilih **Mata Uang** dari dropdown (IDR / USD / KRW)
+3. Isi **Nilai Waste** (nominal sesuai mata uang yang dipilih)
+
+---
+
+## 🔧 TROUBLESHOOTING
+
+---
+
+### 25. Dialog form tidak bisa di-scroll / konten terpotong atas dan bawah
+
+Sudah diperbaiki di **semua dialog** berikut:
+- Dialog "Terima Bayar" di Finance → AR
+- Dialog "Bayar" di Finance → AP
+- Dialog "Ajukan Waste Baru" di Warehouse → Waste
+
+Jika dialog masih tampak terpotong:
+1. Coba **refresh halaman** (F5 atau Ctrl+R) — bisa jadi browser melakukan cache versi lama
+2. Pastikan browser tidak dalam zoom > 100% — zoom yang besar bisa membuat konten melebihi layar
+3. Coba **scroll di dalam dialog** (bukan scroll halaman utama) — kursor/jari harus berada di dalam area dialog
+
+> **Catatan teknis:** Perbaikan dilakukan dengan menambahkan `max-height: 90vh` + `overflow-y: auto` pada konten dialog, sehingga dialog memiliki scrollbar internal dan tidak terpotong di layar apapun.
 
 ---
 

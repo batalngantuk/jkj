@@ -12,8 +12,8 @@ export const STORE_KEYS = {
   GR: 'jkj_goods_receipts',            // BB masuk gudang dari impor
   STOCK: 'jkj_stock',                  // saldo stok BB & FG
   WASTE: 'jkj_waste',
-  AR_INVOICES: 'jkj_ar_invoices',
-  AP_INVOICES: 'jkj_ap_invoices',
+  AR_INVOICES: 'jkj_ar_invoices_v2',
+  AP_INVOICES: 'jkj_ap_invoices_v2',
   PAYMENTS: 'jkj_payments',
   SUBKONTRAK: 'jkj_subkontrak',
   TEMP_STORAGE: 'jkj_temp_storage',

@@ -2,8 +2,8 @@
 
 **Dokumen**: Response terhadap "komen program jkj.pdf"  
 **Tanggal Feedback Diterima**: April 17, 2026  
-**Tanggal Laporan Terakhir**: Mei 19, 2026  
-**Status**: ✅ F1–F9 selesai | ✅ K1–K9 selesai | ✅ M1–M5 selesai | ✅ Batch 3 (B/P/S/E/A/W) selesai | ✅ Batch 4 (F/SO/PO/W/CMT) — semua selesai
+**Tanggal Laporan Terakhir**: Juni 8, 2026  
+**Status**: ✅ F1–F9 selesai | ✅ K1–K9 selesai | ✅ M1–M5 selesai | ✅ Batch 3 (B/P/S/E/A/W) selesai | ✅ Batch 4 (F/SO/PO/W/CMT) selesai | ✅ Batch 5 (Bug/BC40/Satuan/Waste) — semua selesai
 
 ---
 
@@ -1222,3 +1222,180 @@ Semua warning bersifat **informatif** (tidak memblokir) — user tetap bisa lanj
 | CMT1 | Nama subkon bisa input manual (free-text)         | Tinggi    | ✅ Selesai (`0394485`) |
 | CMT2 | Qty total BJ yang akan di-CMT-kan                 | Tinggi    | ✅ Selesai (`0394485`) |
 | CMT3 | Input barang jadi dari CMT (Terima Hasil dialog)  | Tinggi    | ✅ Selesai (`f4e05dc`) |
+
+---
+
+## Revisi Batch 5 — 02 Juni 2026
+
+Feedback kelima diterima 02/06/2026 melalui 2 dokumen PDF. Mencakup **4 bug kritis**, **4 fitur baru**, dan **4 pertanyaan operasional** yang dijawab di FAQ.
+
+**Status:** ✅ Semua selesai — Juni 8, 2026
+
+---
+
+### GRUP BUG — Bug & Scroll Fix
+
+---
+
+#### BUG-1 — AR/AP Dialog Pembayaran Terpotong (Tidak Bisa Scroll)
+
+**Laporan Klien:**
+
+> Dialog "Terima Bayar" (AR) dan "Bayar" (AP) terpotong atas dan bawah — tidak bisa di-scroll, beberapa field tidak terlihat.
+
+**Root Cause:** `DialogContent` tidak memiliki batas tinggi (`max-height`) dan tidak dikonfigurasi untuk overflow scroll. Konten yang melebihi viewport terpotong tanpa scrollbar.
+
+**Fix:**
+- `app/finance/ar/page.tsx` dan `app/finance/ap/page.tsx`
+- `DialogContent`: tambah `max-h-[90vh] flex flex-col`
+- Container konten: tambah `overflow-y-auto flex-1 pr-1`
+- `DialogHeader` dan `DialogFooter`: tambah `shrink-0`
+
+---
+
+#### BUG-2 — AR/AP: Tidak Ada Invoice USD → Dialog Kurs Tidak Pernah Tampil
+
+**Laporan Klien:**
+
+> Finance → AR — buka invoice INV/2026/005 (APEX USD 10,000) → klik "Terima Bayar" → field Currency + Kurs + Selisih Kurs harus muncul.
+
+**Root Cause:** Semua mock invoice bawaan sistem hanya memiliki `currency: 'IDR'`. Blok "Currency + Kurs" di dialog pembayaran hanya tampil jika `invoice.currency !== 'IDR'` — kondisi tidak pernah terpenuhi karena tidak ada data demo non-IDR.
+
+**Fix:**
+- `lib/mock-data/finance.ts` — Tambah 2 mock invoice USD:
+  - **ar-005**: INV/2026/005 — APEX International Ltd. — USD 10,000 @ Rp 15.500 = Rp 155 juta
+  - **ap-004**: APINV/2026/004 — LS Textile Korea Co., Ltd. — USD 3.548 @ Rp 15.500 = Rp 55 juta
+- `lib/store/index.ts` — Naikan versi store key: `jkj_ar_invoices_v2` dan `jkj_ap_invoices_v2` — flush localStorage lama yang menyimpan data IDR-only
+
+Setelah fix: buka AR → INV/2026/005 → "Terima Bayar" → dialog menampilkan Mata Uang Invoice + Kurs Terima + **Selisih Kurs** (untung/rugi dihitung otomatis).
+
+---
+
+#### BUG-3 — Waste Form: Dropdown Mata Uang Tidak Muncul
+
+**Laporan Klien:**
+
+> Warehouse → Waste → "Ajukan Waste Baru" → dropdown Mata Uang tidak tampil meskipun disposisi sudah "Dijual".
+
+**Root Cause:** Layout menggunakan `grid grid-cols-2`, tapi field Mata Uang diberi `col-span-2`. Dalam CSS grid, `col-span-2` yang dimulai dari kolom kedua tidak dapat melebar — elemen overflow/hilang dari tampilan tanpa error.
+
+**Fix (`app/warehouse/waste/page.tsx`):**
+- Ganti `grid grid-cols-2` menjadi `space-y-3` (vertikal stack) untuk section Nilai Waste + Mata Uang
+- Dropdown Mata Uang tetap di dalam blok `formDisposisi === 'Dijual'`
+
+---
+
+#### BUG-4 — Waste Dialog Terpotong (Tidak Bisa Scroll)
+
+**Laporan Klien:**
+
+> Dialog "Ajukan Waste Baru" terpotong atas dan bawah setelah field BC 2.4 + Mata Uang ditambahkan.
+
+**Fix (`app/warehouse/waste/page.tsx`):**
+- `DialogContent`: `max-h-[90vh] flex flex-col`
+- Container konten: `overflow-y-auto flex-1 pr-1`
+- Footer: `shrink-0 border-t mt-2`
+
+---
+
+### GRUP P5 — Fitur Baru
+
+---
+
+#### P5-1 — Form BC 4.0: Pemberitahuan Pemasukan Barang dari Dalam Negeri ke TPB
+
+**Yang Diminta:** Form dokumen BC 4.0 — "Pemberitahuan Pemasukan Barang Asal Tempat Lain Dalam Daerah Pabean ke Tempat Penimbunan Berikat".
+
+**Update yang Dilakukan:**
+
+- Store baru `lib/store/useBC40.ts` — localStorage-backed, interface `BC40Document`: nomor, tanggal, kantor pabean, jenis transaksi, data penjual (NPWP, nama, alamat), dokumen pendukung (faktur pajak, packing list, kontrak), data pengangkutan, multi-line items barang (HS Code, kode, nama, satuan, qty, harga, nilai IDR), kurs, mata uang, status (Draft/Submitted/Approved)
+
+- **`/logistics/bc40`** (halaman list) — tabel BC 4.0: nomor, tanggal, penjual, jenis transaksi, total nilai IDR, status; tombol Export; summary cards total/draft/approved
+
+- **`/logistics/bc40/new`** (form baru) — 5 section:
+  1. Informasi Dokumen: nomor BC 4.0, tanggal, kantor pabean, jenis transaksi
+  2. Data Penjual: nama penjual, NPWP, alamat
+  3. Dokumen Pendukung: no. faktur pajak, packing list, kontrak
+  4. Data Pengangkutan: jenis kendaraan, no. polisi, no. surat jalan
+  5. Data Barang: tabel multi-baris (Pos Tarif/HS, kode barang, nama barang, satuan, qty, harga satuan, nilai IDR) + header mata uang + kurs
+
+- `app/logistics/page.tsx` — Tombol **"BC 4.0"** ditambahkan di header halaman Logistics
+
+---
+
+#### P5-2 — Satuan Tambahan: TNE, PCE, ST, FTK, KGM
+
+**Yang Diminta:** Satuan kode BC/KITE (TNE = Metric Ton, PCE = Piece, ST = Set, FTK = Square Foot, KGM = Kilogram) belum tersedia di form input.
+
+**Update yang Dilakukan:**
+
+| Form | File | Satuan yang Ditambahkan |
+|------|------|------------------------|
+| PO create — item unit | `app/purchasing/po/create/page.tsx` | TNE, PCE, ST, FTK, KGM |
+| SO new — line item satuan | `app/sales/new/page.tsx` | TNE, PCE, ST, FTK, KGM |
+| Inbound — satuan terima | `app/warehouse/inbound/page.tsx` | YARD, SF, TNE, PCE, ST, FTK, KGM |
+| Gudang WIP — satuan | `app/warehouse/wip/page.tsx` | tne, pce, st, ftk, kgm |
+| Subkontrak BB — satuan | `app/production/subkontrak/page.tsx` | TNE, PCE, ST, FTK, KGM |
+
+---
+
+#### P5-3 — Outbound Input BJ: Info Card Panduan Alur CMT
+
+**Yang Diminta:** Tab "Input Barang Jadi" menampilkan "0 WO Selesai" — klien tidak mengerti mengapa kosong padahal ada WO dari CMT.
+
+**Root Cause:** Bukan bug. Tab ini hanya menampilkan WO **produksi internal JKJ** yang berstatus COMPLETED dan belum diterima ke gudang. BJ dari CMT diterima melalui menu Subkontrak, bukan di sini.
+
+**Fix (`app/warehouse/outbound/page.tsx`):**
+
+Tambah info card biru di tab "Input Barang Jadi":
+- "Daftar ini hanya menampilkan WO produksi internal yang sudah selesai."
+- "Untuk CMT: Produksi → Subkontrak → buka job → 'Terima Hasil dari CMT'."
+- "WO baru muncul setelah status COMPLETED di Production → Work Orders."
+
+---
+
+#### P5-4 — Waste Form: Field No. BC 2.4, Tanggal BC 2.4, dan Mata Uang
+
+**Yang Diminta:** Form "Ajukan Waste Baru" perlu field:
+- No. BC 2.4
+- Tanggal BC 2.4
+- Mata Uang (untuk nilai waste saat disposisi "Dijual")
+
+**Update yang Dilakukan (`app/warehouse/waste/page.tsx`):**
+
+State baru: `formBC24No`, `formBC24Tgl`, `formMataUang` (default: 'USD')
+
+Layout form:
+- **No. BC 2.4** dan **Tanggal BC 2.4**: selalu tampil di grid 2 kolom, di atas field Disposisi
+- **Nilai Waste** + **Dropdown Mata Uang** (IDR/USD/KRW): tampil hanya saat `formDisposisi === 'Dijual'` — layout flex row (mata uang di kiri, nominal di kanan)
+
+---
+
+#### Pertanyaan Operasional (P5-5 s/d P5-8) — Dijawab di FAQ
+
+Pertanyaan dari feedback 02/06/2026 yang bersifat operasional dan tidak memerlukan perubahan kode:
+
+| Item | Pertanyaan | FAQ |
+|------|-----------|-----|
+| P5-5 | Pengeluaran material gudang ke produksi/CMT — di mana? | Q19 |
+| P5-6 | WO dibuat setelah SO? Apa itu "Produk" di WO? FG-A vs FG-B? | Q20 |
+| P5-7 | WO di SO vs di Production — harus buat di keduanya? | Q21 |
+| P5-8 | Material subkon kembali → masuk laporan KITE nomor berapa? | Q22 |
+
+---
+
+## Ringkasan Status — Revisi Batch 5 (Juni 2026)
+
+| #      | Area                                              | Prioritas | Status     |
+| ------ | ------------------------------------------------- | --------- | ---------- |
+| BUG-1  | AR/AP dialog tidak bisa scroll (kepotong)         | Kritis    | ✅ Selesai |
+| BUG-2  | Mock invoice USD (ar-005, ap-004) + flush store   | Tinggi    | ✅ Selesai |
+| BUG-3  | Waste dropdown Mata Uang tidak tampil (CSS bug)   | Kritis    | ✅ Selesai |
+| BUG-4  | Waste dialog tidak bisa scroll (kepotong)         | Sedang    | ✅ Selesai |
+| P5-1   | Form BC 4.0 — list + form baru di /logistics/bc40 | Tinggi    | ✅ Selesai |
+| P5-2   | Satuan TNE/PCE/ST/FTK/KGM di semua form           | Sedang    | ✅ Selesai |
+| P5-3   | Outbound BJ: info card panduan alur CMT           | Sedang    | ✅ Selesai |
+| P5-4   | Waste form: No BC 2.4, Tgl BC 2.4, Mata Uang     | Tinggi    | ✅ Selesai |
+| Q19-22 | Pertanyaan operasional → dijawab di FAQ           | Sedang    | ✅ Selesai |
+
+_Diperbarui: Juni 8, 2026 (tambah Batch 5 — semua selesai)_

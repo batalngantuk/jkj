@@ -171,6 +171,23 @@ export default function OutboundPage() {
                   />
                 </div>
 
+                {/* Info: BJ dari CMT/Subkon */}
+                <div className="flex items-start gap-3 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm">
+                  <AlertTriangle className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-medium text-blue-800">BJ dari CMT / Subkontrak?</p>
+                    <p className="text-blue-700 text-xs mt-0.5">
+                      Daftar ini hanya menampilkan WO produksi internal yang sudah selesai.
+                      Untuk menerima hasil dari CMT/subkon, gunakan menu{' '}
+                      <Link href="/production/subkontrak" className="underline font-medium">Produksi → Subkontrak</Link>
+                      {' '}→ buka job → klik <strong>"Terima Hasil dari CMT"</strong>.
+                    </p>
+                    <p className="text-blue-700 text-xs mt-1">
+                      WO baru muncul di sini setelah statusnya berubah ke <strong>COMPLETED</strong> di menu Produksi → Work Orders.
+                    </p>
+                  </div>
+                </div>
+
                 {filteredWO.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <PackageCheck className="h-10 w-10 mx-auto mb-2 opacity-30" />

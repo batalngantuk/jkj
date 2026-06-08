@@ -27,7 +27,7 @@ const TAHAP_PROSES = [
 
 const LOKASI_WIP = ['Gudang WIP-1', 'Gudang WIP-2', 'Gudang WIP-3', 'Mixing Room A', 'Mixing Room B', 'Line A WIP', 'Line B WIP']
 
-const SATUAN_WIP = ['kg', 'mtr', 'batch', 'liter', 'pcs', 'ctn', 'roll', 'sf', 'yard']
+const SATUAN_WIP = ['kg', 'mtr', 'batch', 'liter', 'pcs', 'ctn', 'roll', 'sf', 'yard', 'tne', 'pce', 'st', 'ftk', 'kgm']
 
 function fmt(n: number) { return n.toLocaleString('id-ID') }
 

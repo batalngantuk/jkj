@@ -317,6 +317,11 @@ export default function NewSalesOrderPage() {
                                   <SelectItem value="roll">Roll</SelectItem>
                                   <SelectItem value="yard">Yard (yd)</SelectItem>
                                   <SelectItem value="sf">SF</SelectItem>
+                                  <SelectItem value="tne">TNE</SelectItem>
+                                  <SelectItem value="pce">PCE</SelectItem>
+                                  <SelectItem value="st">ST</SelectItem>
+                                  <SelectItem value="ftk">FTK</SelectItem>
+                                  <SelectItem value="kgm">KGM</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
