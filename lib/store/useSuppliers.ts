@@ -5,7 +5,9 @@ import { STORE_KEYS, getStore, addToStore, generateId } from './index'
 import { MOCK_SUPPLIERS, type Supplier } from '@/lib/mock-data/purchasing'
 
 export function useSuppliers() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [suppliers, setSuppliers] = useState<Supplier[]>(() =>
+    getStore(STORE_KEYS.SUPPLIERS, MOCK_SUPPLIERS)
+  )
 
   useEffect(() => {
     setSuppliers(getStore(STORE_KEYS.SUPPLIERS, MOCK_SUPPLIERS))

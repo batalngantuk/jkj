@@ -71,7 +71,9 @@ const SEED: PEBDocument[] = [
 ]
 
 export function usePEB() {
-  const [pebs, setPebs] = useState<PEBDocument[]>([])
+  const [pebs, setPebs] = useState<PEBDocument[]>(() =>
+    getStore(STORE_KEYS.PEB, SEED)
+  )
 
   useEffect(() => {
     setPebs(getStore(STORE_KEYS.PEB, SEED))

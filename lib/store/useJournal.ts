@@ -40,7 +40,9 @@ const SEED: JournalEntry[] = [
 ]
 
 export function useJournal() {
-  const [entries, setEntries] = useState<JournalEntry[]>([])
+  const [entries, setEntries] = useState<JournalEntry[]>(() =>
+    getStore(STORE_KEY, SEED)
+  )
 
   useEffect(() => {
     setEntries(getStore(STORE_KEY, SEED))

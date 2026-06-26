@@ -49,7 +49,9 @@ const STORE_KEY = 'jkj_bc40_v1'
 const SEED: BC40Document[] = []
 
 export function useBC40() {
-  const [documents, setDocuments] = useState<BC40Document[]>([])
+  const [documents, setDocuments] = useState<BC40Document[]>(() =>
+    getStore(STORE_KEY, SEED)
+  )
 
   useEffect(() => {
     setDocuments(getStore(STORE_KEY, SEED))

@@ -21,9 +21,10 @@ import {
   DialogDescription, DialogFooter
 } from '@/components/ui/dialog'
 import AppLayout from '@/components/app-layout'
-import { MOCK_PURCHASE_ORDERS, type PurchaseOrder } from '@/lib/mock-data/purchasing'
+import type { PurchaseOrder } from '@/lib/mock-data/purchasing'
 import { useGoodsReceipts } from '@/lib/store/useGoodsReceipts'
 import { useStock } from '@/lib/store/useStock'
+import { usePurchaseOrders } from '@/lib/store/usePurchaseOrders'
 
 interface MaterialLineGR {
   id: string
@@ -47,6 +48,7 @@ function newLineGR(): MaterialLineGR {
 export default function InboundPage() {
   const { receipts, createReceipt } = useGoodsReceipts()
   const { addStock } = useStock()
+  const { orders: allPOs } = usePurchaseOrders()
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null)
   const [showManualForm, setShowManualForm] = useState(false)
 
@@ -72,7 +74,7 @@ export default function InboundPage() {
   const [poPenerima, setPoPenerima] = useState('')
   const [poQtyReceived, setPoQtyReceived] = useState<Record<string, number>>({})
 
-  const incomingPOs = MOCK_PURCHASE_ORDERS.filter(po =>
+  const incomingPOs = allPOs.filter(po =>
     po.status === 'APPROVED' || po.status === 'PARTIAL'
   )
 

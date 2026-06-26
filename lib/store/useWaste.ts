@@ -5,7 +5,9 @@ import { STORE_KEYS, getStore, addToStore, updateInStore, generateId } from './i
 import { MOCK_WASTE_RECORDS, type WasteRecord } from '@/lib/mock-data/waste-management'
 
 export function useWaste() {
-  const [records, setRecords] = useState<WasteRecord[]>([])
+  const [records, setRecords] = useState<WasteRecord[]>(() =>
+    getStore(STORE_KEYS.WASTE, MOCK_WASTE_RECORDS)
+  )
 
   useEffect(() => {
     setRecords(getStore(STORE_KEYS.WASTE, MOCK_WASTE_RECORDS))

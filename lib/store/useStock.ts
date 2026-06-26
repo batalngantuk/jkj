@@ -53,8 +53,12 @@ const SEED_MOVEMENTS: StockMovement[] = [
 ]
 
 export function useStock() {
-  const [stock, setStock] = useState<StockItem[]>([])
-  const [movements, setMovements] = useState<StockMovement[]>([])
+  const [stock, setStock] = useState<StockItem[]>(() =>
+    getStore(STORE_KEYS.STOCK, SEED_STOCK)
+  )
+  const [movements, setMovements] = useState<StockMovement[]>(() =>
+    getStore('jkj_stock_movements', SEED_MOVEMENTS)
+  )
 
   useEffect(() => {
     setStock(getStore(STORE_KEYS.STOCK, SEED_STOCK))

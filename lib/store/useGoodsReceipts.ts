@@ -49,7 +49,9 @@ const SEED_GR: GoodsReceipt[] = [
 ]
 
 export function useGoodsReceipts() {
-  const [receipts, setReceipts] = useState<GoodsReceipt[]>([])
+  const [receipts, setReceipts] = useState<GoodsReceipt[]>(() =>
+    getStore(STORE_KEYS.GR, SEED_GR)
+  )
 
   useEffect(() => {
     setReceipts(getStore(STORE_KEYS.GR, SEED_GR))

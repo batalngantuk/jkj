@@ -76,7 +76,9 @@ const SEED_COA: AkunCOA[] = [
 ]
 
 export function useChartOfAccounts() {
-  const [accounts, setAccounts] = useState<AkunCOA[]>([])
+  const [accounts, setAccounts] = useState<AkunCOA[]>(() =>
+    getStore(COA_STORE_KEY, SEED_COA)
+  )
 
   useEffect(() => {
     setAccounts(getStore(COA_STORE_KEY, SEED_COA))

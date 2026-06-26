@@ -25,7 +25,9 @@ export interface TempStorageItem {
 const SEED: TempStorageItem[] = []
 
 export function useTempStorage() {
-  const [items, setItems] = useState<TempStorageItem[]>([])
+  const [items, setItems] = useState<TempStorageItem[]>(() =>
+    getStore(STORE_KEYS.TEMP_STORAGE, SEED)
+  )
 
   useEffect(() => {
     setItems(getStore(STORE_KEYS.TEMP_STORAGE, SEED))

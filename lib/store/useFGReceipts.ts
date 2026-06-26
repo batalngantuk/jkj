@@ -44,7 +44,9 @@ const SEED: FGReceipt[] = [
 ]
 
 export function useFGReceipts() {
-  const [receipts, setReceipts] = useState<FGReceipt[]>([])
+  const [receipts, setReceipts] = useState<FGReceipt[]>(() =>
+    getStore(STORE_KEYS.FG_RECEIPTS, SEED)
+  )
 
   useEffect(() => {
     setReceipts(getStore(STORE_KEYS.FG_RECEIPTS, SEED))

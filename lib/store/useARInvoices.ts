@@ -5,7 +5,9 @@ import { STORE_KEYS, getStore, addToStore, updateInStore, generateId } from './i
 import { MOCK_AR_INVOICES, type ARInvoice } from '@/lib/mock-data/finance'
 
 export function useARInvoices() {
-  const [invoices, setInvoices] = useState<ARInvoice[]>([])
+  const [invoices, setInvoices] = useState<ARInvoice[]>(() =>
+    getStore(STORE_KEYS.AR_INVOICES, MOCK_AR_INVOICES)
+  )
 
   useEffect(() => {
     setInvoices(getStore(STORE_KEYS.AR_INVOICES, MOCK_AR_INVOICES))

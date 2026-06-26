@@ -5,7 +5,9 @@ import { STORE_KEYS, getStore, addToStore, updateInStore, generateId } from './i
 import { MOCK_SUBKON_RECORDS, type SubkonRecord } from '@/lib/mock-data/subkontrak'
 
 export function useSubkontrak() {
-  const [records, setRecords] = useState<SubkonRecord[]>([])
+  const [records, setRecords] = useState<SubkonRecord[]>(() =>
+    getStore(STORE_KEYS.SUBKONTRAK, MOCK_SUBKON_RECORDS)
+  )
 
   useEffect(() => {
     setRecords(getStore(STORE_KEYS.SUBKONTRAK, MOCK_SUBKON_RECORDS))

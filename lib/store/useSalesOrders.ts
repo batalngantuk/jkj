@@ -5,7 +5,9 @@ import { STORE_KEYS, getStore, addToStore, updateInStore, generateId } from './i
 import { MOCK_SALES_ORDERS, type SalesOrder } from '@/lib/mock-data/sales'
 
 export function useSalesOrders() {
-  const [orders, setOrders] = useState<SalesOrder[]>([])
+  const [orders, setOrders] = useState<SalesOrder[]>(() =>
+    getStore(STORE_KEYS.SALES_ORDERS, MOCK_SALES_ORDERS)
+  )
 
   useEffect(() => {
     setOrders(getStore(STORE_KEYS.SALES_ORDERS, MOCK_SALES_ORDERS))
