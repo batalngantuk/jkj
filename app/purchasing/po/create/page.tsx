@@ -356,6 +356,7 @@ ${notes ? `<div style="margin-top:16px"><div class="label">Catatan</div><div>${n
                               <SelectItem value="st">ST</SelectItem>
                               <SelectItem value="ftk">FTK</SelectItem>
                               <SelectItem value="kgm">KGM</SelectItem>
+                              <SelectItem value="sht">SHT (Sheet)</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>

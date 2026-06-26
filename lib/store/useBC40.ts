@@ -10,6 +10,7 @@ export interface BC40Item {
   posTarif: string
   satuan: string
   qty: number
+  beratBersih: number
   hargaSatuan: number
   mataUang: string
   nilaiIDR: number

@@ -642,6 +642,9 @@ export default function PEBCreatePage() {
                         <SelectItem value="KG">KG (Kilogram)</SelectItem>
                         <SelectItem value="PCS">PCS (Pieces)</SelectItem>
                         <SelectItem value="CTN">CTN (Carton)</SelectItem>
+                        <SelectItem value="SHT">SHT (Sheet)</SelectItem>
+                        <SelectItem value="ROLL">ROLL</SelectItem>
+                        <SelectItem value="YARD">YARD</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

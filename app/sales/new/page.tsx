@@ -322,6 +322,7 @@ export default function NewSalesOrderPage() {
                                   <SelectItem value="st">ST</SelectItem>
                                   <SelectItem value="ftk">FTK</SelectItem>
                                   <SelectItem value="kgm">KGM</SelectItem>
+                                  <SelectItem value="sht">SHT (Sheet)</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>

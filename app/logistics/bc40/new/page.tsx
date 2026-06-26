@@ -15,7 +15,7 @@ import { ArrowLeft, Plus, Trash2, Save, Send, Building2, Package, Truck, FileTex
 import AppLayout from '@/components/app-layout'
 import { useBC40, type BC40Item } from '@/lib/store/useBC40'
 
-const SATUAN_OPTIONS = ['KG', 'MTR', 'PCS', 'LITER', 'ROLL', 'CTN', 'YARD', 'SF', 'TNE', 'PCE', 'ST', 'FTK', 'KGM', 'SET', 'TON']
+const SATUAN_OPTIONS = ['KG', 'MTR', 'PCS', 'LITER', 'ROLL', 'CTN', 'YARD', 'SF', 'SHT', 'TNE', 'PCE', 'ST', 'FTK', 'KGM', 'SET', 'TON']
 const MATA_UANG = ['IDR', 'USD', 'KRW']
 const DEFAULT_KURS: Record<string, number> = { IDR: 1, USD: 15500, KRW: 11 }
 
@@ -29,6 +29,7 @@ function newItem(): BC40Item & { _key: string } {
     posTarif: '',
     satuan: 'KG',
     qty: 0,
+    beratBersih: 0,
     hargaSatuan: 0,
     mataUang: 'IDR',
     nilaiIDR: 0,
@@ -82,7 +83,7 @@ export default function BC40NewPage() {
       if (field === 'qty' || field === 'hargaSatuan') {
         const q = field === 'qty' ? Number(value) : item.qty
         const h = field === 'hargaSatuan' ? Number(value) : item.hargaSatuan
-        const kursVal = mataUang === 'IDR' ? 1 : (DEFAULT_KURS[mataUang] || kurs)
+        const kursVal = mataUang === 'IDR' ? 1 : (kurs || DEFAULT_KURS[mataUang] || 1)
         updated.nilaiIDR = Math.round(q * h * kursVal)
       }
       return updated
@@ -303,6 +304,7 @@ export default function BC40NewPage() {
                     <TableHead className="min-w-[180px]">Nama / Merek Barang</TableHead>
                     <TableHead className="w-20">Satuan</TableHead>
                     <TableHead className="w-24 text-right">Qty</TableHead>
+                    <TableHead className="w-28 text-right">Berat Bersih (Kg)</TableHead>
                     <TableHead className="w-28 text-right">Harga Satuan</TableHead>
                     <TableHead className="w-32 text-right">Nilai IDR</TableHead>
                     <TableHead className="w-8"></TableHead>
@@ -346,19 +348,34 @@ export default function BC40NewPage() {
                       <TableCell>
                         <Input
                           type="number"
+                          min="0"
+                          step="any"
                           placeholder="0"
-                          value={item.qty || ''}
-                          onChange={e => updateItem(item._key, 'qty', parseFloat(e.target.value) || 0)}
-                          className="text-right"
+                          value={item.qty === 0 ? '' : item.qty}
+                          onChange={e => updateItem(item._key, 'qty', e.target.value === '' ? 0 : parseFloat(e.target.value))}
+                          className="text-right w-24"
                         />
                       </TableCell>
                       <TableCell>
                         <Input
                           type="number"
+                          min="0"
+                          step="any"
                           placeholder="0"
-                          value={item.hargaSatuan || ''}
-                          onChange={e => updateItem(item._key, 'hargaSatuan', parseFloat(e.target.value) || 0)}
-                          className="text-right"
+                          value={item.beratBersih === 0 ? '' : item.beratBersih}
+                          onChange={e => updateItem(item._key, 'beratBersih', e.target.value === '' ? 0 : parseFloat(e.target.value))}
+                          className="text-right w-28"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="0"
+                          value={item.hargaSatuan === 0 ? '' : item.hargaSatuan}
+                          onChange={e => updateItem(item._key, 'hargaSatuan', e.target.value === '' ? 0 : parseFloat(e.target.value))}
+                          className="text-right w-28"
                         />
                       </TableCell>
                       <TableCell className="text-right font-medium text-sm">

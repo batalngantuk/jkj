@@ -123,6 +123,10 @@ export default function SubkontrakPage() {
   const [terimaQtys, setTerimaQtys] = useState<Record<number, string>>({})
   const [terimaNoSJ, setTerimaNoSJ] = useState('')
   const [terimaCatatan, setTerimaCatatan] = useState('')
+  // Produk jadi yang diterima
+  const [terimaFGNama, setTerimaFGNama] = useState('')
+  const [terimaFGQty, setTerimaFGQty] = useState('')
+  const [terimaFGSatuan, setTerimaFGSatuan] = useState('CTN')
 
   const filtered = records.filter(r =>
     filterStatus === 'all' ? true : r.status === filterStatus
@@ -176,6 +180,9 @@ export default function SubkontrakPage() {
     setTerimaTgl(new Date().toISOString().slice(0, 10))
     setTerimaQtys(Object.fromEntries(rec.items.map((item, i) => [i, String(item.qtyKirim)])))
     setTerimaCatatan('')
+    setTerimaFGNama(rec.deskripsiPekerjaan || '')
+    setTerimaFGQty(rec.qtyCMT ? String(rec.qtyCMT) : '')
+    setTerimaFGSatuan(rec.satuanCMT || 'CTN')
     setShowTerima(true)
   }
 
@@ -198,8 +205,9 @@ export default function SubkontrakPage() {
 
   function handleConfirmKirim() {
     if (!kirimTarget) return
+    const isAdditional = kirimTarget.status === 'BB Dikirim' || kirimTarget.status === 'Dalam Proses'
     updateSubkon(kirimTarget.id, {
-      status: 'BB Dikirim',
+      status: isAdditional ? 'Dalam Proses' : 'BB Dikirim',
       subkKiteKirimNo: kirimSubkNo,
       subkKiteKirimTgl: kirimTgl,
       suratJalanNo: kirimSJNo,
@@ -579,10 +587,16 @@ export default function SubkontrakPage() {
                 </Button>
               )}
               {(selectedRecord.status === 'BB Dikirim' || selectedRecord.status === 'Dalam Proses') && (
-                <Button className="gap-2 bg-green-600 hover:bg-green-700" onClick={() => { openTerima(selectedRecord); setSelectedRecord(null) }}>
-                  <Package className="h-4 w-4" />
-                  Terima Hasil dari CMT
-                </Button>
+                <>
+                  <Button variant="outline" className="gap-2" onClick={() => openKirimBB(selectedRecord)}>
+                    <Truck className="h-4 w-4" />
+                    Kirim BB Tambahan
+                  </Button>
+                  <Button className="gap-2 bg-green-600 hover:bg-green-700" onClick={() => { openTerima(selectedRecord); setSelectedRecord(null) }}>
+                    <Package className="h-4 w-4" />
+                    Terima Hasil dari CMT
+                  </Button>
+                </>
               )}
               {selectedRecord.status === 'Hasil Diterima' && (
                 <Button className="gap-2">
@@ -676,8 +690,45 @@ export default function SubkontrakPage() {
                 </div>
               </div>
 
+              {/* Produk Jadi yang Diterima */}
+              <div className="space-y-2 rounded-md border border-green-200 bg-green-50 p-3">
+                <Label className="text-xs font-semibold text-green-800 uppercase">Produk Jadi yang Diterima</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs text-muted-foreground">Nama Produk / Barang Jadi</Label>
+                    <Input
+                      placeholder="Misal: Sarung Tangan XL Green"
+                      value={terimaFGNama}
+                      onChange={e => setTerimaFGNama(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Qty</Label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={terimaFGQty}
+                      onChange={e => setTerimaFGQty(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Satuan</Label>
+                    <Select value={terimaFGSatuan} onValueChange={setTerimaFGSatuan}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {['CTN', 'PCS', 'KG', 'SET', 'ROLL', 'SHT', 'TNE', 'PCE'].map(s =>
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase">Qty Hasil Diterima per BB/Item</Label>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase">Qty BB/Bahan Kembali dari Subkon</Label>
                 {terimaTarget.items.map((item, i) => (
                   <div key={i} className="grid grid-cols-3 gap-3 items-center rounded border px-3 py-2">
                     <div className="col-span-2">
@@ -853,7 +904,7 @@ export default function SubkontrakPage() {
                         <Select value={bb.satuan} onValueChange={v => updateBBItem(i, 'satuan', v)}>
                           <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {['KG', 'MTR', 'LITER', 'PCS', 'ROLL', 'CTN', 'YARD', 'SF', 'TNE', 'PCE', 'ST', 'FTK', 'KGM'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                            {['KG', 'MTR', 'LITER', 'PCS', 'ROLL', 'CTN', 'YARD', 'SF', 'SHT', 'TNE', 'PCE', 'ST', 'FTK', 'KGM'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>

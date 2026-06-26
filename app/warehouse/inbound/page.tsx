@@ -407,6 +407,7 @@ export default function InboundPage() {
                               <SelectItem value="ST">ST</SelectItem>
                               <SelectItem value="FTK">FTK</SelectItem>
                               <SelectItem value="KGM">KGM</SelectItem>
+                              <SelectItem value="SHT">SHT (Sheet)</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
