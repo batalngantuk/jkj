@@ -718,7 +718,7 @@ export default function SubkontrakPage() {
                     <Select value={terimaFGSatuan} onValueChange={setTerimaFGSatuan}>
                       <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {['CTN', 'PCS', 'KG', 'SET', 'ROLL', 'SHT', 'TNE', 'PCE'].map(s =>
+                        {['CTN', 'PCS', 'KG', 'SET', 'ROLL', 'SHT', 'TNE', 'PCE', 'ST', 'FTK', 'KGM'].map(s =>
                           <SelectItem key={s} value={s}>{s}</SelectItem>
                         )}
                       </SelectContent>

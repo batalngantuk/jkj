@@ -55,6 +55,12 @@ export default function LogisticsDashboard() {
                 <p className="text-sm text-muted-foreground">Fleet management and delivery tracking</p>
               </div>
               <div className="flex gap-3">
+                 <Link href="/logistics/penjualan-lokal">
+                    <Button variant="outline" className="gap-2">
+                        <FileText className="h-4 w-4" />
+                        Penjualan Lokal
+                    </Button>
+                 </Link>
                  <Link href="/logistics/bc40">
                     <Button variant="outline" className="gap-2">
                         <FileText className="h-4 w-4" />

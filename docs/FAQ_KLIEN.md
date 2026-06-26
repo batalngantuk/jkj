@@ -1,7 +1,7 @@
 # FAQ — Pertanyaan Klien JKJ ERP
 
 **Dokumen ini menjawab pertanyaan-pertanyaan operasional yang sering muncul dari penggunaan sistem.**  
-**Terakhir diperbarui:** Juni 8, 2026
+**Terakhir diperbarui:** 26 Juni 2026
 
 ---
 
