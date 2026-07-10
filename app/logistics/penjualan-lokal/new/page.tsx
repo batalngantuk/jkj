@@ -61,6 +61,7 @@ export default function PenjualanLokalNewPage() {
   const [noInvoice, setNoInvoice] = useState('')
   const [noPL, setNoPL] = useState('')
   const [noKontrak, setNoKontrak] = useState('')
+  const [noPendaftaran, setNoPendaftaran] = useState('')
 
   // Pengangkutan
   const [jenisKendaraan, setJenisKendaraan] = useState('')
@@ -104,6 +105,7 @@ export default function PenjualanLokalNewPage() {
       noInvoice,
       noPL,
       noKontrak,
+      noPendaftaran,
       jenisKendaraan,
       noKendaraan,
       noSuratJalan,
@@ -158,7 +160,11 @@ export default function PenjualanLokalNewPage() {
                 <Label>No. Packing List</Label>
                 <Input placeholder="PK-2026-..." value={noPL} onChange={e => setNoPL(e.target.value)} />
               </div>
-              <div className="space-y-1.5 col-span-2 md:col-span-3">
+              <div className="space-y-1.5">
+                <Label>No. Pendaftaran</Label>
+                <Input placeholder="No. pendaftaran pabean" value={noPendaftaran} onChange={e => setNoPendaftaran(e.target.value)} />
+              </div>
+              <div className="space-y-1.5 col-span-2">
                 <Label>No. Kontrak</Label>
                 <Input placeholder="Nomor kontrak (opsional)" value={noKontrak} onChange={e => setNoKontrak(e.target.value)} />
               </div>
@@ -237,7 +243,7 @@ export default function PenjualanLokalNewPage() {
                   <TableHead className="min-w-[160px]">Nama / Merek Barang</TableHead>
                   <TableHead className="w-[110px]">Pos Tarif / HS</TableHead>
                   <TableHead className="w-[90px]">Satuan</TableHead>
-                  <TableHead className="w-[90px] text-right">Qty</TableHead>
+                  <TableHead className="w-[120px] text-right">Qty</TableHead>
                   <TableHead className="w-[100px] text-right">Berat Bersih (Kg)</TableHead>
                   <TableHead className="w-[130px] text-right">Harga Satuan (Rp)</TableHead>
                   <TableHead className="w-[140px] text-right">Nilai IDR</TableHead>

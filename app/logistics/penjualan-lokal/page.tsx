@@ -28,6 +28,7 @@ export default function PenjualanLokalListPage() {
         'NPWP Pembeli': d.pembeliNPWP,
         'No. Invoice': d.noInvoice || '-',
         'No. SO Ref': d.noSORef || '-',
+        'No. Pendaftaran': d.noPendaftaran || '-',
         'Total Nilai (IDR)': d.totalNilaiIDR,
         'Status': d.status,
         'Catatan': d.catatan || '-',

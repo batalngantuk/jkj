@@ -624,11 +624,18 @@ export default function SubkontrakPage() {
                 <p className="font-medium">{kirimTarget.namaSubkon}</p>
                 <p className="text-muted-foreground text-xs">{kirimTarget.deskripsiPekerjaan}</p>
                 {kirimTarget.items.length > 0 && (
-                  <div className="mt-2 space-y-1">
+                  <div className="mt-2 border-t pt-2 space-y-1">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Daftar BB Yang Dikirim</p>
                     {kirimTarget.items.map((item, i) => (
-                      <div key={i} className="flex justify-between text-xs">
-                        <span>{item.namaBB}</span>
-                        <span className="text-muted-foreground">{item.qtyKirim.toLocaleString('id-ID')} {item.satuanBB}</span>
+                      <div key={i} className="flex justify-between items-center text-xs py-0.5 border-b border-dashed border-muted last:border-0">
+                        <div>
+                          <span className="font-mono text-muted-foreground mr-1">{item.kodeBB}</span>
+                          <span className="font-medium">{item.namaBB}</span>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          <span className="font-mono">{item.qtyKirim.toLocaleString('id-ID')}</span>
+                          <span className="ml-1 font-semibold text-primary">{item.satuanBB}</span>
+                        </div>
                       </div>
                     ))}
                   </div>

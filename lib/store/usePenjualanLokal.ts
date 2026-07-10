@@ -28,6 +28,7 @@ export interface PenjualanLokalDoc {
   noInvoice: string
   noPL: string // no. packing list
   noKontrak: string
+  noPendaftaran: string
   // Pengangkutan
   jenisKendaraan: string
   noKendaraan: string

@@ -467,7 +467,7 @@ export default function NewSalesOrderPage() {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {['kg', 'gram', 'liter', 'pcs', 'prs', 'm', 'm²', 'roll', 'unit', 'yard', 'sf'].map(s => (
+                                  {['kg', 'gram', 'liter', 'pcs', 'prs', 'pce', 'm', 'm²', 'mtr', 'roll', 'unit', 'yard', 'yrd', 'sf', 'tne', 'kgm', 'ftk', 'st', 'npr'].map(s => (
                                     <SelectItem key={s} value={s}>{s}</SelectItem>
                                   ))}
                                 </SelectContent>
