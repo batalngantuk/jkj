@@ -36,6 +36,19 @@ function CreateWOForm({ soId }: { soId: string | null }) {
   const { createWorkOrder } = useWorkOrders()
   const [isLoading, setIsLoading] = useState(false)
 
+  // Build product list: MOCK hardcoded + unique products from SO store
+  const soProductNames = [...new Set(
+    salesOrders
+      .filter((s: SalesOrder) => s.product)
+      .map((s: SalesOrder) => s.product as string)
+  )]
+  const allProducts = [
+    ...MOCK_PRODUCTS,
+    ...soProductNames
+      .filter(name => !MOCK_PRODUCTS.find(p => p.name === name))
+      .map(name => ({ id: name, name, stock: 0, unit: 'cartons', type: 'Custom' as const })),
+  ]
+
   // Section 1: Order Info
   const [selectedSo, setSelectedSo] = useState(soId || '')
   const [selectedProduct, setSelectedProduct] = useState('')
@@ -61,15 +74,15 @@ function CreateWOForm({ soId }: { soId: string | null }) {
     if (selectedSo && selectedSo !== 'manual') {
       const so = salesOrders.find((s: SalesOrder) => s.id === selectedSo)
       if (so) {
-        const prod = MOCK_PRODUCTS.find(p => p.name === so.product)
-        if (prod) setSelectedProduct(prod.id)
+        const prod = allProducts.find(p => p.name === so.product)
+        setSelectedProduct(prod ? prod.id : (so.product || ''))
         setQuantity(so.quantity?.toString() || '')
         if (so.priority) setPriority(so.priority)
       }
     }
   }, [selectedSo, salesOrders])
 
-  const selectedProductData = MOCK_PRODUCTS.find(p => p.id === selectedProduct)
+  const selectedProductData = allProducts.find(p => p.id === selectedProduct)
   const bom = MOCK_BOMS.find(b => b.productId === selectedProduct)
   const qty = parseInt(quantity) || 0
 
@@ -131,7 +144,7 @@ function CreateWOForm({ soId }: { soId: string | null }) {
                 <SelectValue placeholder="Pilih produk" />
               </SelectTrigger>
               <SelectContent>
-                {MOCK_PRODUCTS.map(p => (
+                {allProducts.map(p => (
                   <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                 ))}
               </SelectContent>
