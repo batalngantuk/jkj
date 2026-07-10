@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { STORE_KEYS, getStore, addToStore, generateId } from './index'
+import { STORE_KEYS, getStore, setStore, addToStore, generateId } from './index'
 
 export interface GRItem {
   kode: string
@@ -66,5 +66,19 @@ export function useGoodsReceipts() {
     return newReceipt
   }, [])
 
-  return { receipts, createReceipt }
+  const updateReceipt = useCallback((id: string, patch: Partial<Omit<GoodsReceipt, 'id'>>) => {
+    const current = getStore<GoodsReceipt>(STORE_KEYS.GR, SEED_GR)
+    const updated = current.map(r => r.id === id ? { ...r, ...patch } : r)
+    setStore(STORE_KEYS.GR, updated)
+    setReceipts(updated)
+  }, [])
+
+  const deleteReceipt = useCallback((id: string) => {
+    const current = getStore<GoodsReceipt>(STORE_KEYS.GR, SEED_GR)
+    const updated = current.filter(r => r.id !== id)
+    setStore(STORE_KEYS.GR, updated)
+    setReceipts(updated)
+  }, [])
+
+  return { receipts, createReceipt, updateReceipt, deleteReceipt }
 }

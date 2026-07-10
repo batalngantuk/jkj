@@ -20,9 +20,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter
 } from '@/components/ui/dialog'
+import { Pencil, Trash2 as Trash } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import type { PurchaseOrder } from '@/lib/mock-data/purchasing'
-import { useGoodsReceipts } from '@/lib/store/useGoodsReceipts'
+import { useGoodsReceipts, type GoodsReceipt } from '@/lib/store/useGoodsReceipts'
 import { useStock } from '@/lib/store/useStock'
 import { usePurchaseOrders } from '@/lib/store/usePurchaseOrders'
 
@@ -46,7 +47,7 @@ function newLineGR(): MaterialLineGR {
 }
 
 export default function InboundPage() {
-  const { receipts, createReceipt } = useGoodsReceipts()
+  const { receipts, createReceipt, updateReceipt, deleteReceipt } = useGoodsReceipts()
   const { addStock } = useStock()
   const { orders: allPOs } = usePurchaseOrders()
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null)
@@ -65,6 +66,42 @@ export default function InboundPage() {
   const [catatan, setCatatan] = useState('')
   const [lines, setLines] = useState<MaterialLineGR[]>([newLineGR()])
   const [expandedLine, setExpandedLine] = useState<string | null>(lines[0]?.id)
+
+  // State edit/hapus GR
+  const [deleteTarget, setDeleteTarget] = useState<GoodsReceipt | null>(null)
+  const [editTarget, setEditTarget] = useState<GoodsReceipt | null>(null)
+  const [editSupplier, setEditSupplier] = useState('')
+  const [editNoPIB, setEditNoPIB] = useState('')
+  const [editTgl, setEditTgl] = useState('')
+  const [editGudang, setEditGudang] = useState('')
+  const [editPenerima, setEditPenerima] = useState('')
+  const [editSJ, setEditSJ] = useState('')
+  const [editCatatan, setEditCatatan] = useState('')
+
+  function openEdit(gr: GoodsReceipt) {
+    setEditTarget(gr)
+    setEditSupplier(gr.supplier)
+    setEditNoPIB(gr.noPIB)
+    setEditTgl(gr.tglMasuk)
+    setEditGudang(gr.gudang)
+    setEditPenerima(gr.penerima)
+    setEditSJ(gr.noSuratJalan)
+    setEditCatatan(gr.catatan || '')
+  }
+
+  function saveEdit() {
+    if (!editTarget) return
+    updateReceipt(editTarget.id, {
+      supplier: editSupplier,
+      noPIB: editNoPIB,
+      tglMasuk: editTgl,
+      gudang: editGudang,
+      penerima: editPenerima,
+      noSuratJalan: editSJ,
+      catatan: editCatatan,
+    })
+    setEditTarget(null)
+  }
 
   // State untuk dialog terima dari PO
   const [poSuratJalan, setPoSuratJalan] = useState('')
@@ -154,6 +191,7 @@ export default function InboundPage() {
                       <TableHead>Gudang</TableHead>
                       <TableHead>Penerima</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="w-[80px]">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -182,6 +220,16 @@ export default function InboundPage() {
                         <TableCell className="text-sm">{gr.penerima}</TableCell>
                         <TableCell>
                           <Badge variant="default" className="text-xs bg-green-600">{gr.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-blue-600 hover:text-blue-800" onClick={() => openEdit(gr)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-700" onClick={() => setDeleteTarget(gr)}>
+                              <Trash className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -610,6 +658,69 @@ export default function InboundPage() {
               <CheckCircle className="h-4 w-4" />
               Konfirmasi Penerimaan
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog Hapus GR ── */}
+      <Dialog open={!!deleteTarget} onOpenChange={v => { if (!v) setDeleteTarget(null) }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Hapus GR?</DialogTitle>
+            <DialogDescription>
+              Yakin hapus <span className="font-mono font-semibold">{deleteTarget?.id}</span>?<br />
+              Stok yang sudah ditambahkan dari GR ini <strong>tidak otomatis dikurangi</strong>. Lakukan penyesuaian stok manual jika diperlukan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Batal</Button>
+            <Button variant="destructive" onClick={() => { if (deleteTarget) { deleteReceipt(deleteTarget.id); setDeleteTarget(null) } }}>
+              Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog Edit GR (header only) ── */}
+      <Dialog open={!!editTarget} onOpenChange={v => { if (!v) setEditTarget(null) }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit GR — <span className="font-mono">{editTarget?.id}</span></DialogTitle>
+            <DialogDescription>Perubahan pada data header saja. Item dan qty tidak dapat diubah di sini.</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 py-2">
+            <div className="space-y-1.5">
+              <Label>Supplier</Label>
+              <Input value={editSupplier} onChange={e => setEditSupplier(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>No. PIB</Label>
+              <Input value={editNoPIB} onChange={e => setEditNoPIB(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Tgl Masuk</Label>
+              <Input type="date" value={editTgl} onChange={e => setEditTgl(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Gudang</Label>
+              <Input value={editGudang} onChange={e => setEditGudang(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Penerima</Label>
+              <Input value={editPenerima} onChange={e => setEditPenerima(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>No. Surat Jalan</Label>
+              <Input value={editSJ} onChange={e => setEditSJ(e.target.value)} />
+            </div>
+            <div className="col-span-2 space-y-1.5">
+              <Label>Catatan</Label>
+              <Input value={editCatatan} onChange={e => setEditCatatan(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditTarget(null)}>Batal</Button>
+            <Button onClick={saveEdit}>Simpan Perubahan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

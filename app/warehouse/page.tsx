@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import AppLayout from '@/components/app-layout'
 
 import { DataTable } from '@/components/shared/data-table'
-import { MOCK_INVENTORY, MOCK_TRANSACTIONS } from "@/lib/mock-data/warehouse"
+import { MOCK_INVENTORY, MOCK_TRANSACTIONS, type InventoryItem } from "@/lib/mock-data/warehouse"
 import { AlertBadge } from "@/components/shared/alert-badge"
 import { useStock, useSubkontrak } from '@/lib/store/hooks'
 
@@ -34,10 +34,37 @@ export default function WarehouseDashboard() {
     r.status === 'Hasil Diterima' || r.status === 'Selesai'
   )
 
-  const lowStockCount = MOCK_INVENTORY.filter(i => i.status === 'Low Stock' || i.status === 'Critical').length
+  // F3: gabung MOCK_INVENTORY dengan live stock dari GR (yang belum ada di MOCK)
+  const liveInventoryExtra: InventoryItem[] = stock
+    .filter(s => s.category !== 'WIP' && !MOCK_INVENTORY.find(m => m.code === s.materialCode))
+    .map((s, i) => {
+      const catMap: Record<string, InventoryItem['category']> = {
+        BB: 'Raw Material', FG: 'Finished Goods', Packaging: 'Raw Material',
+      }
+      const qty = s.qtyOnHand
+      const status: InventoryItem['status'] = qty === 0 ? 'Critical' : qty < 50 ? 'Low Stock' : 'In Stock'
+      return {
+        id: `LIVE-${i}`,
+        code: s.materialCode,
+        name: s.materialName,
+        category: catMap[s.category] || 'Raw Material',
+        quantity: qty,
+        unit: s.unit,
+        location: s.location,
+        minStock: 0,
+        maxStock: Math.max(qty * 2, 1),
+        status,
+        value: 0,
+        lastUpdated: s.lastUpdated,
+        fasilitas: (s.fasilitas as 'KITE' | 'Non-KITE') || 'KITE',
+      }
+    })
+  const allInventory: InventoryItem[] = [...MOCK_INVENTORY, ...liveInventoryExtra]
+
+  const lowStockCount = allInventory.filter(i => i.status === 'Low Stock' || i.status === 'Critical').length
   const totalValue = MOCK_INVENTORY.reduce((acc, curr) => acc + curr.value, 0)
 
-  const filteredInventory = MOCK_INVENTORY.filter(item => {
+  const filteredInventory = allInventory.filter(item => {
     const matchSearch = search === '' ||
       item.name.toLowerCase().includes(search.toLowerCase()) ||
       item.code.toLowerCase().includes(search.toLowerCase()) ||
