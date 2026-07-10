@@ -105,7 +105,7 @@ export function useStock() {
   }, [])
 
   // Kurangi stok (dari WO/produksi/ekspor)
-  const deductStock = useCallback((materialCode: string, qty: number, ref: string, refType: string, txType: StockMovement['transactionType']) => {
+  const deductStock = useCallback((materialCode: string, qty: number, ref: string, refType: string, txType: StockMovement['transactionType'], notes?: string) => {
     const currentStock = getStore<StockItem>(STORE_KEYS.STOCK, SEED_STOCK)
     const currentMovements = getStore<StockMovement>('jkj_stock_movements', SEED_MOVEMENTS)
 
@@ -125,6 +125,7 @@ export function useStock() {
       transactionType: txType,
       referenceNumber: ref, referenceType: refType,
       quantityIn: 0, quantityOut: qty, runningBalance: newBalance,
+      notes: notes || undefined,
     }
 
     setStore(STORE_KEYS.STOCK, updatedStock)

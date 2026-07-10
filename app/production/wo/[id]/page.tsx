@@ -15,7 +15,7 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { StatusTimeline, TimelineStep } from '@/components/shared/status-timeline'
 import AppLayout from '@/components/app-layout'
 import { MOCK_BOMS } from '@/lib/mock-data/production'
-import { useWorkOrders, useStock } from '@/lib/store/hooks'
+import { useWorkOrders, useStock, useSalesOrders } from '@/lib/store/hooks'
 
 const STATUS_ACTIONS: Record<string, { label: string; icon: React.ElementType; variant?: string }[]> = {
   'PLANNED': [
@@ -40,6 +40,7 @@ export default function WorkOrderDetailPage() {
   const id = params.id as string
   const { getById, updateWorkOrder } = useWorkOrders()
   const { deductStock } = useStock()
+  const { updateOrder } = useSalesOrders()
   const wo = getById(id)
 
   if (!wo) {
@@ -110,13 +111,22 @@ export default function WorkOrderDetailPage() {
                 if (action.label === 'Mulai Produksi') {
                   if (bom) {
                     bom.items.forEach(item => {
-                      deductStock(item.code, item.quantityPerUnit * wo.quantity, wo.id, 'WO', 'PRODUCTION_OUT')
+                      deductStock(item.code, item.quantityPerUnit * wo.quantity, wo.id, 'WO', 'PRODUCTION_OUT', `satuan:${item.unit}`)
+                    })
+                  } else if (wo.bbItems?.length) {
+                    wo.bbItems.forEach(item => {
+                      deductStock(item.code, item.qty * wo.quantity, wo.id, 'WO', 'PRODUCTION_OUT', `satuan:${item.unit}`)
                     })
                   }
                   updateWorkOrder(wo.id, { status: 'IN PROGRESS', progress: 0 })
                 }
                 else if (action.label === 'Selesai → QC') updateWorkOrder(wo.id, { status: 'QC INSPECTION', progress: 90 })
-                else if (action.label === 'QC Lulus → Selesai') updateWorkOrder(wo.id, { status: 'COMPLETED', progress: 100 })
+                else if (action.label === 'QC Lulus → Selesai') {
+                  updateWorkOrder(wo.id, { status: 'COMPLETED', progress: 100 })
+                  if (wo.soNumber && wo.soNumber !== 'manual') {
+                    updateOrder(wo.soNumber, { status: 'READY TO SHIP' })
+                  }
+                }
                 else if (action.label === 'QC Gagal → Ulangi') updateWorkOrder(wo.id, { status: 'IN PROGRESS', progress: 50 })
                 else if (action.label === 'Tahan (On Hold)') updateWorkOrder(wo.id, { status: 'ON HOLD' })
                 else if (action.label === 'Lanjutkan Produksi') updateWorkOrder(wo.id, { status: 'IN PROGRESS' })

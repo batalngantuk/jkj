@@ -57,8 +57,19 @@ function CreateWOForm({ soId }: { soId: string | null }) {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
-  // Section 2: BOM — auto-filled from product
+  // Section 2: BOM — auto-filled or manual
   const [showBom, setShowBom] = useState(true)
+  const [manualBBItems, setManualBBItems] = useState([{ code: '', name: '', qty: '', unit: 'kg' }])
+
+  function addManualBBItem() {
+    setManualBBItems(prev => [...prev, { code: '', name: '', qty: '', unit: 'kg' }])
+  }
+  function updateManualBBItem(i: number, field: string, value: string) {
+    setManualBBItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: value } : item))
+  }
+  function removeManualBBItem(i: number) {
+    setManualBBItems(prev => prev.filter((_, idx) => idx !== i))
+  }
 
   // Section 3: Production Assignment
   const [selectedLine, setSelectedLine] = useState('')
@@ -101,6 +112,9 @@ function CreateWOForm({ soId }: { soId: string | null }) {
       line: line?.name || selectedLine,
       progress: 0,
       bomId: bom?.id || '',
+      bbItems: !bom
+        ? manualBBItems.filter(i => i.code && i.name).map(i => ({ code: i.code, name: i.name, qty: parseFloat(i.qty) || 0, unit: i.unit }))
+        : undefined,
     })
     setTimeout(() => {
       setIsLoading(false)
@@ -245,7 +259,24 @@ function CreateWOForm({ soId }: { soId: string | null }) {
                 </Table>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">BOM belum tersedia untuk produk ini.</p>
+              <div className="space-y-3">
+                <p className="text-xs text-amber-600 font-medium">BOM belum tersedia. Tambahkan bahan baku manual (opsional — untuk deduct stok dan laporan KITE):</p>
+                {manualBBItems.map((item, i) => (
+                  <div key={i} className="grid grid-cols-12 gap-2 items-center">
+                    <Input className="col-span-2 h-8 text-xs" placeholder="Kode BB" value={item.code} onChange={e => updateManualBBItem(i, 'code', e.target.value)} />
+                    <Input className="col-span-4 h-8 text-xs" placeholder="Nama Bahan Baku" value={item.name} onChange={e => updateManualBBItem(i, 'name', e.target.value)} />
+                    <Input className="col-span-2 h-8 text-xs" placeholder="Qty/unit" type="number" value={item.qty} onChange={e => updateManualBBItem(i, 'qty', e.target.value)} />
+                    <Select value={item.unit} onValueChange={v => updateManualBBItem(i, 'unit', v)}>
+                      <SelectTrigger className="col-span-3 h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {['kg','mtr','liter','pcs','prs','pce','roll','ctn','yard','yrd','sf','sht','tne','kgm','ftk','st','npr'].map(s => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Button type="button" variant="ghost" size="icon" className="col-span-1 h-8 w-8" onClick={() => removeManualBBItem(i)}>×</Button>
+                  </div>
+                ))}
+                <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={addManualBBItem}>+ Tambah Bahan Baku</Button>
+              </div>
             )
           )}
         </div>

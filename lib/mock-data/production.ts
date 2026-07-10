@@ -21,6 +21,7 @@ export interface WorkOrder {
   line: string
   progress: number
   bomId: string
+  bbItems?: Array<{ code: string; name: string; qty: number; unit: string }>
   history: Array<{
     date: string
     action: string

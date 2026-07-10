@@ -33,7 +33,7 @@ export default function PEBCreatePage() {
 
   // Form State
   const [pebNumber, setPebNumber] = useState('')
-  const [npeNumber, setNpeNumber] = useState('NPE-123456') // Default NPE
+  const [npeNumber, setNpeNumber] = useState('')
   const [customerId, setCustomerId] = useState('')
   const [customerName, setCustomerName] = useState('')
   const [customerManual, setCustomerManual] = useState(false)
@@ -62,23 +62,7 @@ export default function PEBCreatePage() {
   const [bc20Reference, setBc20Reference] = useState('')
 
   // Items
-  const [items, setItems] = useState<any[]>([
-    {
-      materialId: '1',
-      materialCode: 'FG-001',
-      materialName: 'Steel Coil Grade A',
-      hsCode: '7208.10.00',
-      hsDescription: 'Flat-rolled products of iron',
-      quantity: 100,
-      uom: 'MT',
-      unitPrice: 1250,
-      totalPrice: 125000,
-      packagingType: 'Bundle',
-      numberOfPackages: 10,
-      grossWeight: 102000,
-      netWeight: 100000,
-    },
-  ])
+  const [items, setItems] = useState<any[]>([])
 
   // Calculations
   const [fobValue, setFobValue] = useState(0)
@@ -289,8 +273,7 @@ export default function PEBCreatePage() {
                       <SelectValue placeholder="Pilih customer" />
                     </SelectTrigger>
                     <SelectContent>
-                      {[...new Set(['ABC Trading USA', 'XYZ Corp Japan', 'EuroTech GmbH',
-                        ...salesOrders.map(s => s.customer)])].map(c => (
+                      {[...new Set(salesOrders.map(s => s.customer))].map(c => (
                         <SelectItem key={c} value={c}>{c}</SelectItem>
                       ))}
                       <SelectItem value="__manual__">+ Input nama baru...</SelectItem>
