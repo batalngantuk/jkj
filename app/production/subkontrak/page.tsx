@@ -31,7 +31,7 @@ import {
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import { exportToExcel } from '@/lib/utils/export-excel'
-import { useSubkontrak } from '@/lib/store/hooks'
+import { useSubkontrak, useFGReceipts, useStock } from '@/lib/store/hooks'
 import {
   MOCK_SUBKON_MASTER,
   SUBKON_STATUS_STEPS,
@@ -93,6 +93,8 @@ interface BBItem { kodeBB: string; namaBB: string; qty: number; satuan: string; 
 
 export default function SubkontrakPage() {
   const { records, createSubkon, updateSubkon } = useSubkontrak()
+  const { createReceipt: createFGReceipt } = useFGReceipts()
+  const { addStock } = useStock()
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [selectedRecord, setSelectedRecord] = useState<SubkonRecord | null>(null)
   const [showFormDialog, setShowFormDialog] = useState(false)
@@ -123,6 +125,7 @@ export default function SubkontrakPage() {
   const [terimaQtys, setTerimaQtys] = useState<Record<number, string>>({})
   const [terimaNoSJ, setTerimaNoSJ] = useState('')
   const [terimaCatatan, setTerimaCatatan] = useState('')
+  const [terimaIsFinal, setTerimaIsFinal] = useState(false)
   // Produk jadi yang diterima
   const [terimaFGNama, setTerimaFGNama] = useState('')
   const [terimaFGQty, setTerimaFGQty] = useState('')
@@ -192,15 +195,43 @@ export default function SubkontrakPage() {
       ...item,
       qtyKembali: parseFloat(terimaQtys[i] ?? item.qtyKirim) || 0,
     }))
+    // F6: parsial → status tetap 'Dalam Proses'; jika final → 'Hasil Diterima'
     updateSubkon(terimaTarget.id, {
-      status: 'Hasil Diterima',
+      status: terimaIsFinal ? 'Hasil Diterima' : 'Dalam Proses',
       subkKiteTerimaNo: terimaKiteNo,
       subkKiteTerimaTgl: terimaTgl,
       items: updatedItems,
     })
+
+    // F7: tulis ke FG Receipts (Lap 4) dan Stock (Lap 7) agar laporan update
+    if (terimaFGNama && terimaFGQty) {
+      const qty = parseFloat(terimaFGQty) || 0
+      if (qty > 0) {
+        const fgCode = terimaFGNama.replace(/\s+/g, '-').toUpperCase()
+        createFGReceipt({
+          woId: terimaKiteNo || terimaTarget.id,
+          woNumber: terimaKiteNo || terimaTarget.id,
+          soNumber: terimaTarget.noSO || '-',
+          productName: terimaFGNama,
+          qtyProduced: qty,
+          qtyReceived: qty,
+          qtyReject: 0,
+          unit: terimaFGSatuan,
+          wasteQty: 0,
+          wasteRatio: 0,
+          gudangTujuan: 'Gudang FG-A',
+          penerima: '-',
+          tanggal: terimaTgl,
+          status: 'Diterima',
+        })
+        addStock(fgCode, terimaFGNama, qty, terimaKiteNo || terimaTarget.id, 'SUBKON', 'FG', terimaFGSatuan, 'Gudang FG-A')
+      }
+    }
+
     setShowTerima(false)
     setTerimaTarget(null)
     setSelectedRecord(null)
+    setTerimaIsFinal(false)
   }
 
   function handleConfirmKirim() {
@@ -599,10 +630,16 @@ export default function SubkontrakPage() {
                 </>
               )}
               {selectedRecord.status === 'Hasil Diterima' && (
-                <Button className="gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Selesaikan Job
-                </Button>
+                <>
+                  <Button variant="outline" className="gap-2 text-green-700 border-green-300" onClick={() => { openTerima(selectedRecord); setSelectedRecord(null) }}>
+                    <Package className="h-4 w-4" />
+                    Terima Lagi (Parsial)
+                  </Button>
+                  <Button className="gap-2" onClick={() => { updateSubkon(selectedRecord.id, { status: 'Selesai' }); setSelectedRecord(null) }}>
+                    <CheckCircle2 className="h-4 w-4" />
+                    Selesaikan Job
+                  </Button>
+                </>
               )}
             </div>
           </DialogContent>
@@ -767,15 +804,26 @@ export default function SubkontrakPage() {
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setShowTerima(false)}>Batal</Button>
-            <Button
-              className="gap-2 bg-green-600 hover:bg-green-700"
-              disabled={!terimaTgl || !terimaKiteNo}
-              onClick={handleConfirmTerima}
-            >
-              <Package className="h-4 w-4" />Konfirmasi Terima Hasil CMT
-            </Button>
+          <div className="flex items-center justify-between pt-2">
+            <label className="flex items-center gap-2 cursor-pointer text-sm">
+              <input
+                type="checkbox"
+                checked={terimaIsFinal}
+                onChange={e => setTerimaIsFinal(e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span className="text-muted-foreground">Ini penerimaan <strong>terakhir</strong> (tutup job)</span>
+            </label>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => { setShowTerima(false); setTerimaIsFinal(false) }}>Batal</Button>
+              <Button
+                className="gap-2 bg-green-600 hover:bg-green-700"
+                disabled={!terimaTgl || !terimaKiteNo}
+                onClick={handleConfirmTerima}
+              >
+                <Package className="h-4 w-4" />{terimaIsFinal ? 'Terima & Tutup Job' : 'Terima Parsial'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
