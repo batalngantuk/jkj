@@ -29,7 +29,7 @@ import {
   type WasteScrap,
 } from '@/lib/mock-data/kite-inventory'
 import { exportToExcel, exportToExcelMultiSheet } from '@/lib/utils/export-excel'
-import { useFGReceipts, usePEB, useWaste, useStock, useSubkontrak } from '@/lib/store/hooks'
+import { useFGReceipts, usePEB, useWaste, useStock, useSubkontrak, useGoodsReceipts } from '@/lib/store/hooks'
 
 function formatNumber(n: number) {
   return n.toLocaleString('id-ID')
@@ -46,51 +46,58 @@ export default function KiteInventoryPage() {
   const { records: wasteRecords } = useWaste()
   const { stock, movements } = useStock()
   const { records: subkonRecords } = useSubkontrak()
+  const { receipts: grReceipts } = useGoodsReceipts()
 
   const [dateFrom, setDateFrom] = useState('2026-01-01')
   const [dateTo, setDateTo] = useState('2026-12-31')
 
-  // Lap 1: Pemasukan BB — seed + live GR/IMPORT movements (BB category)
-  const livePemasukanBB: PemasukanBB[] = movements
-    .filter(m => (m.transactionType === 'IMPORT' || m.transactionType === 'LOCAL_PURCHASE') && m.quantityIn > 0)
-    .filter(m => !MOCK_PEMASUKAN_BB.find(s => s.buktiPenerimaanNo === m.referenceNumber))
-    .map((m, i) => ({
-      no: MOCK_PEMASUKAN_BB.length + i + 1,
-      tglRekam: m.date,
-      jenisDokumen: m.transactionType === 'IMPORT' ? 'BC 2.0' : 'Faktur Lokal',
-      noDokumen: m.referenceNumber,
-      tglDokumen: m.date,
-      kodeHS: '-',
-      noSeriBarang: '001',
-      buktiPenerimaanNo: m.referenceNumber,
-      buktiPenerimaanTgl: m.date,
-      kodeBB: m.materialCode,
-      namaBarang: m.materialName,
-      satuan: 'kg',
-      jumlah: m.quantityIn,
-      matauang: 'USD',
-      nilaiBarang: 0,
-      gudang: 'Gudang BB-1',
-      penerimaSubkon: '-',
-      negaraAsal: '-',
-    }))
-  const allPemasukanBB = [...MOCK_PEMASUKAN_BB, ...livePemasukanBB]
+  // Lap 1: Pemasukan BB — seed + live GR receipts (sumber langsung dari modul Inbound)
+  // B1: gunakan gr.id (bukan PO), B2: satuan dari GR item, B3: matauang dari jenisDoc
+  const liveGRPemasukanBB: PemasukanBB[] = grReceipts
+    .filter(gr => !MOCK_PEMASUKAN_BB.find(s => s.buktiPenerimaanNo === gr.id))
+    .flatMap((gr, gi) =>
+      gr.items.map((item, ii) => ({
+        no: MOCK_PEMASUKAN_BB.length + gi + ii + 1,
+        tglRekam: gr.tglMasuk,
+        jenisDokumen: gr.jenisDoc,
+        noDokumen: gr.noPIB && gr.noPIB !== '-' ? gr.noPIB : gr.noPO,
+        tglDokumen: gr.tglMasuk,
+        kodeHS: '-',
+        noSeriBarang: String(ii + 1).padStart(3, '0'),
+        buktiPenerimaanNo: gr.id,
+        buktiPenerimaanTgl: gr.tglMasuk,
+        kodeBB: item.kode,
+        namaBarang: item.nama,
+        satuan: item.satuan,
+        jumlah: item.qtyDiterima,
+        matauang: gr.jenisDoc === 'BC 2.0' ? 'USD' : 'IDR',
+        nilaiBarang: 0,
+        gudang: gr.gudang,
+        penerimaSubkon: '-',
+        negaraAsal: '-',
+      }))
+    )
+  const allPemasukanBB = [...MOCK_PEMASUKAN_BB, ...liveGRPemasukanBB]
 
   // Lap 2: Pemakaian BB — seed + live PRODUCTION_OUT movements
+  // B2: satuan dari stock lookup, bukan hardcoded 'kg'
   const livePemakaianBB: PemakaianBB[] = movements
     .filter(m => m.transactionType === 'PRODUCTION_OUT' && m.quantityOut > 0)
     .filter(m => !MOCK_PEMAKAIAN_BB.find(s => s.buktiPengeluaranNo === m.referenceNumber))
-    .map((m, i) => ({
-      no: MOCK_PEMAKAIAN_BB.length + i + 1,
-      buktiPengeluaranNo: m.referenceNumber,
-      buktiPengeluaranTgl: m.date,
-      kodeBarang: m.materialCode,
-      namaBarang: m.materialName,
-      satuan: 'kg',
-      jumlahDigunakan: m.quantityOut,
-      jumlahDisubkonkan: 0,
-      penerimaSubkon: '-',
-    }))
+    .map((m, i) => {
+      const stockItem = stock.find(s => s.materialCode === m.materialCode)
+      return {
+        no: MOCK_PEMAKAIAN_BB.length + i + 1,
+        buktiPengeluaranNo: m.referenceNumber,
+        buktiPengeluaranTgl: m.date,
+        kodeBarang: m.materialCode,
+        namaBarang: m.materialName,
+        satuan: stockItem?.unit || m.notes?.match(/satuan:(\w+)/)?.[1] || 'kg',
+        jumlahDigunakan: m.quantityOut,
+        jumlahDisubkonkan: 0,
+        penerimaSubkon: '-',
+      }
+    })
   const allPemakaianBB = [...MOCK_PEMAKAIAN_BB, ...livePemakaianBB]
 
   // Lap 3: Pemakaian BB Subkontrak — seed + live subkon records (KITE items)
