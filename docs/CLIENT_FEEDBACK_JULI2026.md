@@ -201,4 +201,34 @@ Nomor Pendaftaran sudah ditambahkan sebagai field tersendiri di bagian **Informa
 
 ---
 
+---
+
+## Catatan — Pertanyaan Berulang
+
+---
+
+**R1. File attachment PO tidak muncul setelah approved**
+
+Ini adalah keterbatasan sistem demo. Sistem saat ini hanya menyimpan metadata file (nama file, ukuran), bukan file aslinya. Saat halaman dibuka kembali, file tidak bisa ditampilkan ulang karena tidak ada server penyimpanan file di lingkungan demo. Fitur upload file nyata akan tersedia di versi produksi dengan server storage.
+
+---
+
+**R2. Satuan belum lengkap di beberapa tempat**
+
+Sudah dilengkapi sepenuhnya. Satuan yang sebelumnya kelewat (YRD, NPR, PRS, dan lainnya) sekarang sudah tersedia di BOM Sales Order dan di form Kirim BB Subkontrak. Lihat juga item 11 di atas.
+
+---
+
+**R3. WO tidak muncul di tab "Input BJ ke Gudang" (Outbound)**
+
+Ini bukan bug — ini alur yang memang harus dilalui. Tab "Input BJ ke Gudang" hanya menampilkan WO yang sudah berstatus **COMPLETED** (QC Lulus). WO yang masih PLANNED, IN PROGRESS, atau QC INSPECTION belum bisa di-input BJ-nya karena produksinya belum selesai.
+
+Alur yang benar:
+1. Buat WO → status PLANNED
+2. Klik "Mulai Produksi" → IN PROGRESS
+3. Klik "Selesai → QC" → QC INSPECTION
+4. Klik "QC Lulus → Selesai" → COMPLETED → WO muncul di tab Input BJ
+
+---
+
 *Untuk pertanyaan lain, lihat juga FAQ_KLIEN.md yang lebih lengkap.*
