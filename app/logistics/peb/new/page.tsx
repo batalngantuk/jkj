@@ -20,13 +20,14 @@ import {
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import { useRouter } from 'next/navigation'
-import { usePEB, useSalesOrders } from '@/lib/store/hooks'
+import { usePEB, useSalesOrders, useWorkOrders } from '@/lib/store/hooks'
 import { AlertTriangle } from 'lucide-react'
 
 export default function PEBCreatePage() {
   const router = useRouter()
   const { createPEB } = usePEB()
   const { orders: salesOrders } = useSalesOrders()
+  const { workOrders } = useWorkOrders()
   const [loading, setLoading] = useState(false)
   const [soRef, setSoRef] = useState('')
 
@@ -35,6 +36,7 @@ export default function PEBCreatePage() {
   const [npeNumber, setNpeNumber] = useState('NPE-123456') // Default NPE
   const [customerId, setCustomerId] = useState('')
   const [customerName, setCustomerName] = useState('')
+  const [customerManual, setCustomerManual] = useState(false)
   const [invoiceNo, setInvoiceNo] = useState('')
   const [invoiceDate, setInvoiceDate] = useState('')
   const [destinationCountry, setDestinationCountry] = useState('')
@@ -265,20 +267,36 @@ export default function PEBCreatePage() {
               </div>
               <div>
                 <Label htmlFor="customerId">Customer *</Label>
-                <Select value={customerId} onValueChange={(value) => {
-                  setCustomerId(value)
-                  if (value === '1') setCustomerName('ABC Trading USA')
-                  if (value === '2') setCustomerName('XYZ Corp Japan')
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select customer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">ABC Trading USA</SelectItem>
-                    <SelectItem value="2">XYZ Corp Japan</SelectItem>
-                    <SelectItem value="3">EuroTech GmbH</SelectItem>
-                  </SelectContent>
-                </Select>
+                {customerManual ? (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Nama customer baru..."
+                      value={customerName}
+                      onChange={e => setCustomerName(e.target.value)}
+                      autoFocus
+                    />
+                    <Button type="button" variant="ghost" size="sm" className="shrink-0 text-xs" onClick={() => { setCustomerManual(false); setCustomerName('') }}>
+                      Batal
+                    </Button>
+                  </div>
+                ) : (
+                  <Select value={customerId} onValueChange={(value) => {
+                    if (value === '__manual__') { setCustomerManual(true); setCustomerId(''); return }
+                    setCustomerId(value)
+                    setCustomerName(value)
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[...new Set(['ABC Trading USA', 'XYZ Corp Japan', 'EuroTech GmbH',
+                        ...salesOrders.map(s => s.customer)])].map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                      <SelectItem value="__manual__">+ Input nama baru...</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
 
@@ -539,12 +557,18 @@ export default function PEBCreatePage() {
               </div>
               <div>
                 <Label htmlFor="workOrderId">Work Order (Optional)</Label>
-                <Input
-                  id="workOrderId"
-                  value={workOrderId}
-                  onChange={(e) => setWorkOrderId(e.target.value)}
-                  placeholder="WO-2026-001"
-                />
+                <Select value={workOrderId} onValueChange={setWorkOrderId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="— Pilih WO —" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(workOrders as Array<{id: string; product: string}>).map(wo => (
+                      <SelectItem key={wo.id} value={wo.id}>
+                        {wo.id} — {wo.product}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="fgLotNumber">Kode Barang FG (Optional)</Label>
