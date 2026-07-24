@@ -3,6 +3,23 @@
 
 ---
 
+## Keterbatasan Versi Demo
+
+Sebelum mulai, pahami dulu batasan sistem demo ini:
+
+| Keterbatasan | Penjelasan |
+|---|---|
+| **Data tidak permanen** | Tersimpan di localStorage browser. Bersih jika browser di-clear atau pakai incognito |
+| **Upload file tidak nyata** | Lampiran PO/dokumen hanya mencatat nama file — file tidak tersimpan ke server |
+| **Tidak ada sinkronisasi** | Data berbeda di tiap perangkat/browser |
+| **Tidak ada notifikasi** | Approval, pengiriman, dll tidak kirim email/notif |
+| **Period lock belum ada** | Tidak bisa kunci periode akuntansi di versi demo |
+| **Print PDF belum sempurna** | Gunakan print browser biasa — tampilan tergantung browser |
+
+Semua keterbatasan ini **tidak ada di versi produksi** yang akan terhubung ke server dan database.
+
+---
+
 ## Alur Kerja dari Awal sampai Laporan
 
 Ikuti urutan ini. Kalau ada langkah yang dilewati, data tidak akan muncul di laporan.
@@ -147,6 +164,7 @@ Ada dua cara:
 - Nama produk di SO bisa diketik bebas — tidak perlu pilih dari daftar.
 - SO harus di-**Approve** dulu sebelum bisa dibuat WO.
 - Setelah WO selesai dan BJ sudah dikirim, status SO akan berubah sendiri.
+- Untuk melihat progress fulfillment (berapa yang sudah diproduksi, sudah dikirim, sisa): buka detail SO → lihat card **"Progress Fulfillment"** di bagian bawah. Warna hijau = target terpenuhi, kuning/merah = masih kurang.
 
 ---
 
@@ -168,10 +186,20 @@ Ada dua cara:
 
 ---
 
+### Gudang — Pengeluaran BB (Issue)
+
+- Halaman `/warehouse/issue` mencatat pengeluaran bahan baku untuk keperluan non-produksi (sampel, rusak, dll).
+- Untuk hapus pengeluaran yang salah: klik ikon **tong sampah** di baris yang ingin dihapus → konfirmasi → data terhapus.
+- **Catatan demo:** hapus pengeluaran hanya menghapus catatannya — stok tidak otomatis kembali. Di versi produksi ada jurnal koreksi otomatis.
+
+---
+
 ### Gudang — Outbound
 
 - **Tab 1 — Input Barang Jadi**: untuk terima FG dari produksi. Hanya WO berstatus COMPLETED yang muncul.
+  - Penerimaan yang sudah diinput bisa diedit (qty, gudang, penerima) atau dihapus via ikon **pensil / tong sampah** di tabel riwayat.
 - **Tab 2 — Kirim ke Customer**: untuk kirim FG ke customer. Hanya SO berstatus READY TO SHIP yang muncul. SO otomatis jadi READY TO SHIP setelah WO-nya selesai (QC Lulus).
+  - Kolom **"Stok BJ Tersedia"** menampilkan total FG yang sudah masuk gudang untuk SO tersebut. Hijau = cukup, kuning = masih kurang dari target.
 
 ---
 
@@ -212,5 +240,7 @@ Pilih sesuai line fisik yang mengerjakan order tersebut (Line A, B, C, atau D). 
 ## Valuasi Stok — Di Mana?
 
 Buka **Finance → Chart of Accounts → Tab "Valuasi Stok"** (`/finance/accounts`). Di sana terlihat nilai stok per kategori (BB / FG / WIP / Packaging) berdasarkan qty × harga satuan yang diinput saat penerimaan barang.
+
+Untuk export ke Excel: klik tombol **"Export Excel"** di pojok kanan atas tabel valuasi. File berisi kode, nama, qty, satuan, harga satuan, dan total nilai per material.
 
 Untuk riwayat pergerakan stok (masuk/keluar per material), buka **Laporan KITE → Tab 6 atau 7**, atau halaman **Reports → Stock Movement** (`/reports/stock-movement`). Bisa di-export ke Excel.
