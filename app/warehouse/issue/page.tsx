@@ -122,6 +122,8 @@ export default function WarehouseIssuePage() {
   const totalKeProduksi = history.filter(h => h.tujuan === 'Produksi').length
   const totalKeSubkon = history.filter(h => h.tujuan === 'Subkon').length
 
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
@@ -195,6 +197,7 @@ export default function WarehouseIssuePage() {
                   <TableHead>Material</TableHead>
                   <TableHead>Catatan</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -223,6 +226,11 @@ export default function WarehouseIssuePage() {
                       <Badge className="text-xs bg-green-100 text-green-800 border-green-300" variant="outline">
                         <CheckCircle className="h-3 w-3 mr-1" />Selesai
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-700" onClick={() => setDeleteId(h.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -410,6 +418,21 @@ export default function WarehouseIssuePage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Konfirmasi hapus */}
+      <Dialog open={!!deleteId} onOpenChange={v => !v && setDeleteId(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Hapus Bukti Pengeluaran?</DialogTitle>
+            <DialogDescription>Catatan pengeluaran akan dihapus dari riwayat. Stok BB tidak akan otomatis dikembalikan.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>Batal</Button>
+            <Button variant="destructive" onClick={() => { setHistory(prev => prev.filter(h => h.id !== deleteId)); setDeleteId(null) }}>Hapus</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </AppLayout>
   )
 }

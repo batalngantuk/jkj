@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft, Truck, Package, PackageCheck, FileText, CheckCircle,
-  Search, ClipboardList, Warehouse, Download, AlertTriangle
+  Search, ClipboardList, Warehouse, Download, AlertTriangle, Pencil, Trash2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -24,11 +24,12 @@ import { useWorkOrders, useSalesOrders, useFGReceipts, useStock, useShipments } 
 import { exportToExcel } from '@/lib/utils/export-excel'
 import type { WorkOrder } from '@/lib/mock-data/production'
 import type { SalesOrder } from '@/lib/mock-data/sales'
+import type { FGReceipt } from '@/lib/store/hooks'
 
 export default function OutboundPage() {
   const { workOrders } = useWorkOrders()
   const { orders: salesOrders } = useSalesOrders()
-  const { receipts, createReceipt } = useFGReceipts()
+  const { receipts, createReceipt, updateReceipt, deleteReceipt } = useFGReceipts()
   const { addStock } = useStock()
   const { shipments, createShipment } = useShipments()
 
@@ -74,6 +75,26 @@ export default function OutboundPage() {
   }
 
   const [activeTab, setActiveTab] = useState('fg-entry')
+
+  // FGR edit/delete state
+  const [editFGR, setEditFGR] = useState<FGReceipt | null>(null)
+  const [editFGRForm, setEditFGRForm] = useState({ qtyReceived: '', qtyReject: '', gudangTujuan: '', penerima: '' })
+  const [deleteFGRId, setDeleteFGRId] = useState<string | null>(null)
+
+  function openEditFGR(r: FGReceipt) {
+    setEditFGR(r)
+    setEditFGRForm({ qtyReceived: String(r.qtyReceived), qtyReject: String(r.qtyReject), gudangTujuan: r.gudangTujuan, penerima: r.penerima })
+  }
+  function saveEditFGR() {
+    if (!editFGR) return
+    updateReceipt(editFGR.id, {
+      qtyReceived: parseFloat(editFGRForm.qtyReceived) || editFGR.qtyReceived,
+      qtyReject: parseFloat(editFGRForm.qtyReject) || 0,
+      gudangTujuan: editFGRForm.gudangTujuan,
+      penerima: editFGRForm.penerima,
+    })
+    setEditFGR(null)
+  }
 
   const openShipForm = (so: SalesOrder) => {
     setSelectedSO(so)
@@ -251,12 +272,13 @@ export default function OutboundPage() {
                       <TableHead className="text-right">Qty Rejek</TableHead>
                       <TableHead>Gudang</TableHead>
                       <TableHead>Penerima</TableHead>
+                      <TableHead>Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {receipts.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">Belum ada penerimaan BJ</TableCell>
+                        <TableCell colSpan={9} className="text-center text-muted-foreground py-8">Belum ada penerimaan BJ</TableCell>
                       </TableRow>
                     ) : receipts.map((r) => (
                       <TableRow key={r.id}>
@@ -274,6 +296,16 @@ export default function OutboundPage() {
                         </TableCell>
                         <TableCell>{r.gudangTujuan}</TableCell>
                         <TableCell>{r.penerima}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditFGR(r)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-700" onClick={() => setDeleteFGRId(r.id)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -318,18 +350,27 @@ export default function OutboundPage() {
                         <TableHead>Customer</TableHead>
                         <TableHead>Produk</TableHead>
                         <TableHead className="text-right">Qty SO</TableHead>
+                        <TableHead className="text-right">Stok BJ Tersedia</TableHead>
                         <TableHead>Deadline</TableHead>
                         <TableHead>Prioritas</TableHead>
                         <TableHead>Aksi</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredSO.map((so) => (
+                      {filteredSO.map((so) => {
+                        const soWoIds = new Set(workOrders.filter((w: WorkOrder) => w.soNumber === so.id).map((w: WorkOrder) => w.id))
+                        const fgAvail = receipts.filter(r => soWoIds.has(r.woId)).reduce((s, r) => s + r.qtyReceived, 0)
+                        const fgCount = receipts.filter(r => soWoIds.has(r.woId)).length
+                        return (
                         <TableRow key={so.id}>
                           <TableCell className="font-medium text-primary">{so.id}</TableCell>
                           <TableCell>{so.customer}</TableCell>
                           <TableCell>{so.product}</TableCell>
                           <TableCell className="text-right font-medium">{so.quantity.toLocaleString()}</TableCell>
+                          <TableCell className="text-right">
+                            <span className={fgAvail >= so.quantity ? 'text-green-600 font-semibold' : 'text-amber-600 font-semibold'}>{fgAvail.toLocaleString()}</span>
+                            {fgCount > 1 && <span className="text-xs text-muted-foreground ml-1">({fgCount}x)</span>}
+                          </TableCell>
                           <TableCell className={so.priority === 'Urgent' ? 'text-red-600 font-medium' : ''}>
                             {so.deliveryDate}
                           </TableCell>
@@ -347,7 +388,8 @@ export default function OutboundPage() {
                             </Button>
                           </TableCell>
                         </TableRow>
-                      ))}
+                        )
+                      })}
                     </TableBody>
                   </Table>
                 )}
@@ -726,6 +768,59 @@ export default function OutboundPage() {
                 <Truck className="h-4 w-4" />
                 Dispatch Pengiriman
               </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit FGR Dialog */}
+        <Dialog open={!!editFGR} onOpenChange={v => !v && setEditFGR(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Penerimaan BJ — {editFGR?.id}</DialogTitle>
+              <DialogDescription>{editFGR?.productName} · WO: {editFGR?.woId}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Qty Diterima</Label>
+                  <Input type="number" value={editFGRForm.qtyReceived} onChange={e => setEditFGRForm(p => ({ ...p, qtyReceived: e.target.value }))} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Qty Rejek</Label>
+                  <Input type="number" value={editFGRForm.qtyReject} onChange={e => setEditFGRForm(p => ({ ...p, qtyReject: e.target.value }))} />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Gudang Tujuan</Label>
+                <Select value={editFGRForm.gudangTujuan} onValueChange={v => setEditFGRForm(p => ({ ...p, gudangTujuan: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {['Gudang FG-A', 'Gudang FG-B', 'Gudang Sementara'].map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Penerima</Label>
+                <Input value={editFGRForm.penerima} onChange={e => setEditFGRForm(p => ({ ...p, penerima: e.target.value }))} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditFGR(null)}>Batal</Button>
+              <Button onClick={saveEditFGR}>Simpan</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete FGR Confirm */}
+        <Dialog open={!!deleteFGRId} onOpenChange={v => !v && setDeleteFGRId(null)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Hapus Penerimaan BJ?</DialogTitle>
+              <DialogDescription>Data penerimaan akan dihapus dari riwayat. Stok FG tidak akan otomatis dikurangi kembali.</DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteFGRId(null)}>Batal</Button>
+              <Button variant="destructive" onClick={() => { if (deleteFGRId) { deleteReceipt(deleteFGRId); setDeleteFGRId(null) } }}>Hapus</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

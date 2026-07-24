@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft, Save, Building2, Package, Landmark, Users,
-  Plus, Trash2, BookOpen, BarChart3
+  Plus, Trash2, BookOpen, BarChart3, Download
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -18,6 +18,7 @@ import AppLayout from '@/components/app-layout'
 import { useAccounts, type AccountBalances } from '@/lib/store/useAccounts'
 import { useChartOfAccounts, type AkunTipe } from '@/lib/store/hooks'
 import { useStock } from '@/lib/store/hooks'
+import { exportToExcel } from '@/lib/utils/export-excel'
 
 // ------- Saldo Awal helpers -------
 function formatIDR(n: number) {
@@ -422,11 +423,30 @@ export default function AccountsPage() {
                     </CardTitle>
                     <CardDescription>Nilai persediaan berdasarkan harga beli terakhir</CardDescription>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Total Nilai Persediaan</p>
-                    <p className="text-2xl font-bold text-emerald-700">
-                      {formatIDR(grandTotal)}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground">Total Nilai Persediaan</p>
+                      <p className="text-2xl font-bold text-emerald-700">{formatIDR(grandTotal)}</p>
+                    </div>
+                    <Button size="sm" variant="outline" className="gap-1.5" onClick={() => {
+                      exportToExcel(
+                        stockWithValue.map(s => ({
+                          'Kategori': s.category === 'BB' ? 'Bahan Baku' : s.category === 'FG' ? 'Barang Jadi' : s.category,
+                          'Kode Material': s.materialCode,
+                          'Nama Material': s.materialName,
+                          'Fasilitas': s.fasilitas || '-',
+                          'Qty On Hand': s.qtyOnHand,
+                          'Satuan': s.unit,
+                          'Harga Satuan (Rp)': s.hargaSatuan,
+                          'Total Nilai (Rp)': s.totalNilai,
+                          'Lokasi': s.location,
+                        })),
+                        `Valuasi_Stok_${new Date().toISOString().slice(0,10)}`
+                      )
+                    }}>
+                      <Download className="h-4 w-4" />
+                      Export Excel
+                    </Button>
                   </div>
                 </div>
               </CardHeader>

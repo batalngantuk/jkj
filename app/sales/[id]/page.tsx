@@ -11,8 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { MOCK_CUSTOMERS } from '@/lib/mock-data/sales'
-import { useSalesOrders } from '@/lib/store/hooks'
-import { useWorkOrders } from '@/lib/store/hooks'
+import { useSalesOrders, useWorkOrders, useFGReceipts, useShipments } from '@/lib/store/hooks'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { StatusTimeline, TimelineStep } from '@/components/shared/status-timeline'
 import { ApprovalButtonGroup } from '@/components/shared/approval-button-group'
@@ -25,6 +24,8 @@ export default function SalesOrderDetailPage() {
   const id = params.id as string
   const { getById, updateOrder } = useSalesOrders()
   const { getBySoNumber } = useWorkOrders()
+  const { receipts: fgReceipts } = useFGReceipts()
+  const { shipments } = useShipments()
 
   // Edit dialog state
   const [showEdit, setShowEdit] = useState(false)
@@ -50,6 +51,14 @@ export default function SalesOrderDetailPage() {
 
   const customer = MOCK_CUSTOMERS.find(c => c.name === order.customer)
   const relatedWOs = getBySoNumber(order.id)
+
+  // Progress fulfillment
+  const woIds = new Set(relatedWOs.map(w => w.id))
+  const soFGReceipts = fgReceipts.filter(r => woIds.has(r.woId))
+  const totalFGReceived = soFGReceipts.reduce((s, r) => s + r.qtyReceived, 0)
+  const soShipments = shipments.filter((s: { soNumber?: string }) => s.soNumber === order.id)
+  const totalShipped = soShipments.reduce((s: number, sh: { qtyDikirim?: number }) => s + (sh.qtyDikirim || 0), 0)
+  const remainingToShip = Math.max(0, order.quantity - totalShipped)
 
   const timelineSteps: TimelineStep[] = [
     {
@@ -301,6 +310,48 @@ export default function SalesOrderDetailPage() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Progress Fulfillment */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Truck className="h-4 w-4 text-blue-600" />
+                    Progress Fulfillment
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="rounded-lg border p-3 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Target Qty SO</p>
+                      <p className="text-xl font-bold">{order.quantity.toLocaleString()}</p>
+                    </div>
+                    <div className="rounded-lg border p-3 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">BJ Sudah Masuk Gudang</p>
+                      <p className={`text-xl font-bold ${totalFGReceived >= order.quantity ? 'text-green-600' : 'text-amber-600'}`}>{totalFGReceived.toLocaleString()}</p>
+                      {soFGReceipts.length > 1 && <p className="text-xs text-muted-foreground">({soFGReceipts.length}x penerimaan)</p>}
+                    </div>
+                    <div className="rounded-lg border p-3 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Sudah Dikirim ke Customer</p>
+                      <p className={`text-xl font-bold ${totalShipped >= order.quantity ? 'text-green-600' : remainingToShip > 0 ? 'text-red-600' : 'text-foreground'}`}>{totalShipped.toLocaleString()}</p>
+                      {remainingToShip > 0 && <p className="text-xs text-red-500">Sisa: {remainingToShip.toLocaleString()}</p>}
+                    </div>
+                  </div>
+                  {soFGReceipts.length > 0 && (
+                    <div className="text-xs space-y-1">
+                      <p className="font-medium text-muted-foreground">Detail Penerimaan BJ:</p>
+                      {soFGReceipts.map(r => (
+                        <div key={r.id} className="flex justify-between text-muted-foreground border-b pb-1">
+                          <span>{r.id} · {r.tanggal}</span>
+                          <span className="font-medium">{r.qtyReceived.toLocaleString()} {r.unit} ({r.gudangTujuan})</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {soFGReceipts.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-2">Belum ada BJ yang masuk dari WO terkait.</p>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* History */}
               <Card>

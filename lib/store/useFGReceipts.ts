@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { STORE_KEYS, getStore, addToStore, generateId } from './index'
+import { STORE_KEYS, getStore, setStore, addToStore, generateId } from './index'
 
 export interface FGReceipt {
   id: string
@@ -78,5 +78,19 @@ export function useFGReceipts() {
     return getStore<FGReceipt>(STORE_KEYS.FG_RECEIPTS, SEED).filter(r => r.qtyReceived > 0)
   }, [])
 
-  return { receipts, createReceipt, getByWoId, getAvailableForPEB, refresh }
+  const updateReceipt = useCallback((id: string, patch: Partial<Omit<FGReceipt, 'id' | 'createdAt'>>) => {
+    const current = getStore<FGReceipt>(STORE_KEYS.FG_RECEIPTS, SEED)
+    const updated = current.map(r => r.id === id ? { ...r, ...patch } : r)
+    setStore(STORE_KEYS.FG_RECEIPTS, updated)
+    setReceipts(updated)
+  }, [])
+
+  const deleteReceipt = useCallback((id: string) => {
+    const current = getStore<FGReceipt>(STORE_KEYS.FG_RECEIPTS, SEED)
+    const updated = current.filter(r => r.id !== id)
+    setStore(STORE_KEYS.FG_RECEIPTS, updated)
+    setReceipts(updated)
+  }, [])
+
+  return { receipts, createReceipt, updateReceipt, deleteReceipt, getByWoId, getAvailableForPEB, refresh }
 }
