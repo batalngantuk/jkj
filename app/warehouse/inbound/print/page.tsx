@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useGoodsReceipts } from '@/lib/store/useGoodsReceipts'
 
-export default function PrintBC11Page() {
+function PrintBC11Content() {
   const searchParams = useSearchParams()
   const grId = searchParams.get('id')
   const { receipts } = useGoodsReceipts()
@@ -138,5 +138,13 @@ export default function PrintBC11Page() {
         </div>
       </div>
     </>
+  )
+}
+
+export default function PrintBC11Page() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Memuat dokumen...</div>}>
+      <PrintBC11Content />
+    </Suspense>
   )
 }

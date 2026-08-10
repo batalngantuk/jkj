@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { STORE_KEYS, getStore } from '@/lib/store/index'
 
@@ -21,7 +21,7 @@ const SEED: BPBEntry[] = [
   },
 ]
 
-export default function PrintBC12Page() {
+function PrintBC12Content() {
   const searchParams = useSearchParams()
   const bpbId = searchParams.get('id')
   const [bpb, setBpb] = useState<BPBEntry | null>(null)
@@ -149,5 +149,13 @@ export default function PrintBC12Page() {
         </div>
       </div>
     </>
+  )
+}
+
+export default function PrintBC12Page() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Memuat dokumen...</div>}>
+      <PrintBC12Content />
+    </Suspense>
   )
 }
