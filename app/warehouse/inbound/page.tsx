@@ -20,7 +20,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter
 } from '@/components/ui/dialog'
-import { Pencil, Trash2 as Trash } from 'lucide-react'
+import { Pencil, Trash2 as Trash, Printer } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import type { PurchaseOrder } from '@/lib/mock-data/purchasing'
 import { useGoodsReceipts, type GoodsReceipt } from '@/lib/store/useGoodsReceipts'
@@ -235,6 +235,9 @@ export default function InboundPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600 hover:text-green-800" title="Print BC 1.1" onClick={() => window.open(`/warehouse/inbound/print?id=${gr.id}`, '_blank')}>
+                              <Printer className="h-3.5 w-3.5" />
+                            </Button>
                             <Button size="icon" variant="ghost" className="h-7 w-7 text-blue-600 hover:text-blue-800" onClick={() => openEdit(gr)}>
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>

@@ -188,6 +188,7 @@ export default function APPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Invoice Number</TableHead>
+                  <TableHead>Tipe</TableHead>
                   <TableHead>Vendor Invoice</TableHead>
                   <TableHead>PO Reference</TableHead>
                   <TableHead>Vendor</TableHead>
@@ -203,7 +204,7 @@ export default function APPage() {
               <TableBody>
                 {filteredInvoices.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="text-center text-muted-foreground py-8">No bills found</TableCell>
+                    <TableCell colSpan={12} className="text-center text-muted-foreground py-8">No bills found</TableCell>
                   </TableRow>
                 ) : (
                   filteredInvoices.map((invoice) => (
@@ -212,6 +213,15 @@ export default function APPage() {
                         <Link href={`/finance/ap/${invoice.id}`} className="font-mono text-sm text-primary hover:underline">
                           {invoice.invoiceNumber}
                         </Link>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
+                          invoice.invoiceType === 'Credit Note' ? 'border-green-300 text-green-700' :
+                          invoice.invoiceType === 'Debit Note' ? 'border-orange-300 text-orange-700' :
+                          'border-blue-300 text-blue-700'
+                        }`}>
+                          {invoice.invoiceType || 'Tagihan'}
+                        </span>
                       </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">{invoice.vendorInvoiceNumber}</TableCell>
                       <TableCell>

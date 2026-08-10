@@ -17,6 +17,7 @@ export const STORE_KEYS = {
   PAYMENTS: 'jkj_payments',
   SUBKONTRAK: 'jkj_subkontrak',
   TEMP_STORAGE: 'jkj_temp_storage',
+  BPB_HISTORY: 'jkj_bpb_history',
 } as const
 
 export function getStore<T>(key: string, seed: T[]): T[] {

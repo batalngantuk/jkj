@@ -45,6 +45,7 @@ export default function NewARInvoicePage() {
   const [paymentTerms, setPaymentTerms] = useState('30')
   const [fakturPajak, setFakturPajak] = useState('')
   const [notes, setNotes] = useState('')
+  const [invoiceType, setInvoiceType] = useState<'Tagihan' | 'Credit Note' | 'Debit Note'>('Tagihan')
   const [currency, setCurrency] = useState<'IDR' | 'USD' | 'KRW'>('IDR')
   const [exchangeRate, setExchangeRate] = useState<string>('')
   
@@ -161,6 +162,7 @@ export default function NewARInvoicePage() {
       taxAmount: idrTax,
       paidAmount: 0,
       balance: idrTotal,
+      invoiceType,
       status: 'DRAFT',
       fakturPajakNumber: fakturPajak || undefined,
       lineItems: lineItems.map((item, i) => ({
@@ -207,7 +209,19 @@ export default function NewARInvoicePage() {
                 <CardTitle>Invoice Details</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-6">
-                
+
+                <div className="space-y-2">
+                  <Label>Tipe Invoice <span className="text-red-500">*</span></Label>
+                  <Select value={invoiceType} onValueChange={v => setInvoiceType(v as typeof invoiceType)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Tagihan">Tagihan</SelectItem>
+                      <SelectItem value="Credit Note">Credit Note</SelectItem>
+                      <SelectItem value="Debit Note">Debit Note</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-2">
                   <Label>Sales Order (SO) <span className="text-red-500">*</span></Label>
                   <Select value={selectedSO} onValueChange={handleSOChange} required>

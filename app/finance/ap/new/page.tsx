@@ -49,6 +49,7 @@ export default function NewAPBillPage() {
   const [selectedBC20, setSelectedBC20] = useState('')
   const [showBC20, setShowBC20] = useState(false)
   const [notes, setNotes] = useState('')
+  const [invoiceType, setInvoiceType] = useState<'Tagihan' | 'Credit Note' | 'Debit Note'>('Tagihan')
   const [currency, setCurrency] = useState<'IDR' | 'USD' | 'KRW'>('IDR')
   const [exchangeRate, setExchangeRate] = useState<string>('')
   
@@ -176,6 +177,7 @@ export default function NewAPBillPage() {
       taxAmount: idrTax,
       paidAmount: 0,
       balance: idrTotal,
+      invoiceType,
       status: 'DRAFT',
       currency,
       exchangeRate: currency !== 'IDR' ? kursNum : undefined,
@@ -223,7 +225,19 @@ export default function NewAPBillPage() {
                 <CardTitle>Bill Details</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-6">
-                
+
+                <div className="space-y-2">
+                  <Label>Tipe Invoice <span className="text-red-500">*</span></Label>
+                  <Select value={invoiceType} onValueChange={v => setInvoiceType(v as typeof invoiceType)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Tagihan">Tagihan</SelectItem>
+                      <SelectItem value="Credit Note">Credit Note</SelectItem>
+                      <SelectItem value="Debit Note">Debit Note</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-2">
                   <Label>Purchase Order (PO) <span className="text-red-500">*</span></Label>
                   <Select value={selectedPO} onValueChange={handlePOChange} required>

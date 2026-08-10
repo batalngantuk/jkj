@@ -189,6 +189,7 @@ export default function ARPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Invoice Number</TableHead>
+                  <TableHead>Tipe</TableHead>
                   <TableHead>SO Reference</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Invoice Date</TableHead>
@@ -203,7 +204,7 @@ export default function ARPage() {
               <TableBody>
                 {filteredInvoices.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">No invoices found</TableCell>
+                    <TableCell colSpan={11} className="text-center text-muted-foreground py-8">No invoices found</TableCell>
                   </TableRow>
                 ) : (
                   filteredInvoices.map((invoice) => (
@@ -212,6 +213,15 @@ export default function ARPage() {
                         <Link href={`/finance/ar/${invoice.id}`} className="font-mono text-sm text-primary hover:underline">
                           {invoice.invoiceNumber}
                         </Link>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
+                          invoice.invoiceType === 'Credit Note' ? 'border-green-300 text-green-700' :
+                          invoice.invoiceType === 'Debit Note' ? 'border-orange-300 text-orange-700' :
+                          'border-blue-300 text-blue-700'
+                        }`}>
+                          {invoice.invoiceType || 'Tagihan'}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <Link href={`/sales/${invoice.soId}`} className="font-mono text-xs text-muted-foreground hover:underline">

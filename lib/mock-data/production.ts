@@ -9,6 +9,15 @@ export interface ProductionLine {
   operator: string
 }
 
+export interface WorksheetStep {
+  id: string
+  label: string
+  status: 'pending' | 'done'
+  doneBy?: string
+  doneAt?: string
+  notes?: string
+}
+
 export interface WorkOrder {
   id: string
   soNumber: string // Link to Sales Order
@@ -22,6 +31,7 @@ export interface WorkOrder {
   progress: number
   bomId: string
   bbItems?: Array<{ code: string; name: string; qty: number; unit: string }>
+  worksheetSteps?: WorksheetStep[]
   history: Array<{
     date: string
     action: string

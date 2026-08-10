@@ -1,21 +1,41 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import {
   ArrowLeft, Box, Timer, AlertTriangle, CheckSquare,
-  FileBarChart, Truck, Play, Pause, PackageCheck, ClipboardCheck
+  FileBarChart, Truck, Play, Pause, PackageCheck, ClipboardCheck,
+  Pencil, Plus, Trash2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { StatusTimeline, TimelineStep } from '@/components/shared/status-timeline'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
 import AppLayout from '@/components/app-layout'
 import { MOCK_BOMS } from '@/lib/mock-data/production'
+import { type WorksheetStep } from '@/lib/mock-data/production'
 import { useWorkOrders, useStock, useSalesOrders } from '@/lib/store/hooks'
+
+const DEFAULT_WORKSHEET_STEPS: WorksheetStep[] = [
+  { id: 'ws-1', label: 'Persiapan & Setup Line Produksi', status: 'pending' },
+  { id: 'ws-2', label: 'Persiapan Larutan / Compound', status: 'pending' },
+  { id: 'ws-3', label: 'Pre-Dipping', status: 'pending' },
+  { id: 'ws-4', label: 'Dipping Proses', status: 'pending' },
+  { id: 'ws-5', label: 'Curing / Vulkanisasi', status: 'pending' },
+  { id: 'ws-6', label: 'Stripping / Demoulding', status: 'pending' },
+  { id: 'ws-7', label: 'Treatment (Powder / Chlorination)', status: 'pending' },
+  { id: 'ws-8', label: 'QC Visual Inspection', status: 'pending' },
+  { id: 'ws-9', label: 'Counting & Packing', status: 'pending' },
+  { id: 'ws-10', label: 'Pelabelan & Serah Terima ke Gudang', status: 'pending' },
+]
 
 const STATUS_ACTIONS: Record<string, { label: string; icon: React.ElementType; variant?: string }[]> = {
   'PLANNED': [
@@ -57,6 +77,46 @@ export default function WorkOrderDetailPage() {
   }
 
   const bom = MOCK_BOMS.find(b => b.id === wo.bomId)
+
+  // Edit BOM state (only for manual bbItems when no official BOM)
+  const [editBOMOpen, setEditBOMOpen] = useState(false)
+  const [editBOMItems, setEditBOMItems] = useState<{ code: string; name: string; qty: number; unit: string }[]>([])
+
+  function openEditBOM() {
+    setEditBOMItems(wo.bbItems?.map(i => ({ ...i })) || [{ code: '', name: '', qty: 0, unit: 'kg' }])
+    setEditBOMOpen(true)
+  }
+
+  function updateBOMItem(idx: number, patch: Partial<{ code: string; name: string; qty: number; unit: string }>) {
+    setEditBOMItems(prev => prev.map((item, i) => i === idx ? { ...item, ...patch } : item))
+  }
+
+  function saveBOM() {
+    const valid = editBOMItems.filter(i => i.code && i.name && i.qty > 0)
+    updateWorkOrder(wo.id, { bbItems: valid })
+    setEditBOMOpen(false)
+  }
+
+  // Worksheet steps
+  const worksheetSteps: WorksheetStep[] = wo.worksheetSteps?.length ? wo.worksheetSteps : DEFAULT_WORKSHEET_STEPS
+  const [wsNotes, setWsNotes] = useState<Record<string, string>>({})
+  const [wsOperator, setWsOperator] = useState<Record<string, string>>({})
+
+  function markStepDone(stepId: string) {
+    const updated = worksheetSteps.map(s => s.id === stepId
+      ? { ...s, status: 'done' as const, doneBy: wsOperator[stepId] || 'Operator', doneAt: new Date().toISOString().split('T')[0], notes: wsNotes[stepId] || '' }
+      : s)
+    updateWorkOrder(wo.id, { worksheetSteps: updated })
+  }
+
+  function markStepPending(stepId: string) {
+    const updated = worksheetSteps.map(s => s.id === stepId
+      ? { ...s, status: 'pending' as const, doneBy: undefined, doneAt: undefined }
+      : s)
+    updateWorkOrder(wo.id, { worksheetSteps: updated })
+  }
+
+  const wsProgress = Math.round((worksheetSteps.filter(s => s.status === 'done').length / worksheetSteps.length) * 100)
 
   const timelineSteps: TimelineStep[] = [
     { id: '1', label: 'Dibuat / Planned', date: wo.startDate, status: 'completed' },
@@ -155,6 +215,17 @@ export default function WorkOrderDetailPage() {
           </div>
         </div>
 
+        <Tabs defaultValue="detail">
+          <TabsList className="mb-4">
+            <TabsTrigger value="detail">Detail WO</TabsTrigger>
+            <TabsTrigger value="worksheet" className="gap-1.5">
+              Lembar Kerja
+              {wsProgress > 0 && wsProgress < 100 && <Badge variant="secondary" className="text-xs ml-1">{wsProgress}%</Badge>}
+              {wsProgress === 100 && <Badge className="text-xs ml-1 bg-green-600">Selesai</Badge>}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="detail">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Main — left 2 cols */}
@@ -187,8 +258,13 @@ export default function WorkOrderDetailPage() {
 
             {/* BOM & Material */}
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Bill of Materials &amp; Konsumsi Bahan</CardTitle>
+                {!bom && wo.status === 'PLANNED' && (
+                  <Button size="sm" variant="outline" className="gap-1.5 h-7" onClick={openEditBOM}>
+                    <Pencil className="h-3.5 w-3.5" />Edit BOM
+                  </Button>
+                )}
               </CardHeader>
               <CardContent>
                 {bom ? (
@@ -329,7 +405,115 @@ export default function WorkOrderDetailPage() {
           </div>
 
         </div>
+          </TabsContent>
+
+          {/* Worksheet Tab */}
+          <TabsContent value="worksheet">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileBarChart className="h-5 w-5 text-blue-600" />
+                    Lembar Kerja Produksi — {wo.id}
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {worksheetSteps.filter(s => s.status === 'done').length} dari {worksheetSteps.length} tahap selesai
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-primary">{wsProgress}%</div>
+                  <Progress value={wsProgress} className="w-24 h-2 mt-1" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {worksheetSteps.map((step, idx) => (
+                    <div key={step.id} className={`border rounded-lg p-4 ${step.status === 'done' ? 'bg-green-50/50 border-green-200' : 'bg-muted/20'}`}>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${step.status === 'done' ? 'bg-green-600 text-white' : 'bg-muted border text-muted-foreground'}`}>
+                            {step.status === 'done' ? '✓' : idx + 1}
+                          </div>
+                          <div className="flex-1">
+                            <p className={`font-medium text-sm ${step.status === 'done' ? 'line-through text-muted-foreground' : ''}`}>{step.label}</p>
+                            {step.status === 'done' && (
+                              <p className="text-xs text-green-700 mt-0.5">✓ {step.doneBy} · {step.doneAt}{step.notes ? ` · ${step.notes}` : ''}</p>
+                            )}
+                          </div>
+                        </div>
+                        {step.status === 'pending' ? (
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Input
+                              className="h-7 w-28 text-xs"
+                              placeholder="Operator"
+                              value={wsOperator[step.id] || ''}
+                              onChange={e => setWsOperator(prev => ({ ...prev, [step.id]: e.target.value }))}
+                            />
+                            <Button size="sm" className="h-7 text-xs gap-1 bg-green-600 hover:bg-green-700" onClick={() => markStepDone(step.id)}>
+                              <CheckSquare className="h-3.5 w-3.5" />Selesai
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground" onClick={() => markStepPending(step.id)}>
+                            Batalkan
+                          </Button>
+                        )}
+                      </div>
+                      {step.status === 'pending' && (
+                        <div className="mt-2 ml-10">
+                          <Input
+                            className="h-7 text-xs"
+                            placeholder="Catatan (opsional)"
+                            value={wsNotes[step.id] || ''}
+                            onChange={e => setWsNotes(prev => ({ ...prev, [step.id]: e.target.value }))}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
+
+      {/* Edit BOM Dialog */}
+      <Dialog open={editBOMOpen} onOpenChange={setEditBOMOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Bahan Baku — {wo.id}</DialogTitle>
+            <DialogDescription>Ubah daftar bahan baku yang dibutuhkan untuk WO ini. Hanya bisa diedit saat status PLANNED.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground px-1">
+              <span className="col-span-3">Kode</span>
+              <span className="col-span-4">Nama Material</span>
+              <span className="col-span-2">Qty/Unit</span>
+              <span className="col-span-2">Satuan</span>
+              <span className="col-span-1"></span>
+            </div>
+            {editBOMItems.map((item, idx) => (
+              <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+                <Input className="col-span-3 h-8 text-xs font-mono" placeholder="RM-LATEX" value={item.code} onChange={e => updateBOMItem(idx, { code: e.target.value })} />
+                <Input className="col-span-4 h-8 text-xs" placeholder="Nama material" value={item.name} onChange={e => updateBOMItem(idx, { name: e.target.value })} />
+                <Input className="col-span-2 h-8 text-xs" type="number" placeholder="0" value={item.qty || ''} onChange={e => updateBOMItem(idx, { qty: parseFloat(e.target.value) || 0 })} />
+                <Input className="col-span-2 h-8 text-xs" placeholder="kg" value={item.unit} onChange={e => updateBOMItem(idx, { unit: e.target.value })} />
+                <Button size="icon" variant="ghost" className="col-span-1 h-7 w-7 text-red-500" onClick={() => setEditBOMItems(prev => prev.filter((_, i) => i !== idx))}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+            <Button size="sm" variant="outline" className="gap-1.5 mt-2" onClick={() => setEditBOMItems(prev => [...prev, { code: '', name: '', qty: 0, unit: 'kg' }])}>
+              <Plus className="h-3.5 w-3.5" />Tambah Bahan
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditBOMOpen(false)}>Batal</Button>
+            <Button onClick={saveBOM}>Simpan BOM</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   )
 }

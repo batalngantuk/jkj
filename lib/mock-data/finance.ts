@@ -34,6 +34,7 @@ export interface ARInvoice {
   taxAmount: number
   paidAmount: number
   balance: number
+  invoiceType?: 'Tagihan' | 'Credit Note' | 'Debit Note'
   status: 'DRAFT' | 'APPROVED' | 'SENT' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE'
   fakturPajakNumber?: string
   lineItems: InvoiceLineItem[]
@@ -58,6 +59,7 @@ export interface APInvoice {
   taxAmount: number
   paidAmount: number
   balance: number
+  invoiceType?: 'Tagihan' | 'Credit Note' | 'Debit Note'
   status: 'DRAFT' | 'VERIFIED' | 'APPROVED' | 'SCHEDULED' | 'PAID'
   currency?: 'IDR' | 'USD' | 'KRW'
   exchangeRate?: number

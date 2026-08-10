@@ -41,6 +41,12 @@ export default function ReportsDashboard() {
                         Inventory Valuation
                     </Button>
                  </Link>
+                 <Link href="/reports/rekap">
+                    <Button variant="outline" className="gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        Rekap Penjualan/Pembelian
+                    </Button>
+                 </Link>
               </div>
             </div>
 

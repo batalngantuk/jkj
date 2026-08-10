@@ -154,10 +154,12 @@ export default function WarehouseDashboard() {
                         Pengeluaran BB
                     </Button>
                  </Link>
-                 <Button className="bg-primary hover:bg-primary/90 gap-2">
-                    <Layers className="h-4 w-4" />
-                    Stock Adjustment
-                 </Button>
+                 <Link href="/warehouse/stock-adjustment">
+                   <Button className="bg-primary hover:bg-primary/90 gap-2">
+                     <Layers className="h-4 w-4" />
+                     Stock Adjustment
+                   </Button>
+                 </Link>
               </div>
             </div>
 

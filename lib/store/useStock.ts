@@ -134,9 +134,40 @@ export function useStock() {
     setMovements([...currentMovements, newMovement])
   }, [])
 
+  const adjustStock = useCallback((materialCode: string, newQty: number, reason: string) => {
+    const currentStock = getStore<StockItem>(STORE_KEYS.STOCK, SEED_STOCK)
+    const currentMovements = getStore<StockMovement>('jkj_stock_movements', SEED_MOVEMENTS)
+
+    const idx = currentStock.findIndex(s => s.materialCode === materialCode)
+    if (idx < 0) return
+
+    const item = currentStock[idx]
+    const delta = newQty - item.qtyOnHand
+    const updatedStock = currentStock.map((s, i) => i === idx
+      ? { ...s, qtyOnHand: newQty, qtyAvailable: Math.max(0, newQty - s.qtyReserved), lastUpdated: new Date().toISOString().split('T')[0] }
+      : s)
+
+    const newMovement: StockMovement = {
+      id: `MOV-ADJ-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      materialCode, materialName: item.materialName,
+      transactionType: 'ADJUSTMENT',
+      referenceNumber: 'ADJ', referenceType: 'MANUAL',
+      quantityIn: delta > 0 ? delta : 0,
+      quantityOut: delta < 0 ? Math.abs(delta) : 0,
+      runningBalance: newQty,
+      notes: reason,
+    }
+
+    setStore(STORE_KEYS.STOCK, updatedStock)
+    setStore('jkj_stock_movements', [...currentMovements, newMovement])
+    setStock(updatedStock)
+    setMovements([...currentMovements, newMovement])
+  }, [])
+
   const getByCode = useCallback((code: string) => {
     return getStore<StockItem>(STORE_KEYS.STOCK, SEED_STOCK).find(s => s.materialCode === code)
   }, [])
 
-  return { stock, movements, addStock, deductStock, getByCode, refresh }
+  return { stock, movements, addStock, deductStock, adjustStock, getByCode, refresh }
 }

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Trash2, PackageOpen, Factory, Building2, CheckCircle, Download } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, PackageOpen, Factory, Building2, CheckCircle, Download, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import AppLayout from '@/components/app-layout'
 import { useStock, useWorkOrders, useSubkontrak } from '@/lib/store/hooks'
+import { STORE_KEYS, getStore, setStore } from '@/lib/store/index'
 import { exportToExcel } from '@/lib/utils/export-excel'
 
 interface IssueItem {
@@ -143,7 +144,12 @@ export default function WarehouseIssuePage() {
       id: noBukti, tanggal, noBukti, tujuan, referensi, catatan, status: 'Selesai',
       items: validItems.map(i => ({ materialCode: i.materialCode, materialName: i.materialName, qty: Number(i.qtyIssued), satuan: i.satuan }))
     }
-    setHistory(prev => [entry, ...prev])
+    setHistory(prev => {
+      const next = [entry, ...prev]
+      const persisted = getStore(STORE_KEYS.BPB_HISTORY, SEED_HISTORY)
+      setStore(STORE_KEYS.BPB_HISTORY, [entry, ...persisted])
+      return next
+    })
     setSubmitted(true)
   }
 
@@ -262,9 +268,14 @@ export default function WarehouseIssuePage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-700" onClick={() => setDeleteId(h.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600 hover:text-green-800" title="Print BC 1.2" onClick={() => window.open(`/warehouse/issue/print?id=${h.id}`, '_blank')}>
+                          <Printer className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-700" onClick={() => setDeleteId(h.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
