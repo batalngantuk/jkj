@@ -87,6 +87,7 @@ export default function KiteInventoryPage() {
     .filter(m => !MOCK_PEMAKAIAN_BB.find(s => s.buktiPengeluaranNo === m.referenceNumber))
     .map((m, i) => {
       const stockItem = stock.find(s => s.materialCode === m.materialCode)
+      const relatedSubkon = subkonRecords.find(r => r.id === m.referenceNumber)
       return {
         no: MOCK_PEMAKAIAN_BB.length + i + 1,
         buktiPengeluaranNo: m.referenceNumber,
@@ -94,9 +95,9 @@ export default function KiteInventoryPage() {
         kodeBarang: m.materialCode,
         namaBarang: m.materialName,
         satuan: stockItem?.unit || m.notes?.match(/satuan:(\w+)/)?.[1] || 'kg',
-        jumlahDigunakan: m.quantityOut,
-        jumlahDisubkonkan: 0,
-        penerimaSubkon: '-',
+        jumlahDigunakan: relatedSubkon ? 0 : m.quantityOut,
+        jumlahDisubkonkan: relatedSubkon ? m.quantityOut : 0,
+        penerimaSubkon: relatedSubkon ? relatedSubkon.namaSubkon : '-',
       }
     })
   const allPemakaianBB = [...MOCK_PEMAKAIAN_BB, ...livePemakaianBB]

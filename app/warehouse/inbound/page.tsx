@@ -49,7 +49,7 @@ function newLineGR(): MaterialLineGR {
 export default function InboundPage() {
   const { receipts, createReceipt, updateReceipt, deleteReceipt } = useGoodsReceipts()
   const { addStock } = useStock()
-  const { orders: allPOs } = usePurchaseOrders()
+  const { orders: allPOs, updateOrder: updatePO } = usePurchaseOrders()
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null)
   const [showManualForm, setShowManualForm] = useState(false)
 
@@ -651,6 +651,10 @@ export default function InboundPage() {
                   const qty = poQtyReceived[item.code] ?? item.quantity
                   addStock(item.code, item.name, qty, selectedPO.id, 'GR', 'BB', item.unit, poGudang || 'Gudang RM-A')
                 })
+                const allItemsReceived = selectedPO.items.every(item =>
+                  (poQtyReceived[item.code] ?? item.quantity) >= item.quantity
+                )
+                updatePO(selectedPO.id, { status: allItemsReceived ? 'RECEIVED' : 'PARTIAL' })
                 setSelectedPO(null)
                 setPoSuratJalan(''); setPoKendaraan(''); setPoTanggal(''); setPoGudang(''); setPoPenerima(''); setPoQtyReceived({})
               }}

@@ -51,9 +51,12 @@ export default function OutboundPage() {
     transporter: '', noKendaraan: '', supir: '', catatan: ''
   })
 
-  // WOs that are COMPLETED and waiting FG receiving
-  const receivedWoIds = new Set(receipts.map(r => r.woId))
-  const woReadyForFG = workOrders.filter(wo => wo.status === 'COMPLETED' && !receivedWoIds.has(wo.id))
+  // WOs that are COMPLETED and still need FG receiving (allow parsial — only exclude if fully received)
+  const woReadyForFG = workOrders.filter(wo => {
+    if (wo.status !== 'COMPLETED') return false
+    const totalReceived = receipts.filter(r => r.woId === wo.id).reduce((s, r) => s + r.qtyReceived, 0)
+    return totalReceived < wo.quantity
+  })
   const filteredWO = woReadyForFG.filter(wo =>
     wo.id.toLowerCase().includes(searchFG.toLowerCase()) ||
     wo.product.toLowerCase().includes(searchFG.toLowerCase())
@@ -69,8 +72,10 @@ export default function OutboundPage() {
   )
 
   const openFGForm = (wo: WorkOrder) => {
+    const alreadyReceived = receipts.filter(r => r.woId === wo.id).reduce((s, r) => s + r.qtyReceived, 0)
+    const remaining = Math.max(0, wo.quantity - alreadyReceived)
     setSelectedWO(wo)
-    setFgForm({ noWO: wo.id, qtyDiterima: wo.quantity.toString(), qtyRejek: '0', gudang: 'Gudang FG-A', penerima: '', catatan: '' })
+    setFgForm({ noWO: wo.id, qtyDiterima: remaining.toString(), qtyRejek: '0', gudang: 'Gudang FG-A', penerima: '', catatan: '' })
     setFgFormOpen(true)
   }
 
@@ -97,13 +102,24 @@ export default function OutboundPage() {
   }
 
   const openShipForm = (so: SalesOrder) => {
+    const soWoIds = new Set(workOrders.filter((w: WorkOrder) => w.soNumber === so.id).map((w: WorkOrder) => w.id))
+    const avail = receipts.filter(r => soWoIds.has(r.woId)).reduce((s, r) => s + r.qtyReceived, 0)
+    const defaultQty = avail > 0 ? Math.min(avail, so.quantity) : so.quantity
     setSelectedSO(so)
-    setShipForm({ qtyDikirim: so.quantity.toString(), noSuratJalan: '', noPEB: '', transporter: '', noKendaraan: '', supir: '', catatan: '' })
+    setShipForm({ qtyDikirim: defaultQty.toString(), noSuratJalan: '', noPEB: '', transporter: '', noKendaraan: '', supir: '', catatan: '' })
   }
 
   const qtyDiterima = parseInt(fgForm.qtyDiterima) || 0
   const qtyRejek = parseInt(fgForm.qtyRejek) || 0
   const qtyAcc = qtyDiterima - qtyRejek
+
+  // For selected SO shipping dialog — FG availability
+  const selectedSOWoIds = selectedSO
+    ? new Set(workOrders.filter((w: WorkOrder) => w.soNumber === selectedSO.id).map((w: WorkOrder) => w.id))
+    : new Set<string>()
+  const selectedSOFGAvail = selectedSO
+    ? receipts.filter(r => selectedSOWoIds.has(r.woId)).reduce((s, r) => s + r.qtyReceived, 0)
+    : 0
 
   return (
     <AppLayout>
@@ -523,6 +539,22 @@ export default function OutboundPage() {
                   <p className="text-muted-foreground">Qty Produksi</p>
                   <p className="font-bold">{selectedWO?.quantity.toLocaleString()} carton</p>
                 </div>
+                {selectedWO && (() => {
+                  const prev = receipts.filter(r => r.woId === selectedWO.id).reduce((s, r) => s + r.qtyReceived, 0)
+                  const remaining = selectedWO.quantity - prev
+                  return prev > 0 ? (
+                    <>
+                      <div>
+                        <p className="text-muted-foreground">Sudah Diterima</p>
+                        <p className="font-medium text-green-600">{prev.toLocaleString()} carton</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Sisa</p>
+                        <p className="font-bold text-amber-600">{remaining.toLocaleString()} carton</p>
+                      </div>
+                    </>
+                  ) : null
+                })()}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -677,6 +709,12 @@ export default function OutboundPage() {
                     <p className="text-xs text-red-600 font-medium flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
                       ⚠ Melebihi qty SO ({selectedSO.quantity.toLocaleString()} carton). Pertimbangkan revisi SO.
+                    </p>
+                  )}
+                  {selectedSOFGAvail > 0 && Number(shipForm.qtyDikirim) > selectedSOFGAvail && (
+                    <p className="text-xs text-orange-600 font-medium flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      Stok BJ di gudang hanya {selectedSOFGAvail.toLocaleString()} — qty kirim melebihi stok tersedia.
                     </p>
                   )}
                 </div>

@@ -56,8 +56,8 @@ export default function SalesOrderDetailPage() {
   const woIds = new Set(relatedWOs.map(w => w.id))
   const soFGReceipts = fgReceipts.filter(r => woIds.has(r.woId))
   const totalFGReceived = soFGReceipts.reduce((s, r) => s + r.qtyReceived, 0)
-  const soShipments = shipments.filter((s: { soNumber?: string }) => s.soNumber === order.id)
-  const totalShipped = soShipments.reduce((s: number, sh: { qtyDikirim?: number }) => s + (sh.qtyDikirim || 0), 0)
+  const soShipments = shipments.filter(s => s.soId === order.id)
+  const totalShipped = soShipments.reduce((s, sh) => s + sh.items.reduce((a, i) => a + i.qtyDikirim, 0), 0)
   const remainingToShip = Math.max(0, order.quantity - totalShipped)
 
   const timelineSteps: TimelineStep[] = [

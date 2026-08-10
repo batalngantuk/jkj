@@ -214,6 +214,24 @@ export default function WorkOrderDetailPage() {
                       )
                     })}
                   </div>
+                ) : wo.bbItems && wo.bbItems.length > 0 ? (
+                  <div className="space-y-4">
+                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                      BOM resmi belum terdaftar. Menampilkan bahan baku yang diinput manual saat WO dibuat.
+                    </p>
+                    {wo.bbItems.map((item, i) => (
+                      <div key={i} className="flex flex-col gap-1 border-b pb-3 last:border-0 last:pb-0">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium text-sm">{item.name}</span>
+                          <span className="text-xs text-muted-foreground font-mono">{item.code}</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>Qty per unit: {item.qty} {item.unit}</span>
+                          <span>Total kebutuhan: {(item.qty * wo.quantity).toFixed(2)} {item.unit}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">BOM tidak tersedia untuk WO ini.</p>
                 )}
