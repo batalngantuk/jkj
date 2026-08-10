@@ -115,6 +115,18 @@ export default function InboundPage() {
     po.status === 'APPROVED' || po.status === 'PARTIAL'
   )
 
+  const alreadyReceivedPerItem = React.useMemo(() => {
+    if (!selectedPO) return {} as Record<string, number>
+    return receipts
+      .filter(r => r.noPO === selectedPO.id)
+      .reduce((acc, gr) => {
+        gr.items.forEach(item => {
+          acc[item.kode] = (acc[item.kode] || 0) + item.qtyDiterima
+        })
+        return acc
+      }, {} as Record<string, number>)
+  }, [selectedPO, receipts])
+
   function updateLine(id: string, field: keyof MaterialLineGR, value: string) {
     setLines(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l))
   }
@@ -591,32 +603,50 @@ export default function InboundPage() {
             <div className="space-y-3">
               <p className="font-semibold text-sm border-b pb-2">Item yang Diterima</p>
               <div className="space-y-3 max-h-64 overflow-auto pr-1">
-                {selectedPO?.items.map((item, idx) => (
-                  <div key={idx} className="bg-muted/20 p-3 rounded-lg border">
-                    <div className="flex justify-between mb-2">
-                      <span className="font-medium text-sm">{item.name}</span>
-                      <span className="text-xs font-mono bg-white px-1 rounded border">{item.code}</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 items-end">
-                      <div>
-                        <span className="text-xs text-muted-foreground block">Dipesan</span>
-                        <span className="font-bold text-sm">{item.quantity.toLocaleString()} {item.unit}</span>
+                {selectedPO?.items.map((item, idx) => {
+                  const alreadyQty = alreadyReceivedPerItem[item.code] || 0
+                  const remainingQty = Math.max(0, item.quantity - alreadyQty)
+                  const inputQty = poQtyReceived[item.code] ?? remainingQty
+                  const isOverQty = inputQty > remainingQty
+                  return (
+                    <div key={idx} className={`bg-muted/20 p-3 rounded-lg border ${isOverQty ? 'border-red-400 bg-red-50/30' : ''}`}>
+                      <div className="flex justify-between mb-2">
+                        <span className="font-medium text-sm">{item.name}</span>
+                        <span className="text-xs font-mono bg-white px-1 rounded border">{item.code}</span>
                       </div>
-                      <div>
-                        <Label className="text-xs mb-1 block">Qty Diterima</Label>
-                        <div className="flex items-center gap-1">
-                          <Input
-                            type="number"
-                            defaultValue={item.quantity}
-                            className="h-8 text-sm"
-                            onChange={e => setPoQtyReceived(prev => ({ ...prev, [item.code]: Number(e.target.value) }))}
-                          />
-                          <span className="text-xs text-muted-foreground">{item.unit}</span>
+                      <div className="grid grid-cols-3 gap-2 items-end">
+                        <div>
+                          <span className="text-xs text-muted-foreground block">Dipesan</span>
+                          <span className="font-bold text-sm">{item.quantity.toLocaleString()} {item.unit}</span>
+                        </div>
+                        {alreadyQty > 0 && (
+                          <div>
+                            <span className="text-xs text-muted-foreground block">Sudah Diterima</span>
+                            <span className="text-sm text-amber-700 font-medium">{alreadyQty.toLocaleString()} {item.unit}</span>
+                          </div>
+                        )}
+                        <div className={alreadyQty > 0 ? '' : 'col-span-2'}>
+                          <Label className="text-xs mb-1 block">
+                            Qty Diterima {alreadyQty > 0 && <span className="text-muted-foreground">(sisa: {remainingQty.toLocaleString()})</span>}
+                          </Label>
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number"
+                              key={`${selectedPO?.id}-${item.code}`}
+                              defaultValue={remainingQty}
+                              className={`h-8 text-sm ${isOverQty ? 'border-red-400 text-red-700' : ''}`}
+                              onChange={e => setPoQtyReceived(prev => ({ ...prev, [item.code]: Number(e.target.value) }))}
+                            />
+                            <span className="text-xs text-muted-foreground">{item.unit}</span>
+                          </div>
+                          {isOverQty && (
+                            <p className="text-xs text-red-600 mt-0.5">Melebihi sisa {remainingQty.toLocaleString()} {item.unit}</p>
+                          )}
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -651,9 +681,12 @@ export default function InboundPage() {
                   const qty = poQtyReceived[item.code] ?? item.quantity
                   addStock(item.code, item.name, qty, selectedPO.id, 'GR', 'BB', item.unit, poGudang || 'Gudang RM-A')
                 })
-                const allItemsReceived = selectedPO.items.every(item =>
-                  (poQtyReceived[item.code] ?? item.quantity) >= item.quantity
-                )
+                const allItemsReceived = selectedPO.items.every(item => {
+                  const alreadyQty = alreadyReceivedPerItem[item.code] || 0
+                  const remainingQty = Math.max(0, item.quantity - alreadyQty)
+                  const newQty = poQtyReceived[item.code] ?? remainingQty
+                  return alreadyQty + newQty >= item.quantity
+                })
                 updatePO(selectedPO.id, { status: allItemsReceived ? 'RECEIVED' : 'PARTIAL' })
                 setSelectedPO(null)
                 setPoSuratJalan(''); setPoKendaraan(''); setPoTanggal(''); setPoGudang(''); setPoPenerima(''); setPoQtyReceived({})

@@ -175,21 +175,37 @@ export default function KiteInventoryPage() {
     )
   const allPengeluaranHP = [...MOCK_PENGELUARAN_HP, ...livePengeluaranHP]
 
-  // Lap 7: Mutasi HP — seed + live stock (FG category)
-  const liveMutasiHP: MutasiHP[] = stock
-    .filter(s => s.category === 'FG')
-    .filter(s => !MOCK_MUTASI_HP.find(m => m.kodeBarang === s.materialCode))
-    .map((s, i) => ({
-      no: MOCK_MUTASI_HP.length + i + 1,
-      kodeBarang: s.materialCode,
-      namaBarang: s.materialName,
-      satuan: s.unit,
+  // Lap 7: Mutasi HP — derived from allPemasukanHP (Lap 4) + allPengeluaranHP (Lap 5)
+  const pemasukanHPByKode = new Map<string, { nama: string; satuan: string; gudang: string; total: number }>()
+  for (const p of allPemasukanHP) {
+    const existing = pemasukanHPByKode.get(p.kodeBarang)
+    if (existing) {
+      existing.total += p.jumlahDariProduksi + p.jumlahDariSubkon
+    } else {
+      pemasukanHPByKode.set(p.kodeBarang, { nama: p.namaBarang, satuan: p.satuan, gudang: p.gudang, total: p.jumlahDariProduksi + p.jumlahDariSubkon })
+    }
+  }
+  const pengeluaranHPByKode = new Map<string, number>()
+  for (const p of allPengeluaranHP) {
+    pengeluaranHPByKode.set(p.kodeBarang, (pengeluaranHPByKode.get(p.kodeBarang) || 0) + p.jumlah)
+  }
+  const liveMutasiHP: MutasiHP[] = []
+  let liveHPNo = MOCK_MUTASI_HP.length + 1
+  for (const [kode, data] of pemasukanHPByKode.entries()) {
+    if (MOCK_MUTASI_HP.find(m => m.kodeBarang === kode)) continue
+    const pengeluaran = pengeluaranHPByKode.get(kode) || 0
+    liveMutasiHP.push({
+      no: liveHPNo++,
+      kodeBarang: kode,
+      namaBarang: data.nama,
+      satuan: data.satuan,
       saldoAwal: 0,
-      pemasukan: s.qtyOnHand + (s.qtyReserved || 0),
-      pengeluaran: s.qtyReserved || 0,
-      saldoAkhir: s.qtyAvailable,
-      gudang: s.location,
-    }))
+      pemasukan: data.total,
+      pengeluaran,
+      saldoAkhir: data.total - pengeluaran,
+      gudang: data.gudang,
+    })
+  }
   const allMutasiHP = [...MOCK_MUTASI_HP, ...liveMutasiHP]
 
   // Lap 8: Waste Scrap — seed + live waste (status Selesai / Diajukan BC 2.4)

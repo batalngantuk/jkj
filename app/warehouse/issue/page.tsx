@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, Trash2, PackageOpen, Factory, Building2, CheckCircle, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -71,7 +71,7 @@ const SEED_HISTORY: HistoryEntry[] = [
 ]
 
 export default function WarehouseIssuePage() {
-  const { stock, deductStock } = useStock()
+  const { stock, deductStock, movements } = useStock()
   const { workOrders } = useWorkOrders()
   const { records: subkonRecords } = useSubkontrak()
 
@@ -85,6 +85,40 @@ export default function WarehouseIssuePage() {
   const [submitted, setSubmitted] = useState(false)
 
   const bbStock = stock.filter(s => s.category === 'BB' || s.category === 'Packaging')
+
+  // Derive persisted history from stock movements (covers WO auto-deductions + Issue page BPBs)
+  const movementHistory = useMemo<HistoryEntry[]>(() => {
+    const grouped = new Map<string, HistoryEntry>()
+    movements
+      .filter(m => m.transactionType === 'PRODUCTION_OUT')
+      .forEach(m => {
+        const key = m.referenceNumber
+        const satuan = m.notes?.match(/satuan:(\w+)/)?.[1] || 'pcs'
+        const existing = grouped.get(key)
+        if (existing) {
+          existing.items.push({ materialCode: m.materialCode, materialName: m.materialName, qty: m.quantityOut, satuan })
+        } else {
+          grouped.set(key, {
+            id: m.id,
+            tanggal: m.date,
+            noBukti: key,
+            tujuan: m.referenceType === 'SUBKON' ? 'Subkon' : 'Produksi',
+            referensi: key,
+            catatan: '',
+            status: 'Selesai',
+            items: [{ materialCode: m.materialCode, materialName: m.materialName, qty: m.quantityOut, satuan }]
+          })
+        }
+      })
+    return Array.from(grouped.values())
+  }, [movements])
+
+  const displayHistory = useMemo<HistoryEntry[]>(() => {
+    const movementRefs = new Set(movementHistory.map(m => m.referensi))
+    const seedOnly = SEED_HISTORY.filter(h => !movementRefs.has(h.referensi))
+    const sessionOnly = history.filter(h => !SEED_HISTORY.find(s => s.id === h.id) && !movementRefs.has(h.referensi))
+    return [...movementHistory, ...seedOnly, ...sessionOnly].sort((a, b) => b.tanggal.localeCompare(a.tanggal))
+  }, [history, movementHistory])
 
   function updateItem(id: string, patch: Partial<IssueItem>) {
     setItems(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i))
@@ -118,9 +152,9 @@ export default function WarehouseIssuePage() {
     setItems([newItem()]); setSubmitted(false)
   }
 
-  const totalBukti = history.length
-  const totalKeProduksi = history.filter(h => h.tujuan === 'Produksi').length
-  const totalKeSubkon = history.filter(h => h.tujuan === 'Subkon').length
+  const totalBukti = displayHistory.length
+  const totalKeProduksi = displayHistory.filter(h => h.tujuan === 'Produksi').length
+  const totalKeSubkon = displayHistory.filter(h => h.tujuan === 'Subkon').length
 
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
@@ -143,7 +177,7 @@ export default function WarehouseIssuePage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2" onClick={() => exportToExcel(history as unknown as Record<string, unknown>[], 'Pengeluaran_BB', 'Pengeluaran BB')}>
+            <Button variant="outline" className="gap-2" onClick={() => exportToExcel(displayHistory as unknown as Record<string, unknown>[], 'Pengeluaran_BB', 'Pengeluaran BB')}>
               <Download className="h-4 w-4" />Export
             </Button>
             <Button className="gap-2" onClick={() => { resetForm(); setShowForm(true) }}>
@@ -201,7 +235,7 @@ export default function WarehouseIssuePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {history.map(h => (
+                {displayHistory.map(h => (
                   <TableRow key={h.id}>
                     <TableCell className="font-mono text-xs font-medium">{h.noBukti}</TableCell>
                     <TableCell className="whitespace-nowrap text-sm">{h.tanggal}</TableCell>
@@ -234,7 +268,7 @@ export default function WarehouseIssuePage() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {history.length === 0 && (
+                {displayHistory.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center text-muted-foreground py-8">Belum ada pengeluaran</TableCell>
                   </TableRow>
