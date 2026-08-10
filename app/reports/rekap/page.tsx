@@ -21,11 +21,11 @@ function fmt(n: number) {
 }
 
 export default function RekapPage() {
-  const { salesOrders } = useSalesOrders()
-  const { orders: purchaseOrders } = usePurchaseOrders()
-  const { pebs } = usePEB()
-  const { documents: penjualanLokal } = usePenjualanLokal()
-  const { receipts: grReceipts } = useGoodsReceipts()
+  const { salesOrders = [] } = useSalesOrders()
+  const { orders: purchaseOrders = [] } = usePurchaseOrders()
+  const { pebs = [] } = usePEB()
+  const { documents: penjualanLokal = [] } = usePenjualanLokal()
+  const { receipts: grReceipts = [] } = useGoodsReceipts()
 
   const [filterTahun, setFilterTahun] = useState('2026')
   const [filterBulan, setFilterBulan] = useState('all')
