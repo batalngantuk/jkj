@@ -32,7 +32,7 @@ const MOCK_PPN_DATA = {
       total: 0,
     },
     netPPN: -172837500, // Negative = creditable
-    status: 'CREDITABLE' as const,
+    status: 'CREDITABLE' as 'CREDITABLE' | 'PAYABLE',
     amountPayable: 0,
     amountCarryForward: 172837500,
   },

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import AppLayout from '@/components/app-layout'
+import { useARInvoices } from '@/lib/store/hooks'
 
 // Mock Sales Orders for selection
 const MOCK_SALES_ORDERS = [
@@ -34,6 +35,7 @@ const CURRENCY_SYMBOL: Record<string, string> = { IDR: 'Rp', USD: '$', KRW: '₩
 
 export default function NewARInvoicePage() {
   const router = useRouter()
+  const { createInvoice } = useARInvoices()
 
   // Form state
   const [selectedSO, setSelectedSO] = useState('')
@@ -143,12 +145,40 @@ export default function NewARInvoicePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false)
-      router.push('/finance/ar')
-    }, 1000)
+    const so = MOCK_SALES_ORDERS.find(s => s.id === selectedSO)
+    const foreignTotal = calculateGrandTotal()
+    const foreignTax = calculateTotalTax()
+    const idrTotal = currency === 'IDR' ? foreignTotal : foreignTotal * kursNum
+    const idrTax = currency === 'IDR' ? foreignTax : foreignTax * kursNum
+    createInvoice({
+      soId: selectedSO,
+      soNumber: so?.soNumber || '',
+      customerId: selectedSO,
+      customerName,
+      invoiceDate,
+      dueDate,
+      totalAmount: idrTotal,
+      taxAmount: idrTax,
+      paidAmount: 0,
+      balance: idrTotal,
+      status: 'DRAFT',
+      fakturPajakNumber: fakturPajak || undefined,
+      lineItems: lineItems.map((item, i) => ({
+        id: String(i + 1),
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        amount: calculateLineTotal(item),
+        taxAmount: calculateLineTax(item),
+      })),
+      paymentIds: [],
+      notes: notes || undefined,
+      currency,
+      exchangeRate: currency !== 'IDR' ? kursNum : undefined,
+      originalAmount: currency !== 'IDR' ? foreignTotal : undefined,
+    })
+    setLoading(false)
+    router.push('/finance/ar')
   }
 
   return (

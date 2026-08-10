@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import AppLayout from '@/components/app-layout'
-import { usePurchaseOrders } from '@/lib/store/hooks'
+import { usePurchaseOrders, useAPInvoices } from '@/lib/store/hooks'
 
 // Mock BC 2.0 Documents
 const MOCK_BC20_DOCUMENTS = [
@@ -37,6 +37,7 @@ const CURRENCY_SYMBOL: Record<string, string> = { IDR: 'Rp', USD: '$', KRW: '₩
 export default function NewAPBillPage() {
   const router = useRouter()
   const { orders: purchaseOrders } = usePurchaseOrders()
+  const { createInvoice } = useAPInvoices()
 
   // Form state
   const [selectedPO, setSelectedPO] = useState('')
@@ -157,12 +158,43 @@ export default function NewAPBillPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false)
-      router.push('/finance/ap')
-    }, 1000)
+    const po = purchaseOrders.find(p => p.id === selectedPO)
+    const bc20 = MOCK_BC20_DOCUMENTS.find(b => b.id === selectedBC20)
+    const foreignTotal = calculateGrandTotal()
+    const foreignTax = calculateTotalPPN()
+    const idrTotal = currency === 'IDR' ? foreignTotal : foreignTotal * kursNum
+    const idrTax = currency === 'IDR' ? foreignTax : foreignTax * kursNum
+    createInvoice({
+      vendorInvoiceNumber,
+      poId: selectedPO,
+      poNumber: po?.id || '',
+      vendorId: selectedPO,
+      vendorName,
+      invoiceDate,
+      dueDate,
+      totalAmount: idrTotal,
+      taxAmount: idrTax,
+      paidAmount: 0,
+      balance: idrTotal,
+      status: 'DRAFT',
+      currency,
+      exchangeRate: currency !== 'IDR' ? kursNum : undefined,
+      originalAmount: currency !== 'IDR' ? foreignTotal : undefined,
+      bc20Id: bc20?.id || undefined,
+      bc20Number: bc20?.bcNumber || undefined,
+      lineItems: lineItems.map((item, i) => ({
+        id: String(i + 1),
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        amount: calculateLineTotal(item),
+        taxAmount: calculateLinePPN(item),
+      })),
+      paymentIds: [],
+      notes: notes || undefined,
+    })
+    setLoading(false)
+    router.push('/finance/ap')
   }
 
   return (
