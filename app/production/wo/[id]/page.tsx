@@ -92,7 +92,7 @@ export default function WorkOrderDetailPage() {
   }
 
   function saveBOM() {
-    const valid = editBOMItems.filter(i => i.code && i.name && i.qty > 0)
+    const valid = editBOMItems.filter(i => i.code && i.name)
     updateWorkOrder(wo.id, { bbItems: valid })
     setEditBOMOpen(false)
   }
@@ -260,7 +260,7 @@ export default function WorkOrderDetailPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Bill of Materials &amp; Konsumsi Bahan</CardTitle>
-                {!bom && wo.status === 'PLANNED' && (
+                {!bom && (
                   <Button size="sm" variant="outline" className="gap-1.5 h-7" onClick={openEditBOM}>
                     <Pencil className="h-3.5 w-3.5" />Edit BOM
                   </Button>

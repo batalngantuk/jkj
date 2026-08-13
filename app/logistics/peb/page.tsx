@@ -6,17 +6,22 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
-  Package, Plus, Search, Filter, FileText, Ship,
-  Calendar, DollarSign, MapPin, CheckCircle, Clock
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+  Package, Plus, Search, FileText, Ship,
+  Calendar, DollarSign, MapPin, CheckCircle, Trash2
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import Link from 'next/link'
 import { usePEB } from '@/lib/store/hooks'
 
 export default function PEBListPage() {
-  const { pebs: MOCK_PEB_DATA } = usePEB()
+  const { pebs: MOCK_PEB_DATA, deletePEB } = usePEB()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
     if (currency === 'USD') {
@@ -294,13 +299,18 @@ export default function PEBListPage() {
                           </div>
                         </div>
 
-                        <div className="ml-4">
+                        <div className="ml-4 flex gap-2">
                           <Link href={`/logistics/peb/${peb.id}`}>
                             <Button variant="outline" size="sm">
                               <FileText className="h-3 w-3 mr-1" />
                               View Details
                             </Button>
                           </Link>
+                          {(peb.status === 'DRAFT' || peb.status === 'CANCELLED') && (
+                            <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(peb.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -339,6 +349,25 @@ export default function PEBListPage() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus PEB</AlertDialogTitle>
+            <AlertDialogDescription>
+              Yakin ingin menghapus dokumen PEB ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => {
+              if (deleteTarget) { deletePEB(deleteTarget); setDeleteTarget(null) }
+            }}>
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   )
 }

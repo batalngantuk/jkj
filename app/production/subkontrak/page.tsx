@@ -27,7 +27,7 @@ import {
 import {
   Factory, Plus, Download, FileText, Package,
   ChevronRight, CheckCircle2, Clock, Truck,
-  DollarSign, AlertCircle, Building2, ExternalLink, Send, Trash2
+  DollarSign, AlertCircle, Building2, ExternalLink, Send, Trash2, Printer
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import { exportToExcel } from '@/lib/utils/export-excel'
@@ -94,7 +94,7 @@ interface BBItem { kodeBB: string; namaBB: string; qty: number; satuan: string; 
 export default function SubkontrakPage() {
   const { records, createSubkon, updateSubkon } = useSubkontrak()
   const { createReceipt: createFGReceipt } = useFGReceipts()
-  const { addStock } = useStock()
+  const { addStock, deductStock } = useStock()
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [selectedRecord, setSelectedRecord] = useState<SubkonRecord | null>(null)
   const [showFormDialog, setShowFormDialog] = useState(false)
@@ -243,6 +243,12 @@ export default function SubkontrakPage() {
       subkKiteKirimTgl: kirimTgl,
       suratJalanNo: kirimSJNo,
       suratJalanTgl: kirimTgl,
+    })
+    // Create PRODUCTION_OUT movements per item so KITE Lap 2 picks them up with penerima subkon
+    kirimTarget.items.forEach(item => {
+      if (item.qtyKirim > 0) {
+        deductStock(item.kodeBB, item.qtyKirim, kirimTarget.id, 'SUBKON', 'PRODUCTION_OUT')
+      }
     })
     setShowKirimBB(false)
     setKirimTarget(null)
@@ -609,7 +615,22 @@ export default function SubkontrakPage() {
               </TabsContent>
             </Tabs>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-wrap justify-between gap-2 pt-2">
+              <div className="flex gap-2">
+                {selectedRecord.subkKiteKirimNo && selectedRecord.subkKiteKirimNo !== '-' && (
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => window.open(`/production/subkontrak/print-11?id=${selectedRecord.id}`, '_blank')}>
+                    <Printer className="h-3 w-3" />
+                    SUBK KITE 1.1
+                  </Button>
+                )}
+                {selectedRecord.subkKiteTerimaNo && selectedRecord.subkKiteTerimaNo !== '-' && (
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => window.open(`/production/subkontrak/print-12?id=${selectedRecord.id}`, '_blank')}>
+                    <Printer className="h-3 w-3" />
+                    SUBK KITE 1.2
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
               <Button variant="outline" onClick={() => setSelectedRecord(null)}>Tutup</Button>
               {selectedRecord.status === 'Draft' && (
                 <Button className="gap-2" onClick={() => openKirimBB(selectedRecord)}>
@@ -641,6 +662,7 @@ export default function SubkontrakPage() {
                   </Button>
                 </>
               )}
+              </div>
             </div>
           </DialogContent>
         </Dialog>

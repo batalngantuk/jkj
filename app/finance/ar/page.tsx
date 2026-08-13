@@ -216,11 +216,11 @@ export default function ARPage() {
                       </TableCell>
                       <TableCell>
                         <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
-                          invoice.invoiceType === 'Credit Note' ? 'border-green-300 text-green-700' :
-                          invoice.invoiceType === 'Debit Note' ? 'border-orange-300 text-orange-700' :
+                          invoice.invoiceType === 'Loc' ? 'border-purple-300 text-purple-700' :
+                          invoice.invoiceType === 'BC2.4' ? 'border-orange-300 text-orange-700' :
                           'border-blue-300 text-blue-700'
                         }`}>
-                          {invoice.invoiceType || 'Tagihan'}
+                          {invoice.invoiceType || 'BC3.0'}
                         </span>
                       </TableCell>
                       <TableCell>

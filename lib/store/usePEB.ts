@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { STORE_KEYS, getStore, addToStore, updateInStore, generateId } from './index'
+import { STORE_KEYS, getStore, addToStore, updateInStore, removeFromStore, generateId } from './index'
 
 export interface PEBItem {
   id: string
@@ -119,5 +119,10 @@ export function usePEB() {
     return getStore<PEBDocument>(STORE_KEYS.PEB, SEED).find(p => p.id === id)
   }, [])
 
-  return { pebs, createPEB, updatePEB, getById, refresh }
+  const deletePEB = useCallback((id: string) => {
+    const updated = removeFromStore<PEBDocument>(STORE_KEYS.PEB, id, SEED)
+    setPebs(updated)
+  }, [])
+
+  return { pebs, createPEB, updatePEB, deletePEB, getById, refresh }
 }

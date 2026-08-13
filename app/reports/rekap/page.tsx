@@ -21,7 +21,7 @@ function fmt(n: number) {
 }
 
 export default function RekapPage() {
-  const { salesOrders = [] } = useSalesOrders()
+  const { orders: salesOrders = [] } = useSalesOrders()
   const { orders: purchaseOrders = [] } = usePurchaseOrders()
   const { pebs = [] } = usePEB()
   const { documents: penjualanLokal = [] } = usePenjualanLokal()

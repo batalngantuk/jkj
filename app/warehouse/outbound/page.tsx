@@ -72,10 +72,8 @@ export default function OutboundPage() {
   )
 
   const openFGForm = (wo: WorkOrder) => {
-    const alreadyReceived = receipts.filter(r => r.woId === wo.id).reduce((s, r) => s + r.qtyReceived, 0)
-    const remaining = Math.max(0, wo.quantity - alreadyReceived)
     setSelectedWO(wo)
-    setFgForm({ noWO: wo.id, qtyDiterima: remaining.toString(), qtyRejek: '0', gudang: 'Gudang FG-A', penerima: '', catatan: '' })
+    setFgForm({ noWO: wo.id, qtyDiterima: '', qtyRejek: '0', gudang: 'Gudang FG-A', penerima: '', catatan: '' })
     setFgFormOpen(true)
   }
 
@@ -237,21 +235,28 @@ export default function OutboundPage() {
                         <TableHead>No. WO</TableHead>
                         <TableHead>No. SO</TableHead>
                         <TableHead>Produk</TableHead>
-                        <TableHead className="text-right">Qty Produksi</TableHead>
+                        <TableHead className="text-right">Qty Total</TableHead>
+                        <TableHead className="text-right">Sudah Diterima</TableHead>
+                        <TableHead className="text-right">Sisa</TableHead>
                         <TableHead>Tanggal Selesai</TableHead>
-                        <TableHead>Line</TableHead>
                         <TableHead>Aksi</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredWO.map((wo) => (
+                      {filteredWO.map((wo) => {
+                        const alreadyRec = receipts.filter(r => r.woId === wo.id).reduce((s, r) => s + r.qtyReceived, 0)
+                        const sisa = Math.max(0, wo.quantity - alreadyRec)
+                        return (
                         <TableRow key={wo.id}>
                           <TableCell className="font-medium text-primary">{wo.id}</TableCell>
                           <TableCell className="text-muted-foreground">{wo.soNumber}</TableCell>
                           <TableCell>{wo.product}</TableCell>
                           <TableCell className="text-right font-medium">{wo.quantity.toLocaleString()}</TableCell>
+                          <TableCell className="text-right text-green-600 font-medium">
+                            {alreadyRec > 0 ? alreadyRec.toLocaleString() : '—'}
+                          </TableCell>
+                          <TableCell className="text-right text-amber-600 font-semibold">{sisa.toLocaleString()}</TableCell>
                           <TableCell>{wo.endDate}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground">{wo.line}</TableCell>
                           <TableCell>
                             <Button size="sm" onClick={() => openFGForm(wo)} className="gap-1">
                               <Warehouse className="h-3.5 w-3.5" />
@@ -259,7 +264,8 @@ export default function OutboundPage() {
                             </Button>
                           </TableCell>
                         </TableRow>
-                      ))}
+                        )
+                      })}
                     </TableBody>
                   </Table>
                 )}
@@ -541,30 +547,36 @@ export default function OutboundPage() {
                 </div>
                 {selectedWO && (() => {
                   const prev = receipts.filter(r => r.woId === selectedWO.id).reduce((s, r) => s + r.qtyReceived, 0)
-                  const remaining = selectedWO.quantity - prev
-                  return prev > 0 ? (
+                  const remaining = Math.max(0, selectedWO.quantity - prev)
+                  return (
                     <>
                       <div>
                         <p className="text-muted-foreground">Sudah Diterima</p>
-                        <p className="font-medium text-green-600">{prev.toLocaleString()} carton</p>
+                        <p className="font-medium text-green-600">{prev > 0 ? `${prev.toLocaleString()} carton` : '—'}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Sisa</p>
+                        <p className="text-muted-foreground">Sisa (belum diterima)</p>
                         <p className="font-bold text-amber-600">{remaining.toLocaleString()} carton</p>
                       </div>
                     </>
-                  ) : null
+                  )
                 })()}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Qty Diterima <span className="text-red-500">*</span></Label>
+                  <Label>Qty Diterima Sekarang <span className="text-red-500">*</span></Label>
                   <Input
                     type="number"
+                    placeholder="Masukkan qty penerimaan ini"
                     value={fgForm.qtyDiterima}
                     onChange={(e) => setFgForm(p => ({ ...p, qtyDiterima: e.target.value }))}
                   />
+                  {selectedWO && (() => {
+                    const prev = receipts.filter(r => r.woId === selectedWO.id).reduce((s, r) => s + r.qtyReceived, 0)
+                    const rem = Math.max(0, selectedWO.quantity - prev)
+                    return <p className="text-xs text-muted-foreground">Maks sisa: {rem.toLocaleString()} carton</p>
+                  })()}
                 </div>
                 <div className="space-y-2">
                   <Label>Qty Rejek / QC Fail</Label>
@@ -695,6 +707,18 @@ export default function OutboundPage() {
                   <p className="text-muted-foreground">Qty SO</p>
                   <p className="font-bold">{selectedSO?.quantity.toLocaleString()} carton</p>
                 </div>
+                <div>
+                  <p className="text-muted-foreground">Stok BJ Tersedia</p>
+                  <p className={`font-bold ${selectedSOFGAvail >= (selectedSO?.quantity || 0) ? 'text-green-600' : 'text-amber-600'}`}>
+                    {selectedSOFGAvail.toLocaleString()} carton
+                  </p>
+                </div>
+                {selectedSOFGAvail < (selectedSO?.quantity || 0) && (
+                  <div>
+                    <p className="text-muted-foreground">Kurang</p>
+                    <p className="font-bold text-red-600">{((selectedSO?.quantity || 0) - selectedSOFGAvail).toLocaleString()} carton</p>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -712,9 +736,9 @@ export default function OutboundPage() {
                     </p>
                   )}
                   {selectedSOFGAvail > 0 && Number(shipForm.qtyDikirim) > selectedSOFGAvail && (
-                    <p className="text-xs text-orange-600 font-medium flex items-center gap-1">
+                    <p className="text-xs text-red-600 font-medium flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
-                      Stok BJ di gudang hanya {selectedSOFGAvail.toLocaleString()} — qty kirim melebihi stok tersedia.
+                      Stok BJ hanya {selectedSOFGAvail.toLocaleString()} — tidak bisa kirim melebihi stok. Kurangi qty atau terima lebih dulu dari produksi.
                     </p>
                   )}
                 </div>
@@ -782,7 +806,11 @@ export default function OutboundPage() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setSelectedSO(null)}>Batal</Button>
               <Button
-                disabled={!shipForm.qtyDikirim || !selectedSO}
+                disabled={
+                  !shipForm.qtyDikirim ||
+                  !selectedSO ||
+                  (selectedSOFGAvail > 0 && Number(shipForm.qtyDikirim) > selectedSOFGAvail)
+                }
                 onClick={() => {
                   if (!selectedSO) return
                   createShipment({

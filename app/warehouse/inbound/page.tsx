@@ -48,7 +48,7 @@ function newLineGR(): MaterialLineGR {
 
 export default function InboundPage() {
   const { receipts, createReceipt, updateReceipt, deleteReceipt } = useGoodsReceipts()
-  const { addStock } = useStock()
+  const { addStock, deductStock } = useStock()
   const { orders: allPOs, updateOrder: updatePO } = usePurchaseOrders()
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null)
   const [showManualForm, setShowManualForm] = useState(false)
@@ -77,6 +77,7 @@ export default function InboundPage() {
   const [editPenerima, setEditPenerima] = useState('')
   const [editSJ, setEditSJ] = useState('')
   const [editCatatan, setEditCatatan] = useState('')
+  const [editItems, setEditItems] = useState<GoodsReceipt['items']>([])
 
   function openEdit(gr: GoodsReceipt) {
     setEditTarget(gr)
@@ -87,6 +88,11 @@ export default function InboundPage() {
     setEditPenerima(gr.penerima)
     setEditSJ(gr.noSuratJalan)
     setEditCatatan(gr.catatan || '')
+    setEditItems(gr.items.map(i => ({ ...i })))
+  }
+
+  function updateEditItem(idx: number, patch: Partial<GoodsReceipt['items'][0]>) {
+    setEditItems(prev => prev.map((item, i) => i === idx ? { ...item, ...patch } : item))
   }
 
   function saveEdit() {
@@ -99,6 +105,7 @@ export default function InboundPage() {
       penerima: editPenerima,
       noSuratJalan: editSJ,
       catatan: editCatatan,
+      items: editItems,
     })
     setEditTarget(null)
   }
@@ -672,7 +679,7 @@ export default function InboundPage() {
                     nama: item.name,
                     satuan: item.unit,
                     qtyPO: item.quantity,
-                    qtyDiterima: poQtyReceived[item.code] ?? item.quantity,
+                    qtyDiterima: poQtyReceived[item.code] ?? Math.max(0, item.quantity - (alreadyReceivedPerItem[item.code] || 0)),
                   })),
                   gudang: poGudang || 'Gudang RM-A',
                   penerima: poPenerima,
@@ -681,8 +688,8 @@ export default function InboundPage() {
                   status: 'Selesai',
                 })
                 selectedPO.items.forEach(item => {
-                  const qty = poQtyReceived[item.code] ?? item.quantity
-                  addStock(item.code, item.name, qty, selectedPO.id, 'GR', 'BB', item.unit, poGudang || 'Gudang RM-A')
+                  const qty = poQtyReceived[item.code] ?? Math.max(0, item.quantity - (alreadyReceivedPerItem[item.code] || 0))
+                  if (qty > 0) addStock(item.code, item.name, qty, selectedPO.id, 'GR', 'BB', item.unit, poGudang || 'Gudang RM-A')
                 })
                 const allItemsReceived = selectedPO.items.every(item => {
                   const alreadyQty = alreadyReceivedPerItem[item.code] || 0
@@ -709,53 +716,114 @@ export default function InboundPage() {
             <DialogTitle className="text-red-600">Hapus GR?</DialogTitle>
             <DialogDescription>
               Yakin hapus <span className="font-mono font-semibold">{deleteTarget?.id}</span>?<br />
-              Stok yang sudah ditambahkan dari GR ini <strong>tidak otomatis dikurangi</strong>. Lakukan penyesuaian stok manual jika diperlukan.
+              Stok akan otomatis dikurangi kembali sesuai qty yang pernah diterima di GR ini.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>Batal</Button>
-            <Button variant="destructive" onClick={() => { if (deleteTarget) { deleteReceipt(deleteTarget.id); setDeleteTarget(null) } }}>
+            <Button variant="destructive" onClick={() => {
+              if (deleteTarget) {
+                deleteTarget.items.forEach(item => {
+                  if (item.qtyDiterima > 0) deductStock(item.kode, item.qtyDiterima, deleteTarget.id, 'GR_DELETE', 'ADJUSTMENT')
+                })
+                deleteReceipt(deleteTarget.id)
+                setDeleteTarget(null)
+              }
+            }}>
               Hapus
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ── Dialog Edit GR (header only) ── */}
+      {/* ── Dialog Edit GR ── */}
       <Dialog open={!!editTarget} onOpenChange={v => { if (!v) setEditTarget(null) }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit GR — <span className="font-mono">{editTarget?.id}</span></DialogTitle>
-            <DialogDescription>Perubahan pada data header saja. Item dan qty tidak dapat diubah di sini.</DialogDescription>
+            <DialogDescription>Edit header dan item/qty penerimaan.</DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-3 py-2">
-            <div className="space-y-1.5">
-              <Label>Supplier</Label>
-              <Input value={editSupplier} onChange={e => setEditSupplier(e.target.value)} />
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Supplier</Label>
+                <Input value={editSupplier} onChange={e => setEditSupplier(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>No. PIB</Label>
+                <Input value={editNoPIB} onChange={e => setEditNoPIB(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Tgl Masuk</Label>
+                <Input type="date" value={editTgl} onChange={e => setEditTgl(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Gudang</Label>
+                <Input value={editGudang} onChange={e => setEditGudang(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Penerima</Label>
+                <Input value={editPenerima} onChange={e => setEditPenerima(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>No. Surat Jalan</Label>
+                <Input value={editSJ} onChange={e => setEditSJ(e.target.value)} />
+              </div>
+              <div className="col-span-2 space-y-1.5">
+                <Label>Catatan</Label>
+                <Input value={editCatatan} onChange={e => setEditCatatan(e.target.value)} />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>No. PIB</Label>
-              <Input value={editNoPIB} onChange={e => setEditNoPIB(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Tgl Masuk</Label>
-              <Input type="date" value={editTgl} onChange={e => setEditTgl(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Gudang</Label>
-              <Input value={editGudang} onChange={e => setEditGudang(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Penerima</Label>
-              <Input value={editPenerima} onChange={e => setEditPenerima(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>No. Surat Jalan</Label>
-              <Input value={editSJ} onChange={e => setEditSJ(e.target.value)} />
-            </div>
-            <div className="col-span-2 space-y-1.5">
-              <Label>Catatan</Label>
-              <Input value={editCatatan} onChange={e => setEditCatatan(e.target.value)} />
+
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Item Diterima</Label>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Kode</TableHead>
+                    <TableHead>Nama</TableHead>
+                    <TableHead>Satuan</TableHead>
+                    <TableHead className="text-right">Qty Diterima</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {editItems.map((item, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>
+                        <Input
+                          className="h-8 text-xs"
+                          value={item.kode}
+                          onChange={e => updateEditItem(idx, { kode: e.target.value })}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          className="h-8 text-xs"
+                          value={item.nama}
+                          onChange={e => updateEditItem(idx, { nama: e.target.value })}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          className="h-8 w-20 text-xs"
+                          value={item.satuan}
+                          onChange={e => updateEditItem(idx, { satuan: e.target.value })}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="any"
+                          className="h-8 w-24 text-xs text-right"
+                          value={item.qtyDiterima}
+                          onChange={e => updateEditItem(idx, { qtyDiterima: parseFloat(e.target.value) || 0 })}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </div>
           <DialogFooter className="gap-2">

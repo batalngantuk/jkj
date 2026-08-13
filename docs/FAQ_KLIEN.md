@@ -1,7 +1,7 @@
 # FAQ — Pertanyaan Klien JKJ ERP
 
 **Dokumen ini menjawab pertanyaan-pertanyaan operasional yang sering muncul dari penggunaan sistem.**  
-**Terakhir diperbarui:** 26 Juni 2026
+**Terakhir diperbarui:** 13 Agustus 2026
 
 ---
 
@@ -11,44 +11,58 @@
 1. [Lampiran PO tidak muncul setelah di-approved — di mana?](#1-filelampiranpotidakmuncul)
 2. [Satuan "prs", "mtr", "sf", "yard", "tne", "pce" — di mana tambahnya?](#2-satuanprs-mtr-sf)
 3. [Revisi qty PO yang sudah berjalan — bisa?](#3-revisi-qty-po)
+4. [Terima barang dari PO — pakai cara mana? Cara 1 vs Cara 2?](#4-cara1-vs-cara2-penerimaan)
+5. [GR yang salah — bisa diedit atau dihapus?](#5-edit-hapus-gr)
 
 ### Sales Order
-4. [SO bisa punya 2 satuan berbeda dalam 1 order?](#4-so-2-satuan)
-5. [Tombol "Edit Order" tidak bisa diklik](#5-edit-order-so)
+6. [SO bisa punya 2 satuan berbeda dalam 1 order?](#6-so-2-satuan)
+7. [Tombol "Edit Order" tidak bisa diklik](#7-edit-order-so)
 
 ### Keuangan (AR / AP / Jurnal)
-6. [AR & AP — "New Invoice" untuk ekspor/impor atau lokal saja?](#6-new-invoice-mata-uang)
-7. [Dialog pembayaran AR/AP — bagaimana dengan currency dan kurs?](#7-dialog-pembayaran-kurs)
-8. [Jurnal — apa perbedaan "Kategori" dan "Akun"?](#8-jurnal-kategori-akun)
-9. [Tax Assets — apa itu "Available"? Apakah terhubung ke Dual Billing?](#9-tax-assets-available)
+8. [AR & AP — tipe invoice apa saja? BC3.0, Loc, BC2.4?](#8-tipe-invoice)
+9. [AR & AP — "New Invoice" untuk ekspor/impor atau lokal saja?](#9-new-invoice-mata-uang)
+10. [Dialog pembayaran AR/AP — bagaimana dengan currency dan kurs?](#10-dialog-pembayaran-kurs)
+11. [Jurnal — apa perbedaan "Kategori" dan "Akun"?](#11-jurnal-kategori-akun)
+12. [Tax Assets — apa itu "Available"? Apakah terhubung ke Dual Billing?](#12-tax-assets-available)
+13. [Penjualan material lokal tidak muncul di laporan keuangan](#13-penjualan-lokal-laporan)
 
 ### Subkontrak / CMT
-10. [Nama subkontraktor tidak bisa input manual — di mana?](#10-nama-subkon-manual)
-11. [Section "Bahan Baku yang Dikirimkan" di form job subkon — wajib diisi?](#11-bb-form-job-subkon)
-12. ["Keluarkan WIP ke Proses" — apakah ini untuk kirim BB ke CMT?](#12-keluarkan-wip-vs-kirim-subkon)
-13. ["WO / Proses Tujuan" di Keluarkan WIP — apa yang diisi?](#13-wo-proses-tujuan)
-14. [Input barang jadi dari CMT — di mana?](#14-input-bj-dari-cmt)
-15. [Input BJ harus menunggu semua material diinput dulu?](#15-input-bj-tidak-tunggu-material)
+14. [Nama subkontraktor tidak bisa input manual — di mana?](#14-nama-subkon-manual)
+15. [Section "Bahan Baku yang Dikirimkan" di form job subkon — wajib diisi?](#15-bb-form-job-subkon)
+16. ["Keluarkan WIP ke Proses" — apakah ini untuk kirim BB ke CMT?](#16-keluarkan-wip-vs-kirim-subkon)
+17. ["WO / Proses Tujuan" di Keluarkan WIP — apa yang diisi?](#17-wo-proses-tujuan)
+18. [Input barang jadi dari CMT — di mana?](#18-input-bj-dari-cmt)
+19. [Input BJ harus menunggu semua material diinput dulu?](#19-input-bj-tidak-tunggu-material)
+20. [Print dokumen SUBK KITE 1.1 dan 1.2 — di mana?](#20-print-subk-kite)
 
 ### Warning / Validasi Qty
-16. [Apakah ada warning jika qty melebihi batas?](#16-warning-qty)
-17. [Jika qty SO perlu direvisi setelah over-quantity — bisa?](#17-revisi-qty-so)
+21. [Apakah ada warning jika qty melebihi batas?](#21-warning-qty)
+22. [Jika qty SO perlu direvisi setelah over-quantity — bisa?](#22-revisi-qty-so)
 
 ### Laporan KITE
-18. [Laporan IT Inventory — perlu diinput ulang setiap bulan?](#18-it-inventory-otomatis)
+23. [Laporan IT Inventory — perlu diinput ulang setiap bulan?](#23-it-inventory-otomatis)
+24. [Laporan Mutasi HP (Lap 7) tidak update setelah buat PEB](#24-mutasi-hp-peb)
 
 ### Produksi & Work Order
-19. [Pengeluaran material gudang ke produksi dan CMT — di mana?](#19-pengeluaran-material)
-20. [Work Order — dibuat setelah SO? Apa itu "Produk" di WO?](#20-wo-setelah-so)
-21. [WO ada di Sales Order dan di Production — harus buat di keduanya?](#21-wo-di-so-vs-production)
-22. [Material subkon kembali jadi WIP — masuk laporan KITE nomor berapa?](#22-material-subkon-kite)
+25. [Pengeluaran material gudang ke produksi dan CMT — di mana?](#25-pengeluaran-material)
+26. [Work Order — dibuat setelah SO? Apa itu "Produk" di WO?](#26-wo-setelah-so)
+27. [WO ada di Sales Order dan di Production — harus buat di keduanya?](#27-wo-di-so-vs-production)
+28. [Material subkon kembali jadi WIP — masuk laporan KITE nomor berapa?](#28-material-subkon-kite)
+29. [BOM tidak bisa diedit setelah WO dibuat atau salah klik Enter](#29-edit-bom-wo)
 
-### Logistics & Waste
-23. [Form penjualan material lokal (BC 4.0) — di mana?](#23-bc40-di-mana)
-24. [Di form waste — di mana field No. BC 2.4 dan Mata Uang?](#24-waste-bc24-matauang)
+### Logistics & PEB
+30. [Form penjualan material lokal (BC 4.0) — di mana?](#30-bc40-di-mana)
+31. [Alur PEB dari awal sampai laporan KITE terisi — bagaimana?](#31-alur-peb)
+32. [Hapus PEB yang salah dibuat — bisa?](#32-hapus-peb)
+
+### Gudang — Pengeluaran BB
+33. [Pengeluaran BB yang salah — bisa diedit atau dihapus?](#33-edit-hapus-pengeluaran-bb)
+
+### Waste
+34. [Di form waste — di mana field No. BC 2.4 dan Mata Uang?](#34-waste-bc24-matauang)
 
 ### Troubleshooting
-25. [Dialog form tidak bisa di-scroll / konten terpotong](#25-dialog-scroll)
+35. [Dialog form tidak bisa di-scroll / konten terpotong](#35-dialog-scroll)
 
 ---
 
@@ -97,11 +111,36 @@ Jika dalam 1 PO ada item dengan satuan berbeda (misal: item 1 = prs, item 2 = pc
 
 ---
 
+### 4. Terima barang dari PO — pakai cara mana? Cara 1 vs Cara 2?
+
+Ada dua cara input penerimaan barang (GR):
+
+| | Cara 1 — "+ Input Penerimaan Barang" | Cara 2 — Tab Antrian PO → Terima |
+|---|---|---|
+| Cocok untuk | Penerimaan yang tidak terkait PO terdaftar | Penerimaan dari PO yang sudah ada di sistem |
+| Terhubung ke PO | ❌ Input bebas | ✅ Otomatis tahu nomor PO |
+| Info sisa parsial | ❌ Tidak ada | ✅ Tampil qty sudah diterima + sisa |
+| Warning over qty | ❌ Tidak ada | ✅ Border merah + keterangan sisa |
+| Masuk KITE Lap 1 | ✅ Ya | ✅ Ya |
+
+**Rekomendasi:** gunakan **Cara 2 (Antrian PO → Terima)** untuk semua penerimaan dari PO terdaftar — lebih akurat dan ada validasi parsial.
+
+---
+
+### 5. GR yang salah — bisa diedit atau dihapus?
+
+**Bisa keduanya.**
+
+- **Edit**: klik ikon **pensil** di baris GR di daftar Inbound → dialog edit terbuka → ubah qty diterima per item → simpan
+- **Hapus**: klik ikon **tong sampah** → konfirmasi → GR terhapus dan **stok otomatis dikurangi kembali**
+
+---
+
 ## 💼 SALES ORDER
 
 ---
 
-### 4. SO bisa punya 2 satuan berbeda dalam 1 order? (misal: 100 pce + 50 prs)
+### 6. SO bisa punya 2 satuan berbeda dalam 1 order? (misal: 100 pce + 50 prs)
 
 **Bisa.** Saat membuat SO di `/sales/new`, form sudah mendukung **multi-line item**. Setiap baris punya dropdown satuan sendiri. Contoh:
 - Baris 1: SYNTHETIC — 100 qty — **pce** — USD 5
@@ -111,7 +150,7 @@ Keduanya tersimpan sebagai 1 SO dengan 2 item. Di daftar SO, kolom Qty akan mena
 
 ---
 
-### 5. Tombol "Edit Order" di halaman detail SO tidak bisa diklik
+### 7. Tombol "Edit Order" di halaman detail SO tidak bisa diklik
 
 Sudah diperbaiki. Klik tombol **"Edit Order"** (hanya muncul untuk SO status **DRAFT**) → dialog edit terbuka dengan field:
 - Qty
@@ -126,7 +165,21 @@ Simpan → total otomatis dihitung ulang dan history SO dicatat.
 
 ---
 
-### 6. AR & AP — "New Invoice" itu untuk ekspor/impor atau lokal saja?
+### 8. AR & AP — tipe invoice apa saja? Apa bedanya BC3.0, Loc, dan BC2.4?
+
+Setiap invoice AR/AP punya pilihan **tipe dokumen**:
+
+| Tipe | Nama | Digunakan untuk |
+|------|------|----------------|
+| **BC3.0** | Ekspor | Invoice penjualan ke luar negeri (ekspor) |
+| **Loc** | Lokal | Invoice penjualan/pembelian dalam negeri biasa |
+| **BC2.4** | Kawasan Berikat | Invoice penjualan material dari kawasan berikat ke pembeli lokal |
+
+Tipe ini hanya untuk penandaan dokumen — tidak mempengaruhi kalkulasi otomatis saat ini. Pilih sesuai jenis transaksi agar rekap laporan akurat.
+
+---
+
+### 9. AR & AP — "New Invoice" itu untuk ekspor/impor atau lokal saja?
 
 **Untuk semua jenis** — lokal, ekspor, maupun impor. Tidak ada pembatasan.
 
@@ -138,7 +191,7 @@ Kolom "Total Amount" di daftar AP akan menampilkan tag mata uang (misal: `USD 5,
 
 ---
 
-### 7. Di dialog pembayaran AR/AP — bagaimana dengan currency dan kurs?
+### 10. Di dialog pembayaran AR/AP — bagaimana dengan currency dan kurs?
 
 Saat klik tombol **"Terima Bayar"** (AR) atau **"Bayar"** (AP) untuk invoice non-IDR:
 
@@ -151,7 +204,7 @@ Saat klik tombol **"Terima Bayar"** (AR) atau **"Bayar"** (AP) untuk invoice non
 
 ---
 
-### 8. Jurnal — apa perbedaan "Kategori" dan "Akun"?
+### 11. Jurnal — apa perbedaan "Kategori" dan "Akun"?
 
 Ini adalah **2 hal yang berbeda**:
 
@@ -170,7 +223,7 @@ Ini adalah **2 hal yang berbeda**:
 
 ---
 
-### 9. Tax Assets — apa itu "Available"? Apakah terhubung ke Dual Billing?
+### 12. Tax Assets — apa itu "Available"? Apakah terhubung ke Dual Billing?
 
 **Penjelasan "Available":**
 
@@ -192,11 +245,23 @@ Saat ini koneksinya masih **manual** — tidak otomatis. Alurnya:
 
 ---
 
+### 13. Penjualan material lokal tidak muncul di laporan keuangan
+
+Pastikan dokumen penjualan lokal sudah berstatus **Approved** (bukan Draft):
+
+1. Buka **Logistics → Penjualan Lokal** → cari dokumen yang bersangkutan
+2. Buka detail → klik tombol **"Approve"**
+3. Setelah status berubah ke Approved, nilai akan muncul di:
+   - **Finance → Laporan Keuangan (P&L)** sebagai baris "Penjualan Material Lokal (BC 2.4)"
+   - **Reports → Rekap Penjualan** sebagai baris dengan tipe "Lokal"
+
+---
+
 ## 🏭 SUBKONTRAK / CMT
 
 ---
 
-### 10. Nama subkontraktor tidak bisa input manual — di mana membuatnya?
+### 14. Nama subkontraktor tidak bisa input manual — di mana membuatnya?
 
 Sekarang **bisa langsung di form buat job subkon**. Caranya:
 
@@ -210,7 +275,7 @@ Sekarang **bisa langsung di form buat job subkon**. Caranya:
 
 ---
 
-### 11. Di form job subkon ada section "Bahan Baku yang Dikirimkan" — wajib diisi atau tidak?
+### 15. Di form job subkon ada section "Bahan Baku yang Dikirimkan" — wajib diisi atau tidak?
 
 **Tidak wajib, tapi dianjurkan diisi sebagai estimasi/rencana.**
 
@@ -231,7 +296,7 @@ Penjelasan perbedaan dua tempat:
 
 ---
 
-### 12. "Keluarkan WIP ke Proses Berikutnya" — apakah ini untuk kirim BB ke CMT?
+### 16. "Keluarkan WIP ke Proses Berikutnya" — apakah ini untuk kirim BB ke CMT?
 
 **Tidak sepenuhnya.** Ini adalah dua hal yang berbeda:
 
@@ -246,7 +311,7 @@ Karena CT-0402 dan label adalah **Bahan Baku (BB)**, bukan WIP. Item di "Pilih I
 
 ---
 
-### 13. "WO / Proses Tujuan" di dialog Keluarkan WIP — apa yang diisi?
+### 17. "WO / Proses Tujuan" di dialog Keluarkan WIP — apa yang diisi?
 
 Field **"WO / Proses Tujuan"** adalah Work Order tujuan untuk **produksi internal JKJ**.
 
@@ -255,7 +320,7 @@ Field **"WO / Proses Tujuan"** adalah Work Order tujuan untuk **produksi interna
 
 ---
 
-### 14. Input barang jadi dari CMT — di mana?
+### 18. Input barang jadi dari CMT — di mana?
 
 Di halaman **Subkontrak** → detail job yang bersangkutan:
 
@@ -271,7 +336,7 @@ Di halaman **Subkontrak** → detail job yang bersangkutan:
 
 ---
 
-### 15. Apakah input barang jadi dari CMT/produksi harus menunggu semua material diinput dulu?
+### 19. Apakah input barang jadi dari CMT/produksi harus menunggu semua material diinput dulu?
 
 **Tidak.** Input barang jadi **tidak bergantung** pada apakah pengeluaran material sudah dicatat atau belum.
 
@@ -279,11 +344,25 @@ Sistem tidak memblokir input BJ hanya karena pengeluaran material belum lengkap 
 
 ---
 
+### 20. Print dokumen SUBK KITE 1.1 dan 1.2 — di mana tombolnya?
+
+Tombol print ada di **footer dialog detail Job Subkontrak**:
+
+1. Buka **Produksi → Subkontrak** → klik job yang sudah ada nomor dokumennya
+2. Di footer dialog detail, cari tombol:
+   - **Print SUBK KITE 1.1** — muncul jika No. SUBK KITE 1.1 (pengiriman BB) sudah diisi
+   - **Print SUBK KITE 1.2** — muncul jika No. SUBK KITE 1.2 (penerimaan hasil) sudah diisi
+3. Klik → halaman print terbuka di tab baru → klik **Print** atau **Ctrl+P**
+
+Jika tombol tidak muncul, pastikan nomor dokumen sudah diisi saat konfirmasi kirim BB / terima hasil CMT.
+
+---
+
 ## ⚠️ WARNING / VALIDASI QTY
 
 ---
 
-### 16. Apakah ada warning jika qty yang diinput melebihi batas?
+### 21. Apakah ada warning jika qty yang diinput melebihi batas?
 
 Ya, sistem menampilkan warning di beberapa titik:
 
@@ -300,7 +379,7 @@ Semua warning **bersifat informatif** — tidak memblokir. User tetap bisa lanju
 
 ---
 
-### 17. Jika qty SO perlu direvisi setelah ada over-quantity — bisa?
+### 22. Jika qty SO perlu direvisi setelah ada over-quantity — bisa?
 
 **Bisa**, dengan 2 cara:
 
@@ -318,7 +397,7 @@ Hubungi Admin/Manager untuk approval revisi SO. Admin bisa mengubah status SO da
 
 ---
 
-### 18. Laporan IT Inventory — apakah perlu diinput ulang setiap bulan?
+### 23. Laporan IT Inventory — apakah perlu diinput ulang setiap bulan?
 
 **Tidak perlu.** Semua 8 laporan **terisi otomatis** dari transaksi yang sudah diinput di modul lain.
 
@@ -326,22 +405,35 @@ Yang perlu dilakukan hanya memastikan transaksi di modul masing-masing sudah dii
 
 | Transaksi | Trigger laporan |
 |-----------|----------------|
-| Complete GR di `/warehouse/gr` | Lap 1 (Pemasukan BB) + Lap 6 (Mutasi BB) |
+| Complete GR di `/warehouse/inbound` | Lap 1 (Pemasukan BB) + Lap 6 (Mutasi BB) |
 | Klik "Mulai Produksi" di WO | Lap 2 (Pemakaian BB) |
-| Buat job subkon dengan item KITE | Lap 3 (BB Subkon) |
+| Konfirmasi "Kirim BB ke Subkon" | Lap 3 (BB Subkon) |
 | Terima FG di `/warehouse/outbound` | Lap 4 (Pemasukan HP) |
-| Submit PEB di `/logistics/peb/new` | Lap 5 (Pengeluaran HP) + Lap 7 (Mutasi HP) |
+| **Approve** PEB di `/logistics/peb/[id]` | Lap 5 (Pengeluaran HP) + Lap 7 (Mutasi HP) |
 | Input waste → status "Diajukan BC 2.4" | Lap 8 (Waste/Scrap) |
+
+> **Penting:** Lap 5 dan Lap 7 hanya terupdate setelah PEB berstatus **Approved** — bukan hanya Submitted.
 
 Saat siap lapor ke DJBC: buka `/reports/kite-inventory` → klik **"Export Semua"** → 1 file Excel, 8 sheet.
 
 ---
 
-## 🏭 PRODUKSI & WORK ORDER
+### 24. Laporan Mutasi HP (Lap 7) tidak update setelah membuat PEB — kenapa?
+
+Dua hal yang perlu dicek:
+
+1. **Status PEB harus Approved** — bukan Draft atau Submitted. Buka detail PEB → klik **"Approve"** → baru laporan terupdate.
+2. **Kode barang di PEB harus konsisten** — Lap 7 mencocokkan kode barang di Pemasukan HP (dari penerimaan FG) dengan kode di Pengeluaran HP (dari PEB). Jika kode berbeda (misal: nama produk di FG berbeda dengan materialCode di PEB), baris akan tetap muncul tapi dengan saldo yang tidak cocok.
+
+Jika setelah Approve masih tidak muncul, cek ulang kode barang di item PEB — pastikan sama dengan kode yang dipakai saat input FG ke gudang.
 
 ---
 
-### 19. Pengeluaran material gudang ke produksi dan CMT — di mana?
+## ⚙️ PRODUKSI & WORK ORDER
+
+---
+
+### 25. Pengeluaran material gudang ke produksi dan CMT — di mana?
 
 Ada **dua tombol berbeda** di halaman Gudang WIP (`/warehouse/wip`):
 
@@ -356,7 +448,7 @@ Untuk mengeluarkan material ke produksi atau CMT: klik **"Keluarkan ke Proses"**
 
 ---
 
-### 20. Work Order — apakah dibuat setelah Sales Order? Apa itu "Produk" di WO?
+### 26. Work Order — apakah dibuat setelah Sales Order? Apa itu "Produk" di WO?
 
 **Alur yang benar:**
 1. Sales menerima order → buat SO di `/sales/new`
@@ -371,7 +463,7 @@ Untuk mengeluarkan material ke produksi atau CMT: klik **"Keluarkan ke Proses"**
 
 ---
 
-### 21. WO ada di Sales Order dan di Production — apakah harus dibuat di keduanya?
+### 27. WO ada di Sales Order dan di Production — apakah harus dibuat di keduanya?
 
 **Tidak, cukup satu kali.** Ada 2 cara membuat WO yang hasilnya sama:
 
@@ -384,7 +476,7 @@ Pilih salah satu. WO yang muncul di `/production/work-orders` adalah daftar semu
 
 ---
 
-### 22. Material subkon kembali jadi bahan setengah jadi — masuk laporan KITE nomor berapa?
+### 28. Material subkon kembali jadi bahan setengah jadi — masuk laporan KITE nomor berapa?
 
 Tergantung pada **jenis barang yang kembali dari CMT**:
 
@@ -400,7 +492,27 @@ Alur pencatatannya:
 
 ---
 
-### 23. Form penjualan material lokal (BC 4.0) — di mana?
+### 29. BOM tidak bisa diedit setelah WO dibuat atau salah klik Enter — bagaimana?
+
+Tombol **"Edit BOM"** tersedia di halaman detail WO selama BOM belum terdaftar (field BOM masih kosong):
+
+- Tersedia di **semua status WO** — tidak hanya status PLANNED
+- Berguna jika BOM tidak sengaja disimpan kosong (salah klik Enter sebelum mengisi qty)
+
+Caranya:
+1. Buka detail WO (`/production/wo/[id]`)
+2. Cari section BOM → jika belum ada, tombol **"Edit BOM"** muncul
+3. Tambah/isi item BOM → klik **"Simpan BOM"**
+
+Jika BOM sudah tersimpan dengan isi yang salah: hapus item yang salah satu per satu, lalu simpan ulang.
+
+---
+
+## 🚢 LOGISTICS & PEB
+
+---
+
+### 30. Form penjualan material lokal (BC 4.0) — di mana?
 
 Tersedia di menu **Logistics → BC 4.0** (`/logistics/bc40`).
 
@@ -416,11 +528,49 @@ Form ini serupa dengan PEB tapi untuk pemasukan barang dari dalam negeri (lokal)
 
 ---
 
+### 31. Alur PEB dari awal sampai laporan KITE terisi — bagaimana?
+
+1. **Logistics → PEB → "+ Create PEB"** — isi semua field: PEB Number, NPE Number, customer, item barang
+2. Klik **"Save Draft"** → status Draft (bisa diedit)
+3. Klik **"Submit"** → status Submitted
+4. Klik **"Approve"** → status Approved → **Lap 5 (Pengeluaran HP) dan Lap 7 (Mutasi HP) otomatis terisi**
+
+> **Penting:** Laporan KITE hanya terupdate setelah status **Approved** — bukan hanya Submitted.
+
+---
+
+### 32. Hapus PEB yang salah dibuat — bisa?
+
+**Bisa**, untuk PEB berstatus **Draft** atau **Cancelled**:
+
+1. Buka **Logistics → PEB** (daftar PEB)
+2. Cari PEB yang ingin dihapus
+3. Klik ikon **tong sampah** di sebelah kanan baris → konfirmasi → PEB terhapus
+
+PEB berstatus Submitted/Approved/Exported tidak bisa dihapus langsung — perlu proses pembatalan terpisah.
+
+---
+
+## 🗑️ GUDANG — PENGELUARAN BB
+
+---
+
+### 33. Pengeluaran BB yang salah — bisa diedit atau dihapus?
+
+**Bisa keduanya** (untuk pengeluaran yang dibuat manual):
+
+- **Edit**: klik ikon **pensil** di baris riwayat → dialog edit terbuka → ubah qty per material → simpan. Stok lama otomatis di-reverse, stok baru langsung diterapkan.
+- **Hapus**: klik ikon **tong sampah** → konfirmasi → catatan terhapus dan **stok otomatis dikembalikan**.
+
+Catatan: untuk pengeluaran otomatis dari WO (saat "Mulai Produksi"), tombol edit tidak tersedia — koreksi dilakukan via **Warehouse → Penyesuaian Stok**.
+
+---
+
 ## 🗑️ WASTE
 
 ---
 
-### 24. Di form "Ajukan Waste Baru" — di mana field No. BC 2.4 dan Mata Uang?
+### 34. Di form "Ajukan Waste Baru" — di mana field No. BC 2.4 dan Mata Uang?
 
 **Field No. BC 2.4 dan Tanggal BC 2.4:**
 
@@ -441,7 +591,7 @@ Saat disposisi = Dijual:
 
 ---
 
-### 25. Dialog form tidak bisa di-scroll / konten terpotong atas dan bawah
+### 35. Dialog form tidak bisa di-scroll / konten terpotong atas dan bawah
 
 Sudah diperbaiki di **semua dialog** berikut:
 - Dialog "Terima Bayar" di Finance → AR

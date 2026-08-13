@@ -1,5 +1,5 @@
 # Panduan Singkat — Demo ERP JKJ
-**Diperbarui:** Juli 2026
+**Diperbarui:** Agustus 2026
 
 ---
 
@@ -53,7 +53,9 @@ Ikuti urutan ini. Kalau ada langkah yang dilewati, data tidak akan muncul di lap
         ↓
 10. Buat PEB        → /logistics/peb/new → isi customer, barang, kurs
         ↓
-        ✅ Laporan KITE Tab 5 & 7 otomatis terisi
+        (Submit → lalu Approve agar Lap 5 & 7 terisi)
+        ↓
+        ✅ Laporan KITE Tab 5 & 7 otomatis terisi setelah status Approved
         ↓
 11. Lihat Laporan   → /reports/kite-inventory → Export Semua
 ```
@@ -113,9 +115,9 @@ Laporan KITE terisi **otomatis** dari aksi yang dilakukan di modul lain. Tabel d
 |---------|----------------|----------|
 | Tab 1 — Pemasukan BB | **Complete GR** | `/warehouse/inbound` |
 | Tab 2 — Pemakaian BB | **Mulai Produksi** | `/production/wo/[id]` |
-| Tab 3 — BB Subkontrak | **Simpan job subkon** dengan BB ber-fasilitas KITE | `/production/subkontrak` |
+| Tab 3 — BB Subkontrak | **Kirim BB ke Subkon** (konfirmasi kirim) | `/production/subkontrak` |
 | Tab 4 — Pemasukan HP | **Input BJ ke Gudang** | `/warehouse/outbound` |
-| Tab 5 — Pengeluaran HP | **Submit PEB** | `/logistics/peb/new` |
+| Tab 5 — Pengeluaran HP | **Approve PEB** | `/logistics/peb/[id]` |
 | Tab 6 — Mutasi BB | Otomatis | (dari Tab 1 + 2 + 3) |
 | Tab 7 — Mutasi HP | Otomatis | (dari Tab 4 + 5) |
 | Tab 8 — Waste | **Input waste** → ubah status ke *Diajukan* | `/warehouse/waste` |
@@ -155,7 +157,8 @@ Ada dua cara:
 - Buat PO dulu sebelum input penerimaan barang. Form Inbound akan menampilkan daftar PO yang sudah ada untuk dipilih.
 - Satuan di PO sudah lengkap: KG, MTR, PCE, YRD, PRS, NPR, TNE, dan lainnya. Kalau tidak ketemu, scroll dropdown lebih jauh.
 - Setelah GR selesai, klik **"Complete GR"** — ini yang memicu stok bertambah dan Laporan 1 KITE terisi.
-- GR yang salah bisa diedit atau dihapus via ikon pensil/tong sampah di daftar Inbound.
+- Untuk penerimaan **parsial** (PO diterima sebagian): gunakan Tab **Antrian PO → Terima**. Sistem otomatis menampilkan sisa qty yang belum diterima dan memberi peringatan merah jika input melebihi sisa.
+- GR yang salah bisa diedit atau dihapus via ikon pensil/tong sampah di daftar Inbound. Hapus GR otomatis mengurangi stok kembali.
 
 ---
 
@@ -172,6 +175,7 @@ Ada dua cara:
 
 - Pilih SO di dropdown WO → data produk dan qty otomatis terisi.
 - Untuk produk baru yang belum ada BOM-nya: setelah pilih produk, muncul bagian **"Input Bahan Baku Manual"** — isi kode BB, nama, qty per unit, dan satuan. Ini penting agar stok BB berkurang dan Laporan 2 KITE terisi.
+- **Edit BOM**: tombol "Edit BOM" tersedia di semua status WO selama BOM belum terdaftar — tidak hanya saat status PLANNED. Berguna jika BOM tidak sengaja disimpan kosong.
 - WO harus dilalui semua status (PLANNED → IN PROGRESS → QC INSPECTION → COMPLETED). Tidak ada yang bisa dilewati.
 
 ---
@@ -183,14 +187,15 @@ Ada dua cara:
 - Penerimaan hasil CMT bisa dilakukan **berkali-kali** (parsial):
   - Kalau belum terakhir: jangan centang "Penerimaan terakhir" → bisa terima lagi nanti
   - Kalau sudah terakhir: centang "Penerimaan terakhir" → status job jadi "Hasil Diterima"
+- **Print dokumen KITE**: setelah BB dikirim / hasil diterima, buka detail job subkon → di footer dialog ada tombol **Print SUBK KITE 1.1** (saat kirim BB) dan **Print SUBK KITE 1.2** (saat terima hasil). Tombol muncul hanya jika nomor dokumen sudah diisi.
 
 ---
 
 ### Gudang — Pengeluaran BB (Issue)
 
-- Halaman `/warehouse/issue` mencatat pengeluaran bahan baku untuk keperluan non-produksi (sampel, rusak, dll).
-- Untuk hapus pengeluaran yang salah: klik ikon **tong sampah** di baris yang ingin dihapus → konfirmasi → data terhapus.
-- **Catatan demo:** hapus pengeluaran hanya menghapus catatannya — stok tidak otomatis kembali. Di versi produksi ada jurnal koreksi otomatis.
+- Halaman `/warehouse/issue` mencatat pengeluaran bahan baku ke produksi atau subkon.
+- **Edit pengeluaran**: klik ikon **pensil** di baris yang ingin diubah → ubah qty per material → simpan. Stok lama otomatis di-reverse lalu stok baru diterapkan. (Hanya tersedia untuk pengeluaran yang dibuat manual — bukan dari WO otomatis.)
+- **Hapus pengeluaran**: klik ikon **tong sampah** → konfirmasi → data terhapus dan stok otomatis dikembalikan.
 
 ---
 
@@ -209,6 +214,35 @@ Ada dua cara:
 - Isi No. NPE sesuai nomor yang diterima dari DJBC — tidak ada nomor bawaan.
 - Customer yang sudah ada di SO langsung muncul di dropdown. Kalau belum, pilih **"+ Input nama baru"**.
 - WO baru yang sudah dibuat langsung muncul di dropdown WO di form PEB.
+- **Alur status PEB**: Draft → Submit → **Approve** → Laporan KITE Lap 5 & 7 terupdate. Pastikan status sudah **Approved** (bukan hanya Submitted) agar laporan terisi.
+- **Hapus PEB**: di halaman daftar PEB, PEB berstatus **Draft** atau **Cancelled** memiliki tombol hapus (ikon tong sampah) di sebelah kanan.
+
+---
+
+### Finance — AR / AP Invoice
+
+- Tipe invoice: **BC3.0** (Ekspor), **Loc** (Lokal), **BC2.4** (Kawasan Berikat). Pilih sesuai jenis transaksi.
+- Unit price mendukung nilai desimal — bisa input 1.25, 3.50 USD, dsb.
+- Invoice yang sudah tersimpan muncul di daftar AR/AP dengan nomor otomatis.
+
+---
+
+### Logistics — Penjualan Material Lokal (BC 2.4)
+
+- Untuk penjualan barang dari kawasan berikat ke pembeli lokal, gunakan menu **Logistics → Penjualan Lokal**.
+- Dokumen harus berstatus **Approved** agar nilainya muncul di:
+  - Finance → Laporan Keuangan (P&L) sebagai komponen pendapatan
+  - Reports → Rekap Penjualan/Pembelian sebagai baris "Lokal"
+- Field "No. SO Referensi" opsional — isi jika penjualan terkait SO tertentu.
+
+---
+
+### Reports — Rekap Penjualan & Pembelian
+
+- Buka `/reports/rekap` untuk ringkasan semua transaksi penjualan dan pembelian.
+- Tab **Penjualan** menggabungkan SO ekspor dan penjualan lokal (BC 2.4) dalam satu tabel dengan kolom "Tipe" (Ekspor / Lokal).
+- Tab **Pembelian** menampilkan semua PO beserta qty yang sudah diterima.
+- Filter periode (tahun + bulan) dan tombol **Export Excel** tersedia.
 
 ---
 

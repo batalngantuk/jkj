@@ -49,7 +49,7 @@ export default function NewAPBillPage() {
   const [selectedBC20, setSelectedBC20] = useState('')
   const [showBC20, setShowBC20] = useState(false)
   const [notes, setNotes] = useState('')
-  const [invoiceType, setInvoiceType] = useState<'Tagihan' | 'Credit Note' | 'Debit Note'>('Tagihan')
+  const [invoiceType, setInvoiceType] = useState<'BC3.0' | 'Loc' | 'BC2.4'>('BC3.0')
   const [currency, setCurrency] = useState<'IDR' | 'USD' | 'KRW'>('IDR')
   const [exchangeRate, setExchangeRate] = useState<string>('')
   
@@ -231,9 +231,9 @@ export default function NewAPBillPage() {
                   <Select value={invoiceType} onValueChange={v => setInvoiceType(v as typeof invoiceType)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Tagihan">Tagihan</SelectItem>
-                      <SelectItem value="Credit Note">Credit Note</SelectItem>
-                      <SelectItem value="Debit Note">Debit Note</SelectItem>
+                      <SelectItem value="BC3.0">BC3.0 — Ekspor</SelectItem>
+                      <SelectItem value="Loc">Loc — Lokal</SelectItem>
+                      <SelectItem value="BC2.4">BC2.4 — Kawasan Berikat</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -411,10 +411,11 @@ export default function NewAPBillPage() {
                           />
                         </TableCell>
                         <TableCell>
-                          <Input 
-                            type="number" 
-                            placeholder="0" 
+                          <Input
+                            type="number"
+                            placeholder="0.00"
                             min="0"
+                            step="any"
                             value={item.unitPrice || ''}
                             onChange={(e) => updateLineItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                             required

@@ -191,19 +191,24 @@ export default function KiteInventoryPage() {
   }
   const liveMutasiHP: MutasiHP[] = []
   let liveHPNo = MOCK_MUTASI_HP.length + 1
-  for (const [kode, data] of pemasukanHPByKode.entries()) {
+  // Gabungkan semua kode dari pemasukan DAN pengeluaran (bisa beda kode karena sumber berbeda)
+  const allHPKodes = new Set([...Array.from(pemasukanHPByKode.keys()), ...Array.from(pengeluaranHPByKode.keys())])
+  for (const kode of allHPKodes) {
     if (MOCK_MUTASI_HP.find(m => m.kodeBarang === kode)) continue
+    const pemasukanData = pemasukanHPByKode.get(kode)
     const pengeluaran = pengeluaranHPByKode.get(kode) || 0
+    const totalPemasukan = pemasukanData?.total || 0
+    const namaFromPengeluaran = allPengeluaranHP.find(p => p.kodeBarang === kode)?.namaBarang
     liveMutasiHP.push({
       no: liveHPNo++,
       kodeBarang: kode,
-      namaBarang: data.nama,
-      satuan: data.satuan,
+      namaBarang: pemasukanData?.nama || namaFromPengeluaran || kode,
+      satuan: pemasukanData?.satuan || allPengeluaranHP.find(p => p.kodeBarang === kode)?.satuan || 'pcs',
       saldoAwal: 0,
-      pemasukan: data.total,
+      pemasukan: totalPemasukan,
       pengeluaran,
-      saldoAkhir: data.total - pengeluaran,
-      gudang: data.gudang,
+      saldoAkhir: totalPemasukan - pengeluaran,
+      gudang: pemasukanData?.gudang || 'Gudang FG',
     })
   }
   const allMutasiHP = [...MOCK_MUTASI_HP, ...liveMutasiHP]
