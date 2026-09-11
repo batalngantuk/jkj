@@ -1,4 +1,4 @@
-// Finance Module Mock Data
+﻿// Finance Module Mock Data
 // Includes AR Invoices, AP Invoices, and Payments
 
 export interface InvoiceLineItem {
@@ -34,11 +34,15 @@ export interface ARInvoice {
   taxAmount: number
   paidAmount: number
   balance: number
+  invoiceType?: 'BC3.0' | 'Loc' | 'BC2.4' | 'BC2.0'
   status: 'DRAFT' | 'APPROVED' | 'SENT' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE'
   fakturPajakNumber?: string
   lineItems: InvoiceLineItem[]
   paymentIds: string[]
   notes?: string
+  currency?: 'IDR' | 'USD' | 'KRW'
+  exchangeRate?: number
+  originalAmount?: number
 }
 
 export interface APInvoice {
@@ -55,7 +59,11 @@ export interface APInvoice {
   taxAmount: number
   paidAmount: number
   balance: number
+  invoiceType?: 'BC3.0' | 'Loc' | 'BC2.4' | 'BC2.0'
   status: 'DRAFT' | 'VERIFIED' | 'APPROVED' | 'SCHEDULED' | 'PAID'
+  currency?: 'IDR' | 'USD' | 'KRW'
+  exchangeRate?: number
+  originalAmount?: number
   bc20Id?: string
   bc20Number?: string
   lineItems: InvoiceLineItem[]
@@ -176,6 +184,36 @@ export const MOCK_AR_INVOICES: ARInvoice[] = [
     ],
     paymentIds: [],
     notes: 'Payment overdue - follow up required'
+  },
+  {
+    id: 'ar-005',
+    invoiceNumber: 'INV/2026/005',
+    soId: 'so-005',
+    soNumber: 'SO-2026-005',
+    customerId: 'cust-004',
+    customerName: 'APEX International Ltd.',
+    invoiceDate: '2026-05-20',
+    dueDate: '2026-06-19',
+    totalAmount: 155000000,
+    taxAmount: 0,
+    paidAmount: 0,
+    balance: 155000000,
+    status: 'SENT',
+    currency: 'USD',
+    exchangeRate: 15500,
+    originalAmount: 10000,
+    lineItems: [
+      {
+        id: 'li-005',
+        description: 'Latex Gloves Size M - Export',
+        quantity: 5000,
+        unitPrice: 31000,
+        amount: 155000000,
+        taxAmount: 0
+      }
+    ],
+    paymentIds: [],
+    notes: 'Export invoice — USD 10,000 @ Rp 15,500'
   }
 ]
 
@@ -268,6 +306,37 @@ export const MOCK_AP_INVOICES: APInvoice[] = [
     ],
     paymentIds: [],
     notes: 'Awaiting approval for payment'
+  },
+  {
+    id: 'ap-004',
+    invoiceNumber: 'APINV/2026/004',
+    vendorInvoiceNumber: 'LST-INV-2026-047',
+    poId: 'po-004',
+    poNumber: 'PO-2026-004',
+    vendorId: 'vendor-003',
+    vendorName: 'LS Textile Korea Co., Ltd.',
+    invoiceDate: '2026-05-15',
+    dueDate: '2026-06-14',
+    totalAmount: 55000000,
+    taxAmount: 0,
+    paidAmount: 0,
+    balance: 55000000,
+    status: 'APPROVED',
+    currency: 'USD',
+    exchangeRate: 15500,
+    originalAmount: 3548,
+    lineItems: [
+      {
+        id: 'li-ap-004',
+        description: 'Elastic Band Comez - Import Korea',
+        quantity: 10902,
+        unitPrice: 5044,
+        amount: 55000000,
+        taxAmount: 0
+      }
+    ],
+    paymentIds: [],
+    notes: 'Import invoice Korea — USD 3,548 @ Rp 15,500'
   }
 ]
 

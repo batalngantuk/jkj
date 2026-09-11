@@ -132,6 +132,16 @@ export default function PEBDetailPage() {
     setTimeout(() => setLoading(false), 400)
   }
 
+  const handleApprove = async () => {
+    setLoading(true)
+    updatePEB(livePeb.id, {
+      status: 'APPROVED',
+      approvedAt: new Date().toISOString(),
+      approvedBy: 'Manager Ekspor',
+    })
+    setTimeout(() => setLoading(false), 400)
+  }
+
   const handleMarkExported = async () => {
     setLoading(true)
     updatePEB(livePeb.id, { status: 'EXPORTED' })
@@ -139,6 +149,7 @@ export default function PEBDetailPage() {
   }
 
   const canSubmit = peb.status === 'DRAFT'
+  const canApprove = peb.status === 'SUBMITTED'
   const canExport = peb.status === 'APPROVED'
 
   return (
@@ -173,6 +184,12 @@ export default function PEBDetailPage() {
               <Button onClick={handleSubmit} disabled={loading}>
                 <Send className="h-4 w-4 mr-2" />
                 Submit to Customs
+              </Button>
+            )}
+            {canApprove && (
+              <Button onClick={handleApprove} disabled={loading} className="bg-green-600 hover:bg-green-700">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Approve
               </Button>
             )}
             {canExport && (

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -13,14 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import AppLayout from '@/components/app-layout'
-
-// Mock Purchase Orders for selection
-const MOCK_PURCHASE_ORDERS = [
-  { id: 'po-001', poNumber: 'PO-2026-001', vendorName: 'PT. Supplier Material Utama', hasBC20: true, bc20Number: 'PIB-2026-001' },
-  { id: 'po-002', poNumber: 'PO-2026-002', vendorName: 'CV. Packaging Solutions', hasBC20: false },
-  { id: 'po-003', poNumber: 'PO-2026-003', vendorName: 'PT. Supplier Material Utama', hasBC20: true, bc20Number: 'PIB-2026-002' },
-  { id: 'po-004', poNumber: 'PO-2026-004', vendorName: 'PT. Chemical Indo', hasBC20: false },
-]
+import { usePurchaseOrders, useAPInvoices } from '@/lib/store/hooks'
 
 // Mock BC 2.0 Documents
 const MOCK_BC20_DOCUMENTS = [
@@ -38,9 +31,14 @@ interface LineItem {
   pph22Rate: number
 }
 
+const DEFAULT_KURS: Record<string, number> = { USD: 15500, KRW: 11 }
+const CURRENCY_SYMBOL: Record<string, string> = { IDR: 'Rp', USD: '$', KRW: '₩' }
+
 export default function NewAPBillPage() {
   const router = useRouter()
-  
+  const { orders: purchaseOrders } = usePurchaseOrders()
+  const { createInvoice } = useAPInvoices()
+
   // Form state
   const [selectedPO, setSelectedPO] = useState('')
   const [vendorName, setVendorName] = useState('')
@@ -51,6 +49,9 @@ export default function NewAPBillPage() {
   const [selectedBC20, setSelectedBC20] = useState('')
   const [showBC20, setShowBC20] = useState(false)
   const [notes, setNotes] = useState('')
+  const [invoiceType, setInvoiceType] = useState<'BC3.0' | 'Loc' | 'BC2.4' | 'BC2.0'>('Loc')
+  const [currency, setCurrency] = useState<'IDR' | 'USD' | 'KRW'>('IDR')
+  const [exchangeRate, setExchangeRate] = useState<string>('')
   
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { id: 1, description: '', quantity: 0, unitPrice: 0, taxRate: 11, pph22Rate: 0 }
@@ -61,18 +62,12 @@ export default function NewAPBillPage() {
   // Handle PO selection
   const handlePOChange = (poId: string) => {
     setSelectedPO(poId)
-    const po = MOCK_PURCHASE_ORDERS.find(p => p.id === poId)
+    const po = purchaseOrders.find(p => p.id === poId)
     if (po) {
-      setVendorName(po.vendorName)
-      setShowBC20(po.hasBC20)
-      if (po.hasBC20 && po.bc20Number) {
-        const bc23 = MOCK_BC20_DOCUMENTS.find(bc => bc.bcNumber === po.bc20Number)
-        if (bc23) {
-          setSelectedBC20(bc23.id)
-        }
-      } else {
-        setSelectedBC20('')
-      }
+      setVendorName(po.supplier)
+      const isImpor = po.poType === 'Impor'
+      setShowBC20(isImpor)
+      if (!isImpor) setSelectedBC20('')
       // Auto-calculate due date based on payment terms
       updateDueDate(invoiceDate, paymentTerms)
     }
@@ -148,6 +143,8 @@ export default function NewAPBillPage() {
     return calculateSubtotal() + calculateTotalPPN() + calculateTotalPPh22()
   }
 
+  const kursNum = parseInt(exchangeRate) || DEFAULT_KURS[currency] || 1
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -156,15 +153,50 @@ export default function NewAPBillPage() {
     }).format(amount)
   }
 
+  const formatForeign = (amount: number) => `${CURRENCY_SYMBOL[currency]} ${amount.toLocaleString('id-ID')}`
+  const toIDR = (foreignAmount: number) => foreignAmount * kursNum
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false)
-      router.push('/finance/ap')
-    }, 1000)
+    const po = purchaseOrders.find(p => p.id === selectedPO)
+    const bc20 = MOCK_BC20_DOCUMENTS.find(b => b.id === selectedBC20)
+    const foreignTotal = calculateGrandTotal()
+    const foreignTax = calculateTotalPPN()
+    const idrTotal = currency === 'IDR' ? foreignTotal : foreignTotal * kursNum
+    const idrTax = currency === 'IDR' ? foreignTax : foreignTax * kursNum
+    createInvoice({
+      vendorInvoiceNumber,
+      poId: selectedPO,
+      poNumber: po?.id || '',
+      vendorId: selectedPO,
+      vendorName,
+      invoiceDate,
+      dueDate,
+      totalAmount: idrTotal,
+      taxAmount: idrTax,
+      paidAmount: 0,
+      balance: idrTotal,
+      invoiceType,
+      status: 'DRAFT',
+      currency,
+      exchangeRate: currency !== 'IDR' ? kursNum : undefined,
+      originalAmount: currency !== 'IDR' ? foreignTotal : undefined,
+      bc20Id: bc20?.id || undefined,
+      bc20Number: bc20?.bcNumber || undefined,
+      lineItems: lineItems.map((item, i) => ({
+        id: String(i + 1),
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        amount: calculateLineTotal(item),
+        taxAmount: calculateLinePPN(item),
+      })),
+      paymentIds: [],
+      notes: notes || undefined,
+    })
+    setLoading(false)
+    router.push('/finance/ap')
   }
 
   return (
@@ -193,7 +225,20 @@ export default function NewAPBillPage() {
                 <CardTitle>Bill Details</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-6">
-                
+
+                <div className="space-y-2">
+                  <Label>Tipe Invoice <span className="text-red-500">*</span></Label>
+                  <Select value={invoiceType} onValueChange={v => setInvoiceType(v as typeof invoiceType)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Loc">Lokal</SelectItem>
+                      <SelectItem value="BC2.0">BC2.0 — Impor (KITE)</SelectItem>
+                      <SelectItem value="BC2.4">BC2.4 — Kawasan Berikat</SelectItem>
+                      <SelectItem value="BC3.0">BC3.0 — Ekspor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-2">
                   <Label>Purchase Order (PO) <span className="text-red-500">*</span></Label>
                   <Select value={selectedPO} onValueChange={handlePOChange} required>
@@ -201,9 +246,9 @@ export default function NewAPBillPage() {
                       <SelectValue placeholder="Select Purchase Order" />
                     </SelectTrigger>
                     <SelectContent>
-                      {MOCK_PURCHASE_ORDERS.map(po => (
+                      {purchaseOrders.map(po => (
                         <SelectItem key={po.id} value={po.id}>
-                          {po.poNumber} - {po.vendorName}
+                          {po.poNumber || po.id} — {po.supplier}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -262,6 +307,33 @@ export default function NewAPBillPage() {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label>Mata Uang Invoice</Label>
+                  <Select value={currency} onValueChange={v => { setCurrency(v as 'IDR' | 'USD' | 'KRW'); setExchangeRate('') }}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="IDR">IDR — Rupiah (Lokal)</SelectItem>
+                      <SelectItem value="USD">USD — Dolar AS (Impor/Ekspor)</SelectItem>
+                      <SelectItem value="KRW">KRW — Won Korea (Impor/Ekspor)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {currency !== 'IDR' && (
+                  <div className="space-y-2">
+                    <Label>Kurs {currency}/IDR <span className="text-red-500">*</span></Label>
+                    <Input
+                      type="number"
+                      placeholder={String(DEFAULT_KURS[currency])}
+                      value={exchangeRate}
+                      onChange={e => setExchangeRate(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Kurs pada tanggal invoice. Default: {DEFAULT_KURS[currency].toLocaleString('id-ID')}</p>
+                  </div>
+                )}
+
                 {showBC20 && (
                   <div className="space-y-2 col-span-2">
                     <Label>BC 2.0 Reference (Import) <span className="text-blue-600 text-xs">Optional</span></Label>
@@ -307,7 +379,7 @@ export default function NewAPBillPage() {
                     <TableRow>
                       <TableHead className="w-[30%]">Description</TableHead>
                       <TableHead>Qty</TableHead>
-                      <TableHead>Unit Price (Rp)</TableHead>
+                      <TableHead>Unit Price ({currency})</TableHead>
                       <TableHead>PPN (%)</TableHead>
                       <TableHead>PPh 22 (%)</TableHead>
                       <TableHead className="text-right">Subtotal</TableHead>
@@ -340,10 +412,11 @@ export default function NewAPBillPage() {
                           />
                         </TableCell>
                         <TableCell>
-                          <Input 
-                            type="number" 
-                            placeholder="0" 
+                          <Input
+                            type="number"
+                            placeholder="0.00"
                             min="0"
+                            step="any"
                             value={item.unitPrice || ''}
                             onChange={(e) => updateLineItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                             required
@@ -414,19 +487,32 @@ export default function NewAPBillPage() {
                   <div className="flex flex-col items-end space-y-2">
                     <div className="flex justify-between w-80">
                       <span className="text-sm text-muted-foreground">Subtotal:</span>
-                      <span className="font-medium">{formatCurrency(calculateSubtotal())}</span>
+                      <span className="font-medium">
+                        {currency !== 'IDR' ? formatForeign(calculateSubtotal()) : formatCurrency(calculateSubtotal())}
+                      </span>
                     </div>
                     <div className="flex justify-between w-80">
                       <span className="text-sm text-muted-foreground">Total PPN (11%):</span>
-                      <span className="font-medium">{formatCurrency(calculateTotalPPN())}</span>
+                      <span className="font-medium">
+                        {currency !== 'IDR' ? formatForeign(calculateTotalPPN()) : formatCurrency(calculateTotalPPN())}
+                      </span>
                     </div>
                     <div className="flex justify-between w-80">
                       <span className="text-sm text-muted-foreground">Total PPh 22:</span>
-                      <span className="font-medium">{formatCurrency(calculateTotalPPh22())}</span>
+                      <span className="font-medium">
+                        {currency !== 'IDR' ? formatForeign(calculateTotalPPh22()) : formatCurrency(calculateTotalPPh22())}
+                      </span>
                     </div>
                     <div className="flex justify-between w-80 pt-2 border-t">
                       <span className="font-semibold">Grand Total:</span>
-                      <span className="text-2xl font-bold text-primary">{formatCurrency(calculateGrandTotal())}</span>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-primary">
+                          {currency !== 'IDR' ? formatForeign(calculateGrandTotal()) : formatCurrency(calculateGrandTotal())}
+                        </p>
+                        {currency !== 'IDR' && (
+                          <p className="text-sm text-muted-foreground">≈ {formatCurrency(toIDR(calculateGrandTotal()))}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
