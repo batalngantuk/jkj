@@ -12,25 +12,27 @@ import AppLayout from '@/components/app-layout'
 
 import { DataTable } from '@/components/shared/data-table'
 import { StatusBadge } from "@/components/shared/status-badge"
-import { MOCK_SUPPLIERS, Supplier } from "@/lib/mock-data/purchasing"
+import { Supplier } from "@/lib/mock-data/purchasing"
+import { useSuppliers } from "@/lib/store/useSuppliers"
 
 export default function SupplierListPage() {
+  const { suppliers } = useSuppliers()
 
   const columns = [
     {
        header: "Supplier Name",
-       accessorKey: "name" as keyof typeof MOCK_SUPPLIERS[0],
-       cell: (item: typeof MOCK_SUPPLIERS[0]) => (
+       accessorKey: "name" as keyof Supplier,
+       cell: (item: Supplier) => (
            <div>
                <p className="font-semibold">{item.name}</p>
                <p className="text-xs text-muted-foreground">{item.id}</p>
            </div>
        )
     },
-    { header: "Contact Person", accessorKey: "contactPerson" as keyof typeof MOCK_SUPPLIERS[0] },
-    { 
-        header: "Contact Info", 
-        cell: (item: typeof MOCK_SUPPLIERS[0]) => (
+    { header: "Contact Person", accessorKey: "contactPerson" as keyof Supplier },
+    {
+        header: "Contact Info",
+        cell: (item: Supplier) => (
             <div className="space-y-1 text-sm">
                 <div className="flex items-center gap-2">
                     <Mail className="h-3 w-3 text-muted-foreground" />
@@ -45,8 +47,8 @@ export default function SupplierListPage() {
     },
     {
        header: "Rating",
-       accessorKey: "rating" as keyof typeof MOCK_SUPPLIERS[0],
-       cell: (item: typeof MOCK_SUPPLIERS[0]) => (
+       accessorKey: "rating" as keyof Supplier,
+       cell: (item: Supplier) => (
            <div className="flex items-center gap-1">
                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                <span className="font-medium">{item.rating}</span>
@@ -55,14 +57,14 @@ export default function SupplierListPage() {
     },
     {
        header: "Status",
-       accessorKey: "status" as keyof typeof MOCK_SUPPLIERS[0],
-       cell: (item: typeof MOCK_SUPPLIERS[0]) => (
+       accessorKey: "status" as keyof Supplier,
+       cell: (item: Supplier) => (
            <StatusBadge status={item.status} />
        )
     },
     {
        header: "Action",
-       cell: (item: typeof MOCK_SUPPLIERS[0]) => (
+       cell: (item: Supplier) => (
            <DropdownMenu>
                <DropdownMenuTrigger asChild>
                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -116,8 +118,8 @@ export default function SupplierListPage() {
                             <Input placeholder="Search supplier name..." className="pl-8" />
                         </div>
                     </div>
-                    <DataTable 
-                        data={MOCK_SUPPLIERS}
+                    <DataTable
+                        data={suppliers}
                         columns={columns}
                     />
                 </CardContent>

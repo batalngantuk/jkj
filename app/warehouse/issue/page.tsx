@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Trash2, PackageOpen, Factory, Building2, CheckCircle, Download } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, PackageOpen, Factory, Building2, CheckCircle, Download, Printer, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -12,9 +12,10 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import AppLayout from '@/components/app-layout'
 import { useStock, useWorkOrders, useSubkontrak } from '@/lib/store/hooks'
+import { STORE_KEYS, getStore, setStore } from '@/lib/store/index'
 import { exportToExcel } from '@/lib/utils/export-excel'
 
 interface IssueItem {
@@ -71,7 +72,7 @@ const SEED_HISTORY: HistoryEntry[] = [
 ]
 
 export default function WarehouseIssuePage() {
-  const { stock, deductStock } = useStock()
+  const { stock, deductStock, addStock, movements } = useStock()
   const { workOrders } = useWorkOrders()
   const { records: subkonRecords } = useSubkontrak()
 
@@ -85,6 +86,40 @@ export default function WarehouseIssuePage() {
   const [submitted, setSubmitted] = useState(false)
 
   const bbStock = stock.filter(s => s.category === 'BB' || s.category === 'Packaging')
+
+  // Derive persisted history from stock movements (covers WO auto-deductions + Issue page BPBs)
+  const movementHistory = useMemo<HistoryEntry[]>(() => {
+    const grouped = new Map<string, HistoryEntry>()
+    movements
+      .filter(m => m.transactionType === 'PRODUCTION_OUT')
+      .forEach(m => {
+        const key = m.referenceNumber
+        const satuan = m.notes?.match(/satuan:(\w+)/)?.[1] || 'pcs'
+        const existing = grouped.get(key)
+        if (existing) {
+          existing.items.push({ materialCode: m.materialCode, materialName: m.materialName, qty: m.quantityOut, satuan })
+        } else {
+          grouped.set(key, {
+            id: m.id,
+            tanggal: m.date,
+            noBukti: key,
+            tujuan: m.referenceType === 'SUBKON' ? 'Subkon' : 'Produksi',
+            referensi: key,
+            catatan: '',
+            status: 'Selesai',
+            items: [{ materialCode: m.materialCode, materialName: m.materialName, qty: m.quantityOut, satuan }]
+          })
+        }
+      })
+    return Array.from(grouped.values())
+  }, [movements])
+
+  const displayHistory = useMemo<HistoryEntry[]>(() => {
+    const movementRefs = new Set(movementHistory.map(m => m.referensi))
+    const seedOnly = SEED_HISTORY.filter(h => !movementRefs.has(h.referensi))
+    const sessionOnly = history.filter(h => !SEED_HISTORY.find(s => s.id === h.id) && !movementRefs.has(h.referensi))
+    return [...movementHistory, ...seedOnly, ...sessionOnly].sort((a, b) => b.tanggal.localeCompare(a.tanggal))
+  }, [history, movementHistory])
 
   function updateItem(id: string, patch: Partial<IssueItem>) {
     setItems(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i))
@@ -109,7 +144,12 @@ export default function WarehouseIssuePage() {
       id: noBukti, tanggal, noBukti, tujuan, referensi, catatan, status: 'Selesai',
       items: validItems.map(i => ({ materialCode: i.materialCode, materialName: i.materialName, qty: Number(i.qtyIssued), satuan: i.satuan }))
     }
-    setHistory(prev => [entry, ...prev])
+    setHistory(prev => {
+      const next = [entry, ...prev]
+      const persisted = getStore(STORE_KEYS.BPB_HISTORY, SEED_HISTORY)
+      setStore(STORE_KEYS.BPB_HISTORY, [entry, ...persisted])
+      return next
+    })
     setSubmitted(true)
   }
 
@@ -118,9 +158,40 @@ export default function WarehouseIssuePage() {
     setItems([newItem()]); setSubmitted(false)
   }
 
-  const totalBukti = history.length
-  const totalKeProduksi = history.filter(h => h.tujuan === 'Produksi').length
-  const totalKeSubkon = history.filter(h => h.tujuan === 'Subkon').length
+  const totalBukti = displayHistory.length
+  const totalKeProduksi = displayHistory.filter(h => h.tujuan === 'Produksi').length
+  const totalKeSubkon = displayHistory.filter(h => h.tujuan === 'Subkon').length
+
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [editTarget, setEditTarget] = useState<HistoryEntry | null>(null)
+  const [editItems, setEditItems] = useState<{ materialCode: string; materialName: string; qty: number; satuan: string }[]>([])
+  const [editCatatan, setEditCatatan] = useState('')
+
+  function openEdit(entry: HistoryEntry) {
+    setEditTarget(entry)
+    setEditItems(entry.items.map(i => ({ ...i })))
+    setEditCatatan(entry.catatan)
+  }
+
+  function saveEdit() {
+    if (!editTarget) return
+    // Reverse old stock, apply new stock
+    editTarget.items.forEach(item => {
+      if (item.qty > 0) addStock(item.materialCode, item.materialName, item.qty, editTarget.id, 'BPB_EDIT', 'BB', item.satuan)
+    })
+    editItems.forEach(item => {
+      if (item.qty > 0) deductStock(item.materialCode, item.qty, editTarget.id, editTarget.tujuan === 'Produksi' ? 'WO' : 'SUBKON', 'PRODUCTION_OUT')
+    })
+    setHistory(prev => {
+      const next = prev.map(h => h.id === editTarget.id
+        ? { ...h, items: editItems, catatan: editCatatan }
+        : h
+      )
+      setStore(STORE_KEYS.BPB_HISTORY, next)
+      return next
+    })
+    setEditTarget(null)
+  }
 
   return (
     <AppLayout>
@@ -141,7 +212,7 @@ export default function WarehouseIssuePage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2" onClick={() => exportToExcel(history as unknown as Record<string, unknown>[], 'Pengeluaran_BB', 'Pengeluaran BB')}>
+            <Button variant="outline" className="gap-2" onClick={() => exportToExcel(displayHistory as unknown as Record<string, unknown>[], 'Pengeluaran_BB', 'Pengeluaran BB')}>
               <Download className="h-4 w-4" />Export
             </Button>
             <Button className="gap-2" onClick={() => { resetForm(); setShowForm(true) }}>
@@ -195,10 +266,11 @@ export default function WarehouseIssuePage() {
                   <TableHead>Material</TableHead>
                   <TableHead>Catatan</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {history.map(h => (
+                {displayHistory.map(h => (
                   <TableRow key={h.id}>
                     <TableCell className="font-mono text-xs font-medium">{h.noBukti}</TableCell>
                     <TableCell className="whitespace-nowrap text-sm">{h.tanggal}</TableCell>
@@ -224,9 +296,24 @@ export default function WarehouseIssuePage() {
                         <CheckCircle className="h-3 w-3 mr-1" />Selesai
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600 hover:text-green-800" title="Print BC 1.2" onClick={() => window.open(`/warehouse/issue/print?id=${h.id}`, '_blank')}>
+                          <Printer className="h-3.5 w-3.5" />
+                        </Button>
+                        {history.find(e => e.id === h.id) && (
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-blue-500 hover:text-blue-700" onClick={() => openEdit(h)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-700" onClick={() => setDeleteId(h.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
-                {history.length === 0 && (
+                {displayHistory.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center text-muted-foreground py-8">Belum ada pengeluaran</TableCell>
                   </TableRow>
@@ -410,6 +497,86 @@ export default function WarehouseIssuePage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editTarget} onOpenChange={v => { if (!v) setEditTarget(null) }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-4 w-4" />Edit Pengeluaran BB — {editTarget?.noBukti}
+            </DialogTitle>
+            <DialogDescription>Ubah qty material. Stok akan disesuaikan otomatis.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead>Kode</TableHead>
+                    <TableHead>Nama Material</TableHead>
+                    <TableHead className="w-32 text-right">Qty</TableHead>
+                    <TableHead className="w-20">Satuan</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {editItems.map((item, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="font-mono text-xs">{item.materialCode}</TableCell>
+                      <TableCell className="text-sm">{item.materialName}</TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          className="h-7 text-sm text-right"
+                          value={item.qty}
+                          min={0}
+                          onChange={e => setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, qty: Number(e.target.value) || 0 } : it))}
+                        />
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{item.satuan}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="space-y-1">
+              <Label>Catatan</Label>
+              <Textarea rows={2} value={editCatatan} onChange={e => setEditCatatan(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTarget(null)}>Batal</Button>
+            <Button onClick={saveEdit}>Simpan Perubahan</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Konfirmasi hapus */}
+      <Dialog open={!!deleteId} onOpenChange={v => !v && setDeleteId(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Hapus Bukti Pengeluaran?</DialogTitle>
+            <DialogDescription>Catatan pengeluaran akan dihapus dan stok BB akan otomatis dikembalikan.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>Batal</Button>
+            <Button variant="destructive" onClick={() => {
+              const entry = history.find(h => h.id === deleteId)
+              if (entry) {
+                entry.items.forEach(item => {
+                  if (item.qty > 0) addStock(item.materialCode, item.materialName, item.qty, entry.id, 'BPB_DELETE', 'BB', item.satuan)
+                })
+              }
+              setHistory(prev => {
+                const next = prev.filter(h => h.id !== deleteId)
+                setStore(STORE_KEYS.BPB_HISTORY, next)
+                return next
+              })
+              setDeleteId(null)
+            }}>Hapus</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </AppLayout>
   )
 }

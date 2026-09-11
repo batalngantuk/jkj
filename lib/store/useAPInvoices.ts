@@ -5,7 +5,9 @@ import { STORE_KEYS, getStore, addToStore, updateInStore, generateId } from './i
 import { MOCK_AP_INVOICES, type APInvoice } from '@/lib/mock-data/finance'
 
 export function useAPInvoices() {
-  const [invoices, setInvoices] = useState<APInvoice[]>([])
+  const [invoices, setInvoices] = useState<APInvoice[]>(() =>
+    getStore(STORE_KEYS.AP_INVOICES, MOCK_AP_INVOICES)
+  )
 
   useEffect(() => {
     setInvoices(getStore(STORE_KEYS.AP_INVOICES, MOCK_AP_INVOICES))

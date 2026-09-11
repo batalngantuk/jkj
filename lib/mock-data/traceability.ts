@@ -1,8 +1,20 @@
 // Traceability data linking BC 2.0 → GR → WO → FG → PEB
 
+export interface MaterialUsed {
+  materialCode: string
+  materialName: string
+  qtyUsed: number
+  unit: string
+  unitCost: number      // Rp per unit
+  totalCost: number
+  poNumber: string
+  supplier: string
+  paymentStatus: 'UNPAID' | 'PARTIAL' | 'PAID'
+}
+
 export interface TraceabilityRecord {
   id: string
-  // Raw Material
+  // Raw Material (main)
   bc20Id: string
   bc20Number: string
   rmLotNumber: string
@@ -25,10 +37,13 @@ export interface TraceabilityRecord {
   fgUnit: string
   productionDate: string
 
+  // Materials detail (all RM consumed for this WO)
+  materialsUsed: MaterialUsed[]
+
   // Conversion
-  conversionRatio: number // FG output / RM input
+  conversionRatio: number
   standardRatio: number
-  variance: number // %
+  variance: number
   waste: number
 
   // Export (if applicable)
@@ -41,110 +56,116 @@ export interface TraceabilityRecord {
 export const MOCK_TRACEABILITY: TraceabilityRecord[] = [
   {
     id: 'TRACE-001',
-    // BC 2.0 Import
     bc20Id: 'bc20-001',
     bc20Number: 'PIB-2026-001234',
     rmLotNumber: 'RM-2026-001',
-    rmDescription: 'Steel Brackets for Industrial Use',
+    rmDescription: 'Natural Rubber Latex',
     rmQuantity: 5000,
-    rmUnit: 'PCS',
+    rmUnit: 'kg',
 
-    // Goods Receipt
     grId: 'gr-001',
     grNumber: 'GR-2026-001',
     grDate: '2026-01-20',
     poNumber: 'PO-2026-001',
 
-    // Production
-    woId: 'wo-001',
+    woId: 'WO-2026-001',
     woNumber: 'WO-2026-001',
-    productName: 'Steel Component Assembly',
+    productName: 'Latex Gloves Size M',
     fgLotNumber: 'FG-2026-001',
-    fgQuantity: 4500,
-    fgUnit: 'PCS',
+    fgQuantity: 1000,
+    fgUnit: 'ctn',
     productionDate: '2026-01-25',
 
-    // Conversion
-    conversionRatio: 0.90, // 4500/5000
-    standardRatio: 0.92,
-    variance: -2.17, // (0.90-0.92)/0.92 * 100
-    waste: 500,
+    materialsUsed: [
+      { materialCode: 'RM-LATEX',   materialName: 'Natural Rubber Latex', qtyUsed: 5000, unit: 'kg',  unitCost: 15000, totalCost: 75000000,  poNumber: 'PO-2026-001', supplier: 'PT. Agro Latex Indonesia', paymentStatus: 'UNPAID' },
+      { materialCode: 'RM-SULFUR',  materialName: 'Sulfur Dispersion',    qtyUsed: 100,  unit: 'kg',  unitCost: 25000, totalCost: 2500000,   poNumber: 'PO-2026-002', supplier: 'Global Chemicals Ltd',     paymentStatus: 'UNPAID' },
+      { materialCode: 'RM-ZINC',    materialName: 'Zinc Oxide',           qtyUsed: 200,  unit: 'kg',  unitCost: 45000, totalCost: 9000000,   poNumber: 'PO-2026-002', supplier: 'Global Chemicals Ltd',     paymentStatus: 'UNPAID' },
+      { materialCode: 'PKG-BOX-S',  materialName: 'Inner Box Size S',     qtyUsed: 1000, unit: 'pcs', unitCost: 1200,  totalCost: 1200000,   poNumber: 'PO-2026-003', supplier: 'Indo Box Packaging',       paymentStatus: 'PAID'   },
+    ],
 
-    // Export
+    conversionRatio: 0.20,
+    standardRatio: 0.21,
+    variance: -4.76,
+    waste: 100,
+
     pebId: 'peb-001',
     pebNumber: 'PEB-2026-001',
     exportDate: '2026-01-30',
-    exportQuantity: 4500
+    exportQuantity: 1000
   },
   {
     id: 'TRACE-002',
-    // BC 2.0 Import
     bc20Id: 'bc20-002',
     bc20Number: 'PIB-2026-001567',
     rmLotNumber: 'RM-2026-002',
-    rmDescription: 'Polyethylene Resin - HDPE Grade',
+    rmDescription: 'Natural Rubber Latex',
     rmQuantity: 10000,
-    rmUnit: 'KG',
+    rmUnit: 'kg',
 
-    // Goods Receipt
     grId: 'gr-002',
     grNumber: 'GR-2026-002',
     grDate: '2026-01-28',
-    poNumber: 'PO-2026-002',
+    poNumber: 'PO-2026-001',
 
-    // Production
-    woId: 'wo-002',
+    woId: 'WO-2026-002',
     woNumber: 'WO-2026-002',
-    productName: 'Polymer Products - Custom Grade',
+    productName: 'Latex Gloves Size S',
     fgLotNumber: 'FG-2026-002',
-    fgQuantity: 8000,
-    fgUnit: 'KG',
-    productionDate: '2026-02-02',
+    fgQuantity: 2000,
+    fgUnit: 'ctn',
+    productionDate: '2026-02-10',
 
-    // Conversion
-    conversionRatio: 0.80,
-    standardRatio: 0.85,
-    variance: -5.88,
-    waste: 2000,
+    materialsUsed: [
+      { materialCode: 'RM-LATEX',   materialName: 'Natural Rubber Latex', qtyUsed: 10000, unit: 'kg',  unitCost: 15000, totalCost: 150000000, poNumber: 'PO-2026-001', supplier: 'PT. Agro Latex Indonesia', paymentStatus: 'UNPAID' },
+      { materialCode: 'RM-SULFUR',  materialName: 'Sulfur Dispersion',    qtyUsed: 200,   unit: 'kg',  unitCost: 25000, totalCost: 5000000,   poNumber: 'PO-2026-002', supplier: 'Global Chemicals Ltd',     paymentStatus: 'UNPAID' },
+      { materialCode: 'RM-ZINC',    materialName: 'Zinc Oxide',           qtyUsed: 400,   unit: 'kg',  unitCost: 45000, totalCost: 18000000,  poNumber: 'PO-2026-002', supplier: 'Global Chemicals Ltd',     paymentStatus: 'UNPAID' },
+      { materialCode: 'PKG-BOX-S',  materialName: 'Inner Box Size S',     qtyUsed: 2000,  unit: 'pcs', unitCost: 1200,  totalCost: 2400000,   poNumber: 'PO-2026-003', supplier: 'Indo Box Packaging',       paymentStatus: 'PAID'   },
+    ],
 
-    // Export
+    conversionRatio: 0.20,
+    standardRatio: 0.21,
+    variance: -4.76,
+    waste: 200,
+
     pebId: 'peb-002',
     pebNumber: 'PEB-2026-002',
-    exportDate: '2026-02-05',
-    exportQuantity: 8000
+    exportDate: '2026-02-15',
+    exportQuantity: 2000
   },
   {
     id: 'TRACE-003',
-    // BC 2.0 Import
     bc20Id: 'bc20-003',
     bc20Number: 'PIB-2026-001890',
     rmLotNumber: 'RM-2026-003',
-    rmDescription: 'Industrial Ball Valves 2 inch',
-    rmQuantity: 200,
-    rmUnit: 'PCS',
+    rmDescription: 'Nitrile Latex',
+    rmQuantity: 12500,
+    rmUnit: 'kg',
 
-    // Goods Receipt
     grId: 'gr-003',
     grNumber: 'GR-2026-003',
-    grDate: '2026-02-05',
-    poNumber: 'PO-2026-005',
+    grDate: '2026-02-03',
+    poNumber: 'PO-2026-004',
 
-    // Production
-    woId: 'wo-003',
+    woId: 'WO-2026-003',
     woNumber: 'WO-2026-003',
-    productName: 'Valve Assembly Units',
+    productName: 'Nitrile Gloves Size S',
     fgLotNumber: 'FG-2026-003',
-    fgQuantity: 195,
-    fgUnit: 'PCS',
-    productionDate: '2026-02-06',
+    fgQuantity: 2500,
+    fgUnit: 'ctn',
+    productionDate: '2026-02-04',
 
-    // Conversion
-    conversionRatio: 0.975,
-    standardRatio: 0.98,
-    variance: -0.51,
-    waste: 5
+    materialsUsed: [
+      { materialCode: 'RM-NITRILE', materialName: 'Nitrile Latex',     qtyUsed: 12500, unit: 'kg',  unitCost: 18000, totalCost: 225000000, poNumber: 'PO-2026-004', supplier: 'Global Chemicals Ltd', paymentStatus: 'PARTIAL' },
+      { materialCode: 'RM-SULFUR',  materialName: 'Sulfur Dispersion', qtyUsed: 250,   unit: 'kg',  unitCost: 25000, totalCost: 6250000,   poNumber: 'PO-2026-002', supplier: 'Global Chemicals Ltd', paymentStatus: 'UNPAID'  },
+      { materialCode: 'PKG-BOX-S',  materialName: 'Inner Box Size S',  qtyUsed: 2500,  unit: 'pcs', unitCost: 1200,  totalCost: 3000000,   poNumber: 'PO-2026-003', supplier: 'Indo Box Packaging',  paymentStatus: 'PAID'    },
+    ],
 
-    // No export yet
+    conversionRatio: 0.20,
+    standardRatio: 0.21,
+    variance: -4.76,
+    waste: 125,
+
+    // Domestic sales, no PEB yet
   }
 ]
 
@@ -165,4 +186,21 @@ export function getTraceabilityByLot(lotNumber: string) {
   return MOCK_TRACEABILITY.find(t =>
     t.rmLotNumber === lotNumber || t.fgLotNumber === lotNumber
   )
+}
+
+// New helpers for material usage features
+export function getTracesByMaterial(materialCode: string) {
+  return MOCK_TRACEABILITY.filter(t =>
+    t.materialsUsed.some(m => m.materialCode === materialCode)
+  )
+}
+
+export function getAllMaterials() {
+  const map = new Map<string, { code: string; name: string }>()
+  for (const t of MOCK_TRACEABILITY) {
+    for (const m of t.materialsUsed) {
+      if (!map.has(m.materialCode)) map.set(m.materialCode, { code: m.materialCode, name: m.materialName })
+    }
+  }
+  return Array.from(map.values())
 }

@@ -46,7 +46,9 @@ const SEED_SHIPMENTS: Shipment[] = [
 ]
 
 export function useShipments() {
-  const [shipments, setShipments] = useState<Shipment[]>([])
+  const [shipments, setShipments] = useState<Shipment[]>(() =>
+    getStore(STORE_KEY, SEED_SHIPMENTS)
+  )
 
   useEffect(() => {
     setShipments(getStore(STORE_KEY, SEED_SHIPMENTS))

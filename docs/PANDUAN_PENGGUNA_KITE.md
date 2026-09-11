@@ -1,7 +1,38 @@
 # Panduan Pengguna — Sistem ERP JKJ (KITE)
 
-**Versi:** Mei 2026  
+**Versi:** Juni 2026 (rev. 4)  
 **Untuk:** PT JKJ — Perusahaan Penerima Fasilitas KITE (Kemudahan Impor Tujuan Ekspor)
+
+> **Perubahan di Rev.4:** Form BC 4.0 di Logistics, satuan baru TNE/PCE/ST/FTK/KGM di semua form, field No. BC 2.4 + Tanggal BC 2.4 + Mata Uang di form Waste, dialog AR/AP/Waste sekarang bisa di-scroll (max-h-90vh), selisih kurs otomatis di dialog pembayaran USD.
+
+---
+
+## Referensi Cepat — URL Menu Utama
+
+| Menu | URL | Siapa |
+|------|-----|-------|
+| Dashboard | `/` | Semua |
+| Sales Order | `/sales` / `/sales/new` | Sales |
+| Purchase Order | `/purchasing/po` / `/purchasing/po/create` | Purchasing |
+| BC 2.0 | `/purchasing/bc20` / `/purchasing/bc20/new` | Purchasing |
+| Gudang (stok) | `/warehouse` | Gudang |
+| Inbound | `/warehouse/inbound` | Gudang |
+| Outbound | `/warehouse/outbound` | Gudang |
+| Gudang WIP | `/warehouse/wip` | Gudang |
+| Stok Sementara | `/warehouse/temp-storage` | Gudang / Purchasing |
+| Waste | `/warehouse/waste` | Gudang |
+| Work Order | `/production/wo` / `/production/wo/new` | Produksi |
+| Subkontrak | `/production/subkontrak` | Produksi |
+| PEB Ekspor | `/logistics/peb/new` | KITE |
+| BC 4.0 | `/logistics/bc40` / `/logistics/bc40/new` | KITE |
+| AR (Piutang) | `/finance/ar` | Keuangan |
+| AP (Hutang) | `/finance/ap` | Keuangan |
+| Jurnal | `/finance/journal` | Keuangan |
+| Chart of Accounts | `/finance/accounts` | Keuangan |
+| Tax Assets | `/finance/tax-assets` | Keuangan |
+| IT Inventory (8 laporan) | `/reports/kite-inventory` | KITE |
+| Traceability | `/reports/traceability` | KITE |
+| Traceability BB | `/reports/material-usage` | KITE |
 
 ---
 
@@ -84,15 +115,22 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 2. **Buat Sales Order** → `/sales/new`
    - Nama customer bebas (free-text, tidak perlu master customer)
    - Nama produk bebas (free-text)
-   - Tambah BOM preview per line item untuk estimasi kebutuhan BB
    - Pilih currency (IDR/USD/EUR) dan kurs
-   - Multi-line item dengan subtotal per baris
+   - **Multi-line item** — setiap baris punya satuan sendiri (mendukung SO dengan 2+ satuan berbeda, misal: 100 pcs + 50 prs)
+   - Satuan tersedia: Carton, Box, Pcs, **Prs**, KG, Unit, Roll, **Yard (yd)**, **SF**, **TNE**, **PCE**, **ST**, **FTK**, **KGM**
+   - **Section "Kebutuhan Material (BOM)"** — input manual bahan baku: Nama Material, Spesifikasi, Warna, Konsumsi, Satuan (termasuk mtr, sf, yard, tne, pce), Penggunaan, Asal Material. Tambah/hapus baris dinamis.
 3. **Pantau status SO** → `/sales`
    - Lihat SO: Draft → Approved → In Production → Completed
-4. **Cek WO terkait** → `/sales/[id]`
+   - SO multi-item: kolom Produk menampilkan badge "X item" + qty per baris
+4. **Edit SO (status Draft)** → `/sales/[id]` → tombol **"Edit Order"**
+   - Buka dialog inline: ubah Qty, Harga Satuan, Tanggal Pengiriman
+   - Total otomatis dihitung ulang, history SO diperbarui
+5. **Cetak SO** → `/sales/[id]` → tombol **"Cetak Order"**
+   - Membuka window cetak: header perusahaan, tabel item, blok tanda tangan 4 kolom
+6. **Cek WO terkait** → `/sales/[id]`
    - Dari halaman detail SO, lihat WO yang sudah dibuat untuk SO tersebut
    - Tombol "Buat Work Order" muncul saat SO sudah Approved
-5. **Pantau laporan penjualan** → `/reports/sales`
+7. **Pantau laporan penjualan** → `/reports/sales`
    - Revenue trend, order volume, top customer, sales by product
 
 ---
@@ -104,8 +142,19 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 1. **Buat Purchase Order** → `/purchasing/po` → *Create PO*
    - Pilih **Tipe PO**: Lokal atau Impor (badge hijau/biru di daftar PO)
    - Isi supplier, item, qty, harga, kurs
+   - Satuan item: kg, pcs, **prs**, ctn, liter, unit, roll, **yard (yd)**, **sf**, **TNE**, **PCE**, **ST**, **FTK**, **KGM**
    - Sistem otomatis hitung DPP (×11/12) dan PPN 12%
    - Preview blok tanda tangan (Dibuat / Diperiksa / Disetujui / Supplier)
+   - **Lampiran**: upload file/gambar pendukung PO. Setelah PO tersimpan, lihat lampiran via ikon **📎** di kolom Aksi daftar PO.
+1a. **Revisi Qty PO yang Sudah Berjalan** → `/purchasing/po` → ikon **pensil kuning** pada baris PO (status APPROVED/PARTIAL)
+   - Dialog: tampil semua item + input qty baru per item + alasan revisi
+   - Total PO otomatis dihitung ulang setelah simpan
+1b. **Cancel PO** → `/purchasing/po` → tombol ikon X merah pada baris PO
+   - Muncul dialog konfirmasi dengan info PO dan daftar item
+   - Jika barang **sudah diterima** (status RECEIVED/PARTIAL): centang *"Pindahkan barang ke stok sementara"* + pilih lokasi
+   - Isi alasan cancel → klik *Konfirmasi Cancel*
+   - PO status: `CANCELLED` (belum terima barang) atau `CANCELLED_WITH_STOCK` — badge oranye (barang masuk stok sementara)
+   - Barang tersimpan di `/warehouse/temp-storage` dan bisa dirilis ke ekspor/SO baru saat ada permintaan serupa
 2. **Input BC 2.0** saat barang tiba di pelabuhan → `/purchasing/bc20/new`
    - Nomor PIB, **Nomor Pendaftaran**, **Tanggal Dokumen**, supplier, deskripsi barang, HS Code
    - Nilai CIF (USD), kurs, bea masuk, PPN import, PPh 22
@@ -128,6 +177,7 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 1. **Terima BB dari impor** → `/warehouse/inbound`
    - Referensi ke BC 2.0 dari Purchasing
    - Input lot number, qty aktual, kondisi barang
+   - ⚠️ **Warning otomatis**: jika qty diterima **melebihi** qty dipesan → peringatan merah tampil di bawah field qty
 2. **Goods Receipt resmi** → `/warehouse/gr`
 3. **Pantau stok gudang** → `/warehouse`
    - Search by nama / kode barang / lokasi
@@ -136,19 +186,35 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
    - Lihat status stok: OK / Low Stock / Out of Stock
    - Section **Gudang WIP** — live dari stok kategori WIP
    - Section **Gudang Hasil Subkon** — live dari job subkontrak (status Hasil Diterima/Selesai)
+3a. **Kelola Gudang WIP** → `/warehouse/wip`
+   - Lihat semua stok bahan setengah jadi (terpisah dari BB dan FG)
+   - **Terima dari Produksi**: input nama barang setengah jadi, tahap proses (Post-Mixing / Post-Dipping / dll), qty, satuan, lokasi, referensi WO
+   - **Keluarkan ke Proses Berikutnya**: pilih item WIP, cek saldo tersedia, input qty + WO tujuan
+   - Riwayat transaksi WIP IN / WIP OUT
+3b. **Kelola Stok Sementara** → `/warehouse/temp-storage`
+   - Lihat barang dari PO yang dibatalkan setelah barang diterima
+   - Tab **"Dalam Penyimpanan"**: tabel item dengan info asal PO, supplier, tgl cancel, alasan
+   - Klik **"Rilis"** untuk mengeluarkan ke SO atau PEB ekspor baru — input nomor SO/PEB + qty
+   - Tab **"Sudah Dirilis"**: riwayat barang yang sudah dikeluarkan
 4. **Terima FG dari produksi** → `/warehouse/outbound` → Tab *Input Barang Jadi*
    - Pilih WO yang sudah selesai
    - Input qty diterima, qty reject, lokasi gudang FG, nama penerima
+   - ⚠️ **Warning otomatis**: jika qty accepted **melebihi** qty WO → peringatan oranye tampil
 5. **Kirim FG ke customer** → `/warehouse/outbound` → Tab *Kirim ke Customer*
    - Isi no. Surat Jalan, transporter, supir, no. kendaraan
+   - ⚠️ **Warning otomatis**: jika qty dikirim **melebihi** qty SO → peringatan merah tampil
    - Link ke nomor PEB jika pengiriman ekspor
    - Klik *Dispatch* → Surat Jalan otomatis tersimpan di tab **Surat Jalan Ekspor**
 5a. **Lihat / export Surat Jalan Ekspor** → `/warehouse/outbound` → Tab *Surat Jalan Ekspor*
    - Daftar semua surat jalan yang sudah dibuat, export Excel
 6. **Catat waste / scrap** → `/warehouse/waste`
-   - Input waste per batch produksi
+   - Klik **"Ajukan Waste Baru"** → isi form:
+     - **No. BC 2.4** dan **Tanggal BC 2.4** (selalu tampil di atas)
+     - Kode material, deskripsi waste, batch WO, qty, satuan
+     - **Disposisi**: Dimusnahkan / Dijual / Disimpan
+     - Jika Disposisi = **"Dijual"**: isi Nama Pembeli + **Mata Uang** (IDR/USD/KRW) + Nilai Waste
    - Sistem otomatis bandingkan waste ratio aktual vs batas BCLKT
-   - Alert jika melebihi batas — perlu pelaporan khusus ke DJBC
+   - Alert merah jika melebihi batas — perlu pelaporan khusus ke DJBC
    - Export laporan waste ke Excel
 
 ---
@@ -166,12 +232,22 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 3. **Update status WO** → `/production/wo/[id]`
    - Draft → In Progress → Completed
    - Saat Completed → klik *"Input BJ ke Gudang"* (notif ke Gudang)
-4. **Kelola Subkontrak KITE** → `/production/subkontrak`
-   - Buat job subkon baru, pilih subkontraktor dari master
+4. **Kelola Subkontrak / CMT** → `/production/subkontrak`
+   - **Buat job subkon baru**:
+     - Dropdown **Subkontraktor**: pilih dari master, atau pilih **"+ Input nama baru (manual)..."** untuk mengetik nama CMT yang belum ada di daftar
+     - Isi **Qty Barang Jadi CMT** + satuan (berapa unit BJ yang akan diproduksi CMT)
+     - Satuan BB tersedia: KG, **MTR**, LITER, PCS, ROLL, CTN, **YARD**, **SF**, **TNE**, **PCE**, **ST**, **FTK**, **KGM**
+     - Input bahan baku yang dikirim (bisa lebih dari 1 item via "+ Tambah BB")
    - Fasilitas: **Pembebasan (SUBK KITE 1.1/1.2)** — satu-satunya skema yang digunakan JKJ
      - **1.1** = pengeluaran BB ke subkontraktor
      - **1.2** = pemasukan hasil dari subkontraktor
-   - Pantau alur: Draft → BB Dikirim → Dalam Proses → Hasil Diterima → Selesai
+   - **Alur job subkon**:
+     - `Draft` → klik **"Kirim BB ke Subkon"** → isi No. SJ + No. SUBK KITE 1.1 + tgl kirim
+     - `BB Dikirim` / `Dalam Proses` → klik **"Terima Hasil dari CMT"** (tombol hijau):
+       - Isi tanggal terima, No. Surat Jalan masuk, No. SUBK KITE 1.2
+       - Input qty kembali per item BB
+       - Status job → `Hasil Diterima`
+     - `Hasil Diterima` → klik "Selesaikan Job" → `Selesai`
    - Catat fee jasa subkontraktor (diproses ke Finance → AP)
 5. **Pantau laporan produksi** → `/reports/production`
    - Konversi ratio aktual vs standar per WO
@@ -188,10 +264,21 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 
 1. **AR (Piutang Customer)** → `/finance/ar`
    - Buat invoice ke customer dari SO yang sudah dikirim
+   - **New invoice**: pilih mata uang (IDR/USD/KRW) + kurs jika non-IDR. Grand total tampil dalam valas + konversi IDR.
+   - **Catat penerimaan**: klik tombol **"Terima Bayar"** (biru) per invoice → dialog pembayaran:
+     - Dialog bisa di-scroll jika konten panjang (scroll di dalam area dialog)
+     - Untuk invoice non-IDR: tampil mata uang + input **kurs terima** saat pembayaran
+     - Nominal IDR auto-calc dari `originalAmount × kurs terima`
+     - **Selisih kurs** dihitung otomatis: hijau = untung kurs, merah = rugi kurs
    - Pantau status: Draft → Sent → Partially Paid → Paid → Overdue
    - Export daftar piutang ke Excel
 2. **AP (Hutang Vendor)** → `/finance/ap`
    - Input tagihan dari supplier / subkontraktor
+   - **New bill**: pilih PO dari daftar PO yang ada di sistem (live dari store) + mata uang + kurs
+   - **Catat pembayaran**: klik tombol **"Bayar"** (hijau) per invoice → dialog pembayaran:
+     - Dialog bisa di-scroll jika konten panjang
+     - Untuk invoice non-IDR: input **kurs bayar** aktual saat pembayaran
+     - **Selisih kurs** dihitung otomatis (rugi/untung)
    - Pantau jatuh tempo pembayaran
    - Export daftar hutang ke Excel
 3. **Payments** → `/finance/payments`
@@ -200,16 +287,23 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 4. **Faktur Pajak PPN** → `/finance/faktur`
    - Kelola faktur pajak keluaran (penjualan domestik, PPN 11%)
    - Export untuk upload ke aplikasi e-Faktur DJP
-5. **Tax Assets** → `/finance/tax-assets` atau `/reports/tax-assets`
-   - Pantau PPN import yang bisa dikreditkan vs PPN keluaran
-   - Pantau PPh 22 yang bisa dikreditkan di SPT Tahunan PPh Badan
-   - Rekonsiliasi bulanan: PPN masukan vs keluaran → lebih/kurang bayar
-6. **Jurnal Umum** → `/finance/journal`
-   - Input jurnal kas/bank dan jurnal umum manual
-   - Tipe: Kas Masuk / Kas Keluar / Jurnal Umum
-   - Multi-line debit/kredit per entri
-7. **Saldo Akun** → `/finance/accounts`
-   - Saldo real-time semua akun dari jurnal
+5. **Tax Assets** → `/finance/tax-assets`
+   - Pantau PPN import dan PPh 22 yang bisa dikreditkan
+   - **Catat Pemakaian** per asset: klik tombol di setiap baris asset → dialog input tanggal, jumlah terpakai, keterangan
+   - Used / Remaining / Progress bar update real-time dari localStorage
+   - Riwayat pemakaian tampil di bawah tiap asset
+   - Link ke Dual Billing BC 2.0 sebagai referensi pembayaran pajak
+   - Rekonsiliasi bulanan PPN → `/finance/tax-assets/ppn`
+6. **Jurnal Kas/Bank** → `/finance/journal`
+   - Input transaksi penerimaan, pengeluaran, atau transaksi umum kas/bank
+   - **Kategori** (3 pilihan): Penerimaan Kas/Bank / Pengeluaran Kas/Bank / Transaksi Umum
+   - **Akun Lawan**: pilih dari Chart of Accounts (49 akun, dikelompokkan per tipe)
+   - **Mata Uang** (IDR/USD/KRW): jika non-IDR → input kurs → nominal IDR auto-calc
+   - Tabel jurnal: kolom "Akun Lawan" menampilkan kode + nama akun
+7. **Saldo Akun & Chart of Accounts** → `/finance/accounts` (3 tab)
+   - **Tab "Saldo Awal"**: input saldo awal per akun
+   - **Tab "Bagan Akun"**: daftar 49 akun COA + form tambah akun baru (kode, nama, tipe, subTipe)
+   - **Tab "Valuasi Stok"**: nilai inventori per kategori (BB/FG/WIP/Packaging): qty × harga satuan = total nilai
 8. **Laporan Keuangan** → `/finance/reports`
    - Laporan Laba Rugi, Neraca, Arus Kas, Rekap Jurnal
 
@@ -219,18 +313,34 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 
 **Tanggung jawab:** Kelola dokumen ekspor (PEB) dan semua laporan wajib KITE untuk DJBC.
 
-1. **Buat PEB (Pemberitahuan Ekspor Barang)** → `/logistics/peb/new`
+1. **Buat BC 4.0 (Pemasukan Barang dari Lokal ke TPB)** → `/logistics/bc40`
+
+   Digunakan saat ada pemasukan barang dari dalam negeri (lokal) ke kawasan TPB JKJ.
+
+   - Buka `/logistics/bc40` → klik **"Buat BC 4.0 Baru"**
+   - Isi **5 section** form:
+     1. Informasi Dokumen: nomor BC 4.0, tanggal, kantor pabean, jenis transaksi
+     2. Data Penjual: nama, NPWP, alamat penjual
+     3. Dokumen Pendukung: no. faktur pajak, no. packing list, no. kontrak
+     4. Data Pengangkutan: jenis kendaraan, no. polisi, no. surat jalan
+     5. Data Barang: tambah baris per item (HS Code / Pos Tarif, kode barang, nama, satuan, qty, harga satuan) + pilih mata uang + kurs
+   - Klik **"Simpan BC 4.0"** → dokumen tersimpan dengan status Draft
+   - Dokumen tersedia di daftar `/logistics/bc40` dengan tombol Export
+
+2. **Buat PEB (Pemberitahuan Ekspor Barang)** → `/logistics/peb/new`
    - Pilih customer ekspor, negara tujuan
    - Input item FG yang diekspor + qty
    - **Input kurs USD/IDR** sesuai kurs resmi BI/DJBC pada tanggal ekspor
    - Sistem otomatis hitung FOB: qty × harga × kurs = nilai Rp
    - PPN otomatis 0% (ekspor = zero-rated)
-2. **Proses PEB** → `/logistics/peb/[id]`
+   - **No. SO Referensi** (opsional): pilih SO yang terkait → tampil qty SO sebagai referensi
+   - ⚠️ **Warning otomatis**: jika total qty PEB **melebihi** qty SO referensi → peringatan oranye tampil
+3. **Proses PEB** → `/logistics/peb/[id]`
    - Draft → Approved → Exported
    - Pantau alur: Dokumen siap → Customs clearance → Shipped
-3. **Dashboard KITE** → `/kite`
+4. **Dashboard KITE** → `/kite`
    - Ringkasan: status waste, subkontrak aktif, mutasi BB terkini
-4. **8 Laporan IT Inventory Wajib** → `/reports/kite-inventory`
+5. **8 Laporan IT Inventory Wajib** → `/reports/kite-inventory`
 
    Sesuai Lampiran XXII PER-5/BC/2023. Semua laporan **otomatis terisi** dari transaksi yang sudah diinput di modul lain — tidak perlu input ulang.
 
@@ -249,17 +359,20 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 
    - **"Export Semua"** → 1 file Excel, 8 sheet sekaligus (format Lampiran XXII PER-5/BC/2023)
    - Export per laporan tersedia di tiap tab dengan tombol *Export* individual
-5. **Laporan Mutasi Stok** → `/reports/stock-movement`
+6. **Laporan Mutasi Stok** → `/reports/stock-movement`
    - Filter per material / periode
    - Rekap: Opening → Import → Produksi → Ekspor → Waste → Closing
    - Export untuk diserahkan ke DJBC
-6. **Laporan Konversi Bahan Baku** → `/reports/production`
+7. **Laporan Konversi Bahan Baku** → `/reports/production`
    - Rasio konversi BB → FG per WO
    - Referensi BC 2.3 (impor KITE) dan BC 3.0 (ekspor KITE)
    - Export untuk audit Bea Cukai
-7. **Traceability material KITE** → `/reports/traceability`
+8. **Traceability material KITE** → `/reports/traceability`
    - Lacak satu lot: BC 2.3 → GR → WO → FG → PEB
    - Generate sertifikat keterlacakan untuk keperluan audit
+9. **Traceability Bahan Baku** → `/reports/material-usage`
+   - **Tab "Trace Produk Jadi"**: pilih produk jadi / WO → lihat semua bahan baku yang dipakai + No. PO + Supplier + **Status Bayar** (Lunas/Partial/Belum) + **Nilai Bahan Baku**. Ringkasan: total sudah dibayar vs belum.
+   - **Tab "Pemakaian Bahan Baku"**: pilih bahan baku → lihat semua FG yang menggunakannya, qty FG, qty RM dipakai, nilai, dan PEB terkait. Cocok untuk audit penggunaan material impor.
 
 ---
 
@@ -292,7 +405,10 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 | Sales / SO | ✅ | ✅ | — | — | Lihat | — | — | — |
 | Purchasing / PO | ✅ | — | ✅ | — | — | — | — | — |
 | BC 2.0 | ✅ | — | ✅ | — | — | — | Lihat | ✅ |
+| BC 4.0 | ✅ | — | — | — | — | — | ✅ | ✅ |
 | Gudang (stok, inbound, outbound) | ✅ | — | — | ✅ | — | — | — | — |
+| Gudang WIP | ✅ | — | — | ✅ | ✅ | — | — | — |
+| Stok Sementara | ✅ | — | ✅ | ✅ | — | — | — | — |
 | Waste | ✅ | — | — | ✅ | ✅ | — | Lihat | ✅ |
 | Work Order | ✅ | Lihat | — | Lihat | ✅ | — | — | — |
 | Subkontrak KITE | ✅ | — | — | — | ✅ | — | Lihat | ✅ |
@@ -305,6 +421,7 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 | Laporan Mutasi Stok | ✅ | — | — | — | — | — | ✅ | ✅ |
 | Laporan Konversi / Produksi | ✅ | — | — | — | ✅ | — | ✅ | ✅ |
 | Traceability KITE | ✅ | — | — | — | — | — | ✅ | ✅ |
+| Traceability Bahan Baku | ✅ | — | — | — | — | — | ✅ | ✅ |
 | Laporan Sales / Inventory | ✅ | ✅ | — | — | — | ✅ | — | — |
 
 ---
@@ -318,6 +435,7 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 | BC 2.3 | (referensi eksternal) | `/reports/production` | Impor KITE — referensi di laporan konversi |
 | BC 3.0 | (referensi eksternal) | `/reports/production` | Ekspor KITE — referensi di laporan konversi |
 | PEB | Staff KITE | `/logistics/peb/new` | Pemberitahuan Ekspor Barang — trigger Lap 5 & 7 |
+| BC 4.0 | Staff KITE | `/logistics/bc40/new` | Pemasukan barang dari dalam negeri (lokal) ke TPB |
 | SUBK KITE 1.1/1.2 | Staff Produksi | `/production/subkontrak` | Pengeluaran/pemasukan BB subkon (Pembebasan) — trigger Lap 3 |
 | FG Receipt | Staff Gudang | `/warehouse/outbound` | Penerimaan BJ dari WO — trigger Lap 4 |
 | Surat Jalan Ekspor | Staff Gudang | `/warehouse/outbound` → Tab *Surat Jalan Ekspor* | Dokumen pengiriman ekspor ke customer — disimpan & bisa di-export Excel |
@@ -326,6 +444,7 @@ Sistem ini dirancang untuk **8 user** dengan peran berbeda:
 | Laporan Mutasi Stok | Staff KITE | `/reports/stock-movement` | BB + FG movements, gabung data live |
 | Laporan Konversi BB | Staff KITE | `/reports/production` | Rasio konversi + waste untuk audit |
 | Sertifikat Traceability | Staff KITE | `/reports/traceability` | Keterlacakan lot BC 2.3 → PEB |
+| Traceability Bahan Baku | Staff KITE | `/reports/material-usage` | Trace FG→RM→PO→status bayar + pemakaian RM→FG + nilai |
 | Faktur Pajak | Staff Keuangan | `/finance/faktur` | PPN keluaran, upload ke e-Faktur DJP |
 
 ---

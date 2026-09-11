@@ -5,7 +5,9 @@ import { STORE_KEYS, getStore, addToStore, updateInStore, generateId } from './i
 import { MOCK_AR_INVOICES, type ARInvoice } from '@/lib/mock-data/finance'
 
 export function useARInvoices() {
-  const [invoices, setInvoices] = useState<ARInvoice[]>([])
+  const [invoices, setInvoices] = useState<ARInvoice[]>(() =>
+    getStore(STORE_KEYS.AR_INVOICES, MOCK_AR_INVOICES)
+  )
 
   useEffect(() => {
     setInvoices(getStore(STORE_KEYS.AR_INVOICES, MOCK_AR_INVOICES))
@@ -15,10 +17,11 @@ export function useARInvoices() {
     setInvoices(getStore(STORE_KEYS.AR_INVOICES, MOCK_AR_INVOICES))
   }, [])
 
-  const createInvoice = useCallback((data: Omit<ARInvoice, 'id'>) => {
+  const createInvoice = useCallback((data: Omit<ARInvoice, 'id' | 'invoiceNumber'>) => {
     const current = getStore<ARInvoice>(STORE_KEYS.AR_INVOICES, MOCK_AR_INVOICES)
     const id = generateId('AR-INV', current.map(i => i.id))
-    const newInvoice: ARInvoice = { ...data, id }
+    const invoiceNumber = generateId('INV', current.map(i => i.invoiceNumber))
+    const newInvoice: ARInvoice = { ...data, id, invoiceNumber }
     const updated = addToStore(STORE_KEYS.AR_INVOICES, newInvoice, MOCK_AR_INVOICES)
     setInvoices(updated)
     return newInvoice

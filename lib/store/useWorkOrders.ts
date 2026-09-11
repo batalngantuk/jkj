@@ -5,7 +5,9 @@ import { STORE_KEYS, getStore, addToStore, updateInStore, generateId } from './i
 import { MOCK_WORK_ORDERS, type WorkOrder } from '@/lib/mock-data/production'
 
 export function useWorkOrders() {
-  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([])
+  const [workOrders, setWorkOrders] = useState<WorkOrder[]>(() =>
+    getStore(STORE_KEYS.WORK_ORDERS, MOCK_WORK_ORDERS)
+  )
 
   useEffect(() => {
     setWorkOrders(getStore(STORE_KEYS.WORK_ORDERS, MOCK_WORK_ORDERS))

@@ -5,7 +5,9 @@ import { STORE_KEYS, getStore, addToStore, updateInStore, generateId } from './i
 import { MOCK_PURCHASE_ORDERS, type PurchaseOrder } from '@/lib/mock-data/purchasing'
 
 export function usePurchaseOrders() {
-  const [orders, setOrders] = useState<PurchaseOrder[]>([])
+  const [orders, setOrders] = useState<PurchaseOrder[]>(() =>
+    getStore(STORE_KEYS.PURCHASE_ORDERS, MOCK_PURCHASE_ORDERS)
+  )
 
   useEffect(() => {
     setOrders(getStore(STORE_KEYS.PURCHASE_ORDERS, MOCK_PURCHASE_ORDERS))

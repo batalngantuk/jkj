@@ -48,7 +48,9 @@ const SEED: BC20Document[] = [
 ]
 
 export function useBC20() {
-  const [documents, setDocuments] = useState<BC20Document[]>([])
+  const [documents, setDocuments] = useState<BC20Document[]>(() =>
+    getStore(STORE_KEYS.BC20, SEED)
+  )
 
   useEffect(() => {
     setDocuments(getStore(STORE_KEYS.BC20, SEED))

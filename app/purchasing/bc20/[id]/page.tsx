@@ -157,6 +157,10 @@ export default function BC20DetailPage() {
   // In real implementation, fetch data from API
   const bc20 = MOCK_BC20_DETAIL
 
+  // Local state for demo (bypass Prisma API)
+  const [taxPaid, setTaxPaid] = useState(false)
+  const [taxPaymentRecord, setTaxPaymentRecord] = useState<{ amount: number; date: string; method: string; ref: string } | null>(null)
+
   const getStatusBadge = (status: BC20Status) => {
     const variants: Record<BC20Status, { color: string; icon: React.ReactNode }> = {
       'DRAFT': { color: 'bg-slate-100 text-slate-700', icon: <FileText className="h-3 w-3" /> },
@@ -214,42 +218,21 @@ export default function BC20DetailPage() {
     }
   }
 
-  // Handle tax payment submission
-  const handleTaxPayment = async () => {
-    setIsSubmitting(true)
-    try {
-      const response = await fetch(`/api/bc20/${params.id}/pay-tax`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: parseFloat(paymentAmount),
-          paymentDate,
-          paymentMethod,
-          referenceNumber,
-          bankAccount,
-          notes: paymentNotes,
-          createdBy: 'current-user', // Will be replaced with actual user
-        }),
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        alert('Tax payment recorded successfully!')
-        setShowPaymentDialog(false)
-        // Refresh page data
-        window.location.reload()
-      } else {
-        alert(`Error: ${data.error}`)
-      }
-    } catch (error) {
-      console.error('Error recording tax payment:', error)
-      alert('Failed to record tax payment')
-    } finally {
-      setIsSubmitting(false)
+  // Handle tax payment submission (demo: bypass Prisma API, handle locally)
+  const handleTaxPayment = () => {
+    if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
+      alert('Masukkan jumlah pembayaran yang valid.')
+      return
     }
+    setTaxPaymentRecord({
+      amount: parseFloat(paymentAmount),
+      date: paymentDate,
+      method: paymentMethod,
+      ref: referenceNumber,
+    })
+    setTaxPaid(true)
+    setShowPaymentDialog(false)
+    alert('Pembayaran pajak berhasil dicatat!')
   }
 
   // Handle SPPB recording
@@ -300,7 +283,7 @@ export default function BC20DetailPage() {
     },
     {
       label: 'Tax Payment',
-      status: bc20.taxPaymentStatus === 'PAID' ? 'complete' as const :
+      status: taxPaid || bc20.taxPaymentStatus === 'PAID' ? 'complete' as const :
               bc20.status === 'TAX_PAYMENT_PENDING' ? 'current' as const : 'pending' as const,
     },
     {
@@ -327,7 +310,7 @@ export default function BC20DetailPage() {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold text-foreground font-mono">{bc20.documentNumber}</h1>
-                {getStatusBadge(bc20.status)}
+                {getStatusBadge(taxPaid ? 'TAX_PAID' : bc20.status)}
               </div>
               <p className="text-sm text-muted-foreground">BC 2.0 Regular Import Declaration (PIB)</p>
             </div>
@@ -346,7 +329,7 @@ export default function BC20DetailPage() {
                 {isSubmitting ? 'Submitting...' : 'Submit to Customs'}
               </Button>
             )}
-            {bc20.status === 'TAX_PAID' && !bc20.sppbNumber && (
+            {(taxPaid || bc20.status === 'TAX_PAID') && !bc20.sppbNumber && (
               <Button
                 className="bg-green-600 hover:bg-green-700 text-white gap-2"
                 onClick={() => setShowSppbDialog(true)}
@@ -355,7 +338,7 @@ export default function BC20DetailPage() {
                 Record SPPB
               </Button>
             )}
-            {bc20.status === 'TAX_PAYMENT_PENDING' && (
+            {!taxPaid && bc20.status === 'TAX_PAYMENT_PENDING' && (
               <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
                 <DialogTrigger asChild>
                   <Button className="bg-orange-600 hover:bg-orange-700 text-white gap-2">
@@ -535,8 +518,19 @@ export default function BC20DetailPage() {
           </div>
         </div>
 
+        {/* Tax Payment Success */}
+        {taxPaid && taxPaymentRecord && (
+          <Alert className="border-cyan-200 bg-cyan-50">
+            <CheckCircle className="h-4 w-4 text-cyan-600" />
+            <AlertTitle className="text-cyan-900">Pembayaran Pajak Tercatat</AlertTitle>
+            <AlertDescription className="text-cyan-700">
+              Rp {taxPaymentRecord.amount.toLocaleString()} — {taxPaymentRecord.method} — Ref: {taxPaymentRecord.ref || '-'} — Tgl: {new Date(taxPaymentRecord.date).toLocaleDateString('id-ID')}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Tax Payment Alert */}
-        {bc20.taxPaymentStatus === 'PENDING' && bc20.status === 'TAX_PAYMENT_PENDING' && (
+        {!taxPaid && bc20.taxPaymentStatus === 'PENDING' && bc20.status === 'TAX_PAYMENT_PENDING' && (
           <Alert className="border-orange-200 bg-orange-50">
             <AlertCircle className="h-4 w-4 text-orange-600" />
             <AlertTitle className="text-orange-900">Tax Payment Required</AlertTitle>

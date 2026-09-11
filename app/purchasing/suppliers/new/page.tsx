@@ -11,9 +11,11 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import AppLayout from '@/components/app-layout'
+import { useSuppliers } from '@/lib/store/useSuppliers'
 
 export default function NewSupplierPage() {
   const router = useRouter()
+  const { createSupplier } = useSuppliers()
   const [formData, setFormData] = useState({
     name: '',
     contactPerson: '',
@@ -30,9 +32,15 @@ export default function NewSupplierPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Mock save - in real app would call API
-    console.log('Saving supplier:', formData)
-    // Redirect back to suppliers list
+    createSupplier({
+      name: formData.name,
+      contactPerson: formData.contactPerson,
+      email: formData.email,
+      phone: formData.phone,
+      address: `${formData.address}, ${formData.city}, ${formData.country}`,
+      rating: 4.0,
+      status: 'Active',
+    })
     router.push('/purchasing/suppliers')
   }
 

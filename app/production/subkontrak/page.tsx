@@ -27,11 +27,11 @@ import {
 import {
   Factory, Plus, Download, FileText, Package,
   ChevronRight, CheckCircle2, Clock, Truck,
-  DollarSign, AlertCircle, Building2, ExternalLink
+  DollarSign, AlertCircle, Building2, ExternalLink, Send, Trash2, Printer
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import { exportToExcel } from '@/lib/utils/export-excel'
-import { useSubkontrak } from '@/lib/store/hooks'
+import { useSubkontrak, useFGReceipts, useStock } from '@/lib/store/hooks'
 import {
   MOCK_SUBKON_MASTER,
   SUBKON_STATUS_STEPS,
@@ -89,19 +89,47 @@ function StatusStepper({ status }: { status: SubkonStatus }) {
   )
 }
 
+interface BBItem { kodeBB: string; namaBB: string; qty: number; satuan: string; isKITE: boolean }
+
 export default function SubkontrakPage() {
-  const { records, createSubkon } = useSubkontrak()
+  const { records, createSubkon, updateSubkon } = useSubkontrak()
+  const { createReceipt: createFGReceipt } = useFGReceipts()
+  const { addStock, deductStock } = useStock()
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [selectedRecord, setSelectedRecord] = useState<SubkonRecord | null>(null)
   const [showFormDialog, setShowFormDialog] = useState(false)
 
   // Form state
   const [formSubkon, setFormSubkon] = useState('')
+  const [formSubkonText, setFormSubkonText] = useState('') // manual entry if not in master
+  const [formNoSO, setFormNoSO] = useState('')
+  const [formQtyCMT, setFormQtyCMT] = useState('')
+  const [formSatuanCMT, setFormSatuanCMT] = useState('carton')
   const [formDeskripsi, setFormDeskripsi] = useState('')
   const [formTarget, setFormTarget] = useState('')
-  // kept for resetForm compatibility
-  const [, setFormFasilitas] = useState('')
   const [formCatatan, setFormCatatan] = useState('')
+  const [formBBItems, setFormBBItems] = useState<BBItem[]>([{ kodeBB: '', namaBB: '', qty: 0, satuan: 'KG', isKITE: true }])
+
+  // S2: Kirim BB dialog state
+  const [showKirimBB, setShowKirimBB] = useState(false)
+  const [kirimTarget, setKirimTarget] = useState<SubkonRecord | null>(null)
+  const [kirimSJNo, setKirimSJNo] = useState('')
+  const [kirimSubkNo, setKirimSubkNo] = useState('')
+  const [kirimTgl, setKirimTgl] = useState(new Date().toISOString().slice(0, 10))
+
+  // Terima Hasil CMT dialog state
+  const [showTerima, setShowTerima] = useState(false)
+  const [terimaTarget, setTerimaTarget] = useState<SubkonRecord | null>(null)
+  const [terimaKiteNo, setTerimaKiteNo] = useState('')
+  const [terimaTgl, setTerimaTgl] = useState(new Date().toISOString().slice(0, 10))
+  const [terimaQtys, setTerimaQtys] = useState<Record<number, string>>({})
+  const [terimaNoSJ, setTerimaNoSJ] = useState('')
+  const [terimaCatatan, setTerimaCatatan] = useState('')
+  const [terimaIsFinal, setTerimaIsFinal] = useState(false)
+  // Produk jadi yang diterima
+  const [terimaFGNama, setTerimaFGNama] = useState('')
+  const [terimaFGQty, setTerimaFGQty] = useState('')
+  const [terimaFGSatuan, setTerimaFGSatuan] = useState('CTN')
 
   const filtered = records.filter(r =>
     filterStatus === 'all' ? true : r.status === filterStatus
@@ -115,8 +143,116 @@ export default function SubkontrakPage() {
   }
 
   function resetForm() {
-    setFormSubkon(''); setFormDeskripsi(''); setFormTarget('')
-    setFormFasilitas(''); setFormCatatan('')
+    setFormSubkon(''); setFormSubkonText(''); setFormNoSO('')
+    setFormQtyCMT(''); setFormSatuanCMT('carton')
+    setFormDeskripsi(''); setFormTarget('')
+    setFormCatatan('')
+    setFormBBItems([{ kodeBB: '', namaBB: '', qty: 0, satuan: 'KG', isKITE: true }])
+  }
+
+  function addBBItem() {
+    setFormBBItems(prev => [...prev, { kodeBB: '', namaBB: '', qty: 0, satuan: 'KG', isKITE: true }])
+  }
+
+  function updateBBItem(i: number, field: keyof BBItem, val: string | number | boolean) {
+    setFormBBItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: val } : item))
+  }
+
+  function removeBBItem(i: number) {
+    if (formBBItems.length === 1) return
+    setFormBBItems(prev => prev.filter((_, idx) => idx !== i))
+  }
+
+  function openKirimBB(rec: SubkonRecord) {
+    setKirimTarget(rec)
+    const year = new Date().getFullYear()
+    const nums = records.map(r => { const m = r.subkKiteKirimNo.match(/(\d+)$/); return m ? parseInt(m[1]) : 0 })
+    const next = Math.max(0, ...nums) + 1
+    setKirimSubkNo(`SUBK-1.1-${year}-${String(next).padStart(3, '0')}`)
+    setKirimSJNo(`SJ-${year}-${String(next).padStart(3, '0')}`)
+    setKirimTgl(new Date().toISOString().slice(0, 10))
+    setShowKirimBB(true)
+  }
+
+  function openTerima(rec: SubkonRecord) {
+    setTerimaTarget(rec)
+    const year = new Date().getFullYear()
+    const next = Math.max(0, ...records.map(r => { const m = r.subkKiteTerimaNo.match(/(\d+)$/); return m ? parseInt(m[1]) : 0 })) + 1
+    setTerimaKiteNo(`SUBK-1.2-${year}-${String(next).padStart(3, '0')}`)
+    setTerimaNoSJ(`SJ-IN-${year}-${String(next).padStart(3, '0')}`)
+    setTerimaTgl(new Date().toISOString().slice(0, 10))
+    setTerimaQtys(Object.fromEntries(rec.items.map((item, i) => [i, String(item.qtyKirim)])))
+    setTerimaCatatan('')
+    setTerimaFGNama(rec.deskripsiPekerjaan || '')
+    setTerimaFGQty(rec.qtyCMT ? String(rec.qtyCMT) : '')
+    setTerimaFGSatuan(rec.satuanCMT || 'CTN')
+    setShowTerima(true)
+  }
+
+  function handleConfirmTerima() {
+    if (!terimaTarget) return
+    const updatedItems = terimaTarget.items.map((item, i) => ({
+      ...item,
+      qtyKembali: parseFloat(terimaQtys[i] ?? item.qtyKirim) || 0,
+    }))
+    // F6: parsial → status tetap 'Dalam Proses'; jika final → 'Hasil Diterima'
+    updateSubkon(terimaTarget.id, {
+      status: terimaIsFinal ? 'Hasil Diterima' : 'Dalam Proses',
+      subkKiteTerimaNo: terimaKiteNo,
+      subkKiteTerimaTgl: terimaTgl,
+      items: updatedItems,
+    })
+
+    // F7: tulis ke FG Receipts (Lap 4) dan Stock (Lap 7) agar laporan update
+    if (terimaFGNama && terimaFGQty) {
+      const qty = parseFloat(terimaFGQty) || 0
+      if (qty > 0) {
+        const fgCode = terimaFGNama.replace(/\s+/g, '-').toUpperCase()
+        createFGReceipt({
+          woId: terimaKiteNo || terimaTarget.id,
+          woNumber: terimaKiteNo || terimaTarget.id,
+          soNumber: terimaTarget.noSO || '-',
+          productName: terimaFGNama,
+          qtyProduced: qty,
+          qtyReceived: qty,
+          qtyReject: 0,
+          unit: terimaFGSatuan,
+          wasteQty: 0,
+          wasteRatio: 0,
+          gudangTujuan: 'Gudang FG-A',
+          penerima: '-',
+          tanggal: terimaTgl,
+          status: 'Diterima',
+        })
+        addStock(fgCode, terimaFGNama, qty, terimaKiteNo || terimaTarget.id, 'SUBKON', 'FG', terimaFGSatuan, 'Gudang FG-A')
+      }
+    }
+
+    setShowTerima(false)
+    setTerimaTarget(null)
+    setSelectedRecord(null)
+    setTerimaIsFinal(false)
+  }
+
+  function handleConfirmKirim() {
+    if (!kirimTarget) return
+    const isAdditional = kirimTarget.status === 'BB Dikirim' || kirimTarget.status === 'Dalam Proses'
+    updateSubkon(kirimTarget.id, {
+      status: isAdditional ? 'Dalam Proses' : 'BB Dikirim',
+      subkKiteKirimNo: kirimSubkNo,
+      subkKiteKirimTgl: kirimTgl,
+      suratJalanNo: kirimSJNo,
+      suratJalanTgl: kirimTgl,
+    })
+    // Create PRODUCTION_OUT movements per item so KITE Lap 2 picks them up with penerima subkon
+    kirimTarget.items.forEach(item => {
+      if (item.qtyKirim > 0) {
+        deductStock(item.kodeBB, item.qtyKirim, kirimTarget.id, 'SUBKON', 'PRODUCTION_OUT')
+      }
+    })
+    setShowKirimBB(false)
+    setKirimTarget(null)
+    setSelectedRecord(null)
   }
 
   return (
@@ -317,6 +453,12 @@ export default function SubkontrakPage() {
                       <p className="text-xs text-muted-foreground">Target Selesai</p>
                       <p className="font-medium">{selectedRecord.targetSelesai}</p>
                     </div>
+                    {selectedRecord.qtyCMT && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Qty Barang Jadi CMT</p>
+                        <p className="font-medium text-blue-700">{selectedRecord.qtyCMT.toLocaleString('id-ID')} {selectedRecord.satuanCMT}</p>
+                      </div>
+                    )}
                     <div>
                       <p className="text-xs text-muted-foreground">Tanggal Selesai Aktual</p>
                       <p className={`font-medium ${selectedRecord.tglSelesaiAktual === '-' ? 'text-muted-foreground' : ''}`}>
@@ -473,94 +615,398 @@ export default function SubkontrakPage() {
               </TabsContent>
             </Tabs>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-wrap justify-between gap-2 pt-2">
+              <div className="flex gap-2">
+                {selectedRecord.subkKiteKirimNo && selectedRecord.subkKiteKirimNo !== '-' && (
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => window.open(`/production/subkontrak/print-11?id=${selectedRecord.id}`, '_blank')}>
+                    <Printer className="h-3 w-3" />
+                    SUBK KITE 1.1
+                  </Button>
+                )}
+                {selectedRecord.subkKiteTerimaNo && selectedRecord.subkKiteTerimaNo !== '-' && (
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => window.open(`/production/subkontrak/print-12?id=${selectedRecord.id}`, '_blank')}>
+                    <Printer className="h-3 w-3" />
+                    SUBK KITE 1.2
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
               <Button variant="outline" onClick={() => setSelectedRecord(null)}>Tutup</Button>
               {selectedRecord.status === 'Draft' && (
-                <Button className="gap-2">
+                <Button className="gap-2" onClick={() => openKirimBB(selectedRecord)}>
                   <Truck className="h-4 w-4" />
                   Kirim BB ke Subkon
                 </Button>
               )}
-              {selectedRecord.status === 'Dalam Proses' && (
-                <Button className="gap-2">
-                  <Package className="h-4 w-4" />
-                  Terima Hasil dari Subkon
-                </Button>
+              {(selectedRecord.status === 'BB Dikirim' || selectedRecord.status === 'Dalam Proses') && (
+                <>
+                  <Button variant="outline" className="gap-2" onClick={() => openKirimBB(selectedRecord)}>
+                    <Truck className="h-4 w-4" />
+                    Kirim BB Tambahan
+                  </Button>
+                  <Button className="gap-2 bg-green-600 hover:bg-green-700" onClick={() => { openTerima(selectedRecord); setSelectedRecord(null) }}>
+                    <Package className="h-4 w-4" />
+                    Terima Hasil dari CMT
+                  </Button>
+                </>
               )}
               {selectedRecord.status === 'Hasil Diterima' && (
-                <Button className="gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Selesaikan Job
-                </Button>
+                <>
+                  <Button variant="outline" className="gap-2 text-green-700 border-green-300" onClick={() => { openTerima(selectedRecord); setSelectedRecord(null) }}>
+                    <Package className="h-4 w-4" />
+                    Terima Lagi (Parsial)
+                  </Button>
+                  <Button className="gap-2" onClick={() => { updateSubkon(selectedRecord.id, { status: 'Selesai' }); setSelectedRecord(null) }}>
+                    <CheckCircle2 className="h-4 w-4" />
+                    Selesaikan Job
+                  </Button>
+                </>
               )}
+              </div>
             </div>
           </DialogContent>
         </Dialog>
       )}
 
+      {/* ── S2: Dialog Kirim BB ke Subkon ── */}
+      <Dialog open={showKirimBB} onOpenChange={v => { if (!v) { setShowKirimBB(false); setKirimTarget(null) } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5 text-blue-600" />
+              Kirim BB ke Subkon
+            </DialogTitle>
+          </DialogHeader>
+          {kirimTarget && (
+            <div className="space-y-4 py-2">
+              <div className="rounded-lg bg-muted/50 p-3 text-sm space-y-1">
+                <p className="font-medium">{kirimTarget.namaSubkon}</p>
+                <p className="text-muted-foreground text-xs">{kirimTarget.deskripsiPekerjaan}</p>
+                {kirimTarget.items.length > 0 && (
+                  <div className="mt-2 border-t pt-2 space-y-1">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Daftar BB Yang Dikirim</p>
+                    {kirimTarget.items.map((item, i) => (
+                      <div key={i} className="flex justify-between items-center text-xs py-0.5 border-b border-dashed border-muted last:border-0">
+                        <div>
+                          <span className="font-mono text-muted-foreground mr-1">{item.kodeBB}</span>
+                          <span className="font-medium">{item.namaBB}</span>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          <span className="font-mono">{item.qtyKirim.toLocaleString('id-ID')}</span>
+                          <span className="ml-1 font-semibold text-primary">{item.satuanBB}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label>Tanggal Pengiriman</Label>
+                <Input type="date" value={kirimTgl} onChange={e => setKirimTgl(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>No. Surat Jalan</Label>
+                <Input placeholder="SJ-2026-001" value={kirimSJNo} onChange={e => setKirimSJNo(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>No. SUBK KITE 1.1</Label>
+                <Input placeholder="SUBK-1.1-2026-001" value={kirimSubkNo} onChange={e => setKirimSubkNo(e.target.value)} />
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => { setShowKirimBB(false); setKirimTarget(null) }}>Batal</Button>
+            <Button
+              disabled={!kirimSJNo || !kirimSubkNo || !kirimTgl}
+              onClick={handleConfirmKirim}
+              className="gap-2"
+            >
+              <Send className="h-4 w-4" />Konfirmasi Kirim BB
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: Terima Hasil dari CMT ── */}
+      <Dialog open={showTerima} onOpenChange={v => { if (!v) { setShowTerima(false); setTerimaTarget(null) } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-700">
+              <Package className="h-5 w-5" />
+              Terima Hasil dari CMT — {terimaTarget?.namaSubkon}
+            </DialogTitle>
+            <DialogDescription>
+              Input qty barang jadi yang diterima kembali dari subkontraktor/CMT
+            </DialogDescription>
+          </DialogHeader>
+          {terimaTarget && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Tanggal Terima</Label>
+                  <Input type="date" value={terimaTgl} onChange={e => setTerimaTgl(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>No. Surat Jalan Masuk</Label>
+                  <Input placeholder="SJ-IN-2026-001" value={terimaNoSJ} onChange={e => setTerimaNoSJ(e.target.value)} />
+                </div>
+                <div className="space-y-1.5 col-span-2">
+                  <Label>No. SUBK KITE 1.2</Label>
+                  <Input placeholder="SUBK-1.2-2026-001" value={terimaKiteNo} onChange={e => setTerimaKiteNo(e.target.value)} />
+                </div>
+              </div>
+
+              {/* Produk Jadi yang Diterima */}
+              <div className="space-y-2 rounded-md border border-green-200 bg-green-50 p-3">
+                <Label className="text-xs font-semibold text-green-800 uppercase">Produk Jadi yang Diterima</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs text-muted-foreground">Nama Produk / Barang Jadi</Label>
+                    <Input
+                      placeholder="Misal: Sarung Tangan XL Green"
+                      value={terimaFGNama}
+                      onChange={e => setTerimaFGNama(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Qty</Label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={terimaFGQty}
+                      onChange={e => setTerimaFGQty(e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Satuan</Label>
+                    <Select value={terimaFGSatuan} onValueChange={setTerimaFGSatuan}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {['CTN', 'PCS', 'KG', 'SET', 'ROLL', 'SHT', 'TNE', 'PCE', 'ST', 'FTK', 'KGM'].map(s =>
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase">Qty BB/Bahan Kembali dari Subkon</Label>
+                {terimaTarget.items.map((item, i) => (
+                  <div key={i} className="grid grid-cols-3 gap-3 items-center rounded border px-3 py-2">
+                    <div className="col-span-2">
+                      <p className="text-sm font-medium">{item.namaBB}</p>
+                      <p className="text-xs text-muted-foreground">{item.kodeBB} · Dikirim: {item.qtyKirim.toLocaleString('id-ID')} {item.satuanBB}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Qty kembali</Label>
+                      <Input
+                        type="number"
+                        value={terimaQtys[i] ?? item.qtyKirim}
+                        onChange={e => setTerimaQtys(prev => ({ ...prev, [i]: e.target.value }))}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {terimaTarget.qtyCMT && (
+                <div className="rounded-md bg-blue-50 border border-blue-200 p-3 text-sm">
+                  <p className="text-blue-700">Target BJ: <strong>{terimaTarget.qtyCMT.toLocaleString('id-ID')} {terimaTarget.satuanCMT}</strong></p>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label>Catatan</Label>
+                <Input placeholder="Kondisi barang, catatan QC, dll..." value={terimaCatatan} onChange={e => setTerimaCatatan(e.target.value)} />
+              </div>
+            </div>
+          )}
+          <div className="flex items-center justify-between pt-2">
+            <label className="flex items-center gap-2 cursor-pointer text-sm">
+              <input
+                type="checkbox"
+                checked={terimaIsFinal}
+                onChange={e => setTerimaIsFinal(e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span className="text-muted-foreground">Ini penerimaan <strong>terakhir</strong> (tutup job)</span>
+            </label>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => { setShowTerima(false); setTerimaIsFinal(false) }}>Batal</Button>
+              <Button
+                className="gap-2 bg-green-600 hover:bg-green-700"
+                disabled={!terimaTgl || !terimaKiteNo}
+                onClick={handleConfirmTerima}
+              >
+                <Package className="h-4 w-4" />{terimaIsFinal ? 'Terima & Tutup Job' : 'Terima Parsial'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* ── Form: Buat Job Subkon Baru ── */}
       <Dialog open={showFormDialog} onOpenChange={(v) => { if (!v) { setShowFormDialog(false); resetForm() } }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5 text-primary" />
               Buat Job Subkontrak Baru
             </DialogTitle>
             <DialogDescription>
-              Isi data dasar job. Dokumen SUBK KITE dibuat setelah job disimpan.
+              Isi data job dan bahan baku yang akan dikirim ke subkontraktor.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <Label>Subkontraktor <span className="text-red-500">*</span></Label>
-              <Select value={formSubkon} onValueChange={setFormSubkon}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih subkontraktor..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {MOCK_SUBKON_MASTER.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.nama}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-5 py-1">
 
-            <div className="space-y-1">
-              <Label>Deskripsi Pekerjaan <span className="text-red-500">*</span></Label>
-              <Textarea
-                placeholder="Jelaskan pekerjaan yang akan disubkonkan..."
-                value={formDeskripsi}
-                onChange={e => setFormDeskripsi(e.target.value)}
-                rows={2}
-              />
-            </div>
+            {/* Section: Info Job */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Info Job</p>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label>Subkontraktor / CMT <span className="text-red-500">*</span></Label>
+                  <Select value={formSubkon} onValueChange={v => { setFormSubkon(v); if (v !== 'custom') setFormSubkonText('') }}>
+                    <SelectTrigger><SelectValue placeholder="Pilih subkontraktor..." /></SelectTrigger>
+                    <SelectContent>
+                      {MOCK_SUBKON_MASTER.map(s => (
+                        <SelectItem key={s.id} value={s.id}>{s.nama}</SelectItem>
+                      ))}
+                      <SelectItem value="custom">+ Input nama baru (manual)...</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formSubkon === 'custom' && (
+                    <Input
+                      placeholder="Ketik nama subkontraktor / CMT baru"
+                      value={formSubkonText}
+                      onChange={e => setFormSubkonText(e.target.value)}
+                      className="mt-1.5"
+                      autoFocus
+                    />
+                  )}
+                </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label>Target Selesai <span className="text-red-500">*</span></Label>
-                <Input
-                  type="date"
-                  value={formTarget}
-                  onChange={e => setFormTarget(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Fasilitas KITE</Label>
-                <div className="flex items-center h-10 px-3 rounded-md border bg-muted/40 text-sm text-muted-foreground">
-                  Pembebasan (SUBK KITE 1.1/1.2)
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>No. Sales Order <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                    <Input placeholder="SO-2026-001" value={formNoSO} onChange={e => setFormNoSO(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Target Selesai <span className="text-red-500">*</span></Label>
+                    <Input type="date" value={formTarget} onChange={e => setFormTarget(e.target.value)} />
+                  </div>
+                </div>
+
+                {/* Qty Total CMT */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Qty Barang Jadi CMT</Label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={formQtyCMT}
+                      onChange={e => setFormQtyCMT(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Total qty BJ yang akan diproduksi CMT</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Satuan BJ CMT</Label>
+                    <Select value={formSatuanCMT} onValueChange={setFormSatuanCMT}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {['carton', 'pcs', 'prs', 'box', 'kg', 'mtr', 'yard', 'roll'].map(s => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Deskripsi Pekerjaan <span className="text-red-500">*</span></Label>
+                  <Textarea
+                    placeholder="Jelaskan pekerjaan yang akan disubkonkan..."
+                    value={formDeskripsi}
+                    onChange={e => setFormDeskripsi(e.target.value)}
+                    rows={2}
+                  />
                 </div>
               </div>
             </div>
 
-            <div className="space-y-1">
-              <Label>Catatan</Label>
-              <Textarea
-                placeholder="Catatan tambahan (opsional)"
-                value={formCatatan}
-                onChange={e => setFormCatatan(e.target.value)}
-                rows={2}
-              />
+            <Separator />
+
+            {/* Section: Bahan Baku */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Bahan Baku yang Dikirim</p>
+                <Button type="button" variant="outline" size="sm" onClick={addBBItem} className="gap-1.5 h-8">
+                  <Plus className="h-3.5 w-3.5" />Tambah BB
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {formBBItems.map((bb, i) => (
+                  <div key={i} className="rounded-lg border bg-muted/20 p-3 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">BB #{i + 1}</span>
+                      {formBBItems.length > 1 && (
+                        <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => removeBBItem(i)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Kode BB</Label>
+                        <Input className="h-8" placeholder="BB-001" value={bb.kodeBB} onChange={e => updateBBItem(i, 'kodeBB', e.target.value)} />
+                      </div>
+                      <div className="col-span-2 space-y-1">
+                        <Label className="text-xs">Nama Bahan <span className="text-red-500">*</span></Label>
+                        <Input className="h-8" placeholder="Nama bahan baku" value={bb.namaBB} onChange={e => updateBBItem(i, 'namaBB', e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Qty</Label>
+                        <Input type="number" className="h-8" placeholder="0" value={bb.qty || ''} onChange={e => updateBBItem(i, 'qty', parseFloat(e.target.value) || 0)} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Satuan</Label>
+                        <Select value={bb.satuan} onValueChange={v => updateBBItem(i, 'satuan', v)}>
+                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {['KG', 'MTR', 'LITER', 'PCS', 'PRS', 'PCE', 'ROLL', 'CTN', 'YARD', 'YRD', 'SF', 'SHT', 'TNE', 'KGM', 'FTK', 'ST', 'NPR'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Fasilitas</Label>
+                        <Select value={bb.isKITE ? 'yes' : 'no'} onValueChange={v => updateBBItem(i, 'isKITE', v === 'yes')}>
+                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="yes">KITE</SelectItem>
+                            <SelectItem value="no">Non-KITE</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Catatan */}
+            <div className="space-y-1.5">
+              <Label>Catatan <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+              <Textarea placeholder="Catatan tambahan..." value={formCatatan} onChange={e => setFormCatatan(e.target.value)} rows={2} />
             </div>
           </div>
 
@@ -569,15 +1015,19 @@ export default function SubkontrakPage() {
               Batal
             </Button>
             <Button
-              disabled={!formSubkon || !formDeskripsi || !formTarget}
+              disabled={!formSubkon || (formSubkon === 'custom' && !formSubkonText) || !formDeskripsi || !formTarget}
               onClick={() => {
                 const master = MOCK_SUBKON_MASTER.find(s => s.id === formSubkon)
+                const namaFinal = formSubkon === 'custom' ? formSubkonText : (master?.nama ?? formSubkon)
                 createSubkon({
-                  namaSubkon: master?.nama ?? formSubkon,
+                  namaSubkon: namaFinal,
                   alamatSubkon: '-',
                   npwpSubkon: master?.npwp ?? '-',
                   jobNo: '-',
                   jobTgl: new Date().toISOString().slice(0, 10),
+                  noSO: formNoSO || undefined,
+                  qtyCMT: formQtyCMT ? parseFloat(formQtyCMT) : undefined,
+                  satuanCMT: formQtyCMT ? formSatuanCMT : undefined,
                   deskripsiPekerjaan: formDeskripsi,
                   targetSelesai: formTarget,
                   tglSelesaiAktual: '-',
@@ -589,8 +1039,16 @@ export default function SubkontrakPage() {
                   subkKiteTerimaJenis: 'SUBK KITE 1.2',
                   suratJalanNo: '-',
                   suratJalanTgl: '-',
-                  items: [],
-                  feeJasa: { invoiceNo: '-', invoiceTgl: '-', nilaiJasa: 0, status: 'Belum Dibayar' },
+                  items: formBBItems
+                    .filter(bb => bb.namaBB)
+                    .map(bb => ({
+                      kodeBB: bb.kodeBB || '-',
+                      namaBB: bb.namaBB,
+                      satuanBB: bb.satuan,
+                      qtyKirim: bb.qty,
+                      isKITE: bb.isKITE,
+                    })),
+                  feeJasa: { invoiceNo: '-', invoiceTgl: '-', nilaiJasa: 0, matauang: 'IDR', status: 'Belum Dibayar' },
                   status: 'Draft',
                   catatan: formCatatan,
                 })

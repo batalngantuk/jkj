@@ -91,12 +91,13 @@ export default function NewSalesOrderPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    const validLines = lines.filter(l => l.namaBarang)
     createOrder({
       poNumber,
       customer,
-      product: lines.map(l => l.namaBarang).join(', '),
-      quantity: lines.reduce((s, l) => s + (Number(l.qty) || 0), 0),
-      unitPrice: Number(lines[0]?.hargaSatuan) || 0,
+      product: validLines.map(l => l.namaBarang).join(', '),
+      quantity: validLines.reduce((s, l) => s + (Number(l.qty) || 0), 0),
+      unitPrice: Number(validLines[0]?.hargaSatuan) || 0,
       total: totalIDR,
       deliveryDate,
       status: 'DRAFT',
@@ -105,6 +106,15 @@ export default function NewSalesOrderPage() {
       createdBy: 'Sales Admin',
       notes,
       bomItems: bomItems.filter(b => b.namaMaterial),
+      lineItems: validLines.map(l => ({
+        id: l.id,
+        namaBarang: l.namaBarang,
+        kodeBarang: l.kodeBarang || undefined,
+        satuan: l.satuan,
+        qty: Number(l.qty) || 0,
+        hargaSatuan: Number(l.hargaSatuan) || 0,
+        catatan: l.catatan || undefined,
+      })),
     })
     router.push('/sales')
   }
@@ -301,8 +311,18 @@ export default function NewSalesOrderPage() {
                                   <SelectItem value="carton">Carton</SelectItem>
                                   <SelectItem value="box">Box</SelectItem>
                                   <SelectItem value="pcs">Pcs</SelectItem>
+                                  <SelectItem value="prs">Prs</SelectItem>
                                   <SelectItem value="kg">KG</SelectItem>
                                   <SelectItem value="unit">Unit</SelectItem>
+                                  <SelectItem value="roll">Roll</SelectItem>
+                                  <SelectItem value="yard">Yard (yd)</SelectItem>
+                                  <SelectItem value="sf">SF</SelectItem>
+                                  <SelectItem value="tne">TNE</SelectItem>
+                                  <SelectItem value="pce">PCE</SelectItem>
+                                  <SelectItem value="st">ST</SelectItem>
+                                  <SelectItem value="ftk">FTK</SelectItem>
+                                  <SelectItem value="kgm">KGM</SelectItem>
+                                  <SelectItem value="sht">SHT (Sheet)</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -447,7 +467,7 @@ export default function NewSalesOrderPage() {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {['kg', 'gram', 'liter', 'pcs', 'm', 'm²', 'roll', 'unit'].map(s => (
+                                  {['kg', 'gram', 'liter', 'pcs', 'prs', 'pce', 'm', 'm²', 'mtr', 'roll', 'unit', 'yard', 'yrd', 'sf', 'tne', 'kgm', 'ftk', 'st', 'npr'].map(s => (
                                     <SelectItem key={s} value={s}>{s}</SelectItem>
                                   ))}
                                 </SelectContent>

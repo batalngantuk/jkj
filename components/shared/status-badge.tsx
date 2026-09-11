@@ -18,8 +18,11 @@ export function StatusBadge({ status, className, size = 'sm' }: StatusBadgeProps
     if (['IN PROGRESS', 'IN PRODUCTION', 'PROCESSING', 'IN TRANSIT'].includes(s)) 
       return 'bg-blue-100 text-blue-800 border-blue-200'
       
-    if (['WARNING', 'REJECTED', 'FAILED', 'OVERDUE', 'CRITICAL', 'RETURNED'].includes(s)) 
+    if (['WARNING', 'REJECTED', 'FAILED', 'OVERDUE', 'CRITICAL', 'RETURNED', 'CANCELLED'].includes(s))
       return 'bg-red-100 text-red-800 border-red-200'
+
+    if (s === 'CANCELLED_WITH_STOCK')
+      return 'bg-orange-100 text-orange-800 border-orange-200'
       
     if (['SUBMITTED', 'UNDER REVIEW', 'AWAITING APPROVAL', 'READY TO SHIP'].includes(s)) 
       return 'bg-yellow-100 text-yellow-800 border-yellow-200'

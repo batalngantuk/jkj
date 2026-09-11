@@ -2,13 +2,16 @@
 
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Printer, FileText, Factory, Truck, CreditCard, AlertTriangle } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowLeft, Printer, FileText, Factory, Truck, AlertTriangle, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { MOCK_CUSTOMERS } from '@/lib/mock-data/sales'
-import { useSalesOrders } from '@/lib/store/hooks'
-import { useWorkOrders } from '@/lib/store/hooks'
+import { useSalesOrders, useWorkOrders, useFGReceipts, useShipments } from '@/lib/store/hooks'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { StatusTimeline, TimelineStep } from '@/components/shared/status-timeline'
 import { ApprovalButtonGroup } from '@/components/shared/approval-button-group'
@@ -21,6 +24,15 @@ export default function SalesOrderDetailPage() {
   const id = params.id as string
   const { getById, updateOrder } = useSalesOrders()
   const { getBySoNumber } = useWorkOrders()
+  const { receipts: fgReceipts } = useFGReceipts()
+  const { shipments } = useShipments()
+
+  // Edit dialog state
+  const [showEdit, setShowEdit] = useState(false)
+  const [editQty, setEditQty] = useState('')
+  const [editUnitPrice, setEditUnitPrice] = useState('')
+  const [editDelivery, setEditDelivery] = useState('')
+  const [editNotes, setEditNotes] = useState('')
 
   const order = getById(id)
 
@@ -39,6 +51,14 @@ export default function SalesOrderDetailPage() {
 
   const customer = MOCK_CUSTOMERS.find(c => c.name === order.customer)
   const relatedWOs = getBySoNumber(order.id)
+
+  // Progress fulfillment
+  const woIds = new Set(relatedWOs.map(w => w.id))
+  const soFGReceipts = fgReceipts.filter(r => woIds.has(r.woId))
+  const totalFGReceived = soFGReceipts.reduce((s, r) => s + r.qtyReceived, 0)
+  const soShipments = shipments.filter(s => s.soId === order.id)
+  const totalShipped = soShipments.reduce((s, sh) => s + sh.items.reduce((a, i) => a + i.qtyDikirim, 0), 0)
+  const remainingToShip = Math.max(0, order.quantity - totalShipped)
 
   const timelineSteps: TimelineStep[] = [
     {
@@ -85,6 +105,32 @@ export default function SalesOrderDetailPage() {
     updateOrder(order.id, { status: 'REJECTED' })
   }
 
+  function openEdit() {
+    if (!order) return
+    setEditQty(String(order.quantity))
+    setEditUnitPrice(String(order.unitPrice))
+    setEditDelivery(order.deliveryDate)
+    setEditNotes('')
+    setShowEdit(true)
+  }
+
+  function saveEdit() {
+    if (!order) return
+    const qty = parseInt(editQty) || order.quantity
+    const price = parseInt(editUnitPrice) || order.unitPrice
+    updateOrder(order.id, {
+      quantity: qty,
+      unitPrice: price,
+      total: qty * price,
+      deliveryDate: editDelivery || order.deliveryDate,
+      history: [
+        ...order.history,
+        { date: new Date().toLocaleString('id-ID'), action: `Revisi: qty=${qty}, harga=${price.toLocaleString()}`, user: 'Sales Admin', status: order.status }
+      ]
+    })
+    setShowEdit(false)
+  }
+
   return (
     <AppLayout>
       <div className="p-6">
@@ -110,12 +156,30 @@ export default function SalesOrderDetailPage() {
               )}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="gap-2" onClick={() => {
+                const items = order.lineItems && order.lineItems.length > 0
+                  ? order.lineItems.map(i => `<tr><td style="padding:8px;border:1px solid #ddd">${i.namaBarang}</td><td style="padding:8px;border:1px solid #ddd;text-align:center">${i.qty.toLocaleString('id-ID')} ${i.satuan}</td><td style="padding:8px;border:1px solid #ddd;text-align:right">${i.hargaSatuan.toLocaleString('id-ID')}</td><td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold">${(i.qty*i.hargaSatuan).toLocaleString('id-ID')}</td></tr>`).join('')
+                  : `<tr><td style="padding:8px;border:1px solid #ddd">${order.product}</td><td style="padding:8px;border:1px solid #ddd;text-align:center">${order.quantity.toLocaleString('id-ID')} carton</td><td style="padding:8px;border:1px solid #ddd;text-align:right">${order.unitPrice.toLocaleString('id-ID')}</td><td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold">${order.total.toLocaleString('id-ID')}</td></tr>`
+                const win = window.open('', '_blank')
+                if (!win) return
+                win.document.write(`<!DOCTYPE html><html><head><title>Sales Order ${order.id}</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#111}table{width:100%;border-collapse:collapse}th{background:#f3f4f6;padding:8px;border:1px solid #ddd;text-align:left}.header{display:flex;justify-content:space-between;margin-bottom:24px}.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}.info-label{font-size:12px;color:#6b7280}.info-value{font-weight:600}.total-section{text-align:right;margin-top:16px;font-size:18px;font-weight:bold}.sign-table{width:100%;margin-top:48px;border-collapse:collapse}.sign-table td{width:25%;border:1px solid #ddd;padding:12px;text-align:center;height:80px;vertical-align:top;font-size:13px}.priority-urgent{color:#dc2626;font-weight:bold}@media print{button{display:none}}</style></head><body>
+                <div class="header"><div><h2 style="margin:0">PT. JKJ MANUFACTURING</h2><p style="margin:4px 0;color:#6b7280;font-size:13px">SALES ORDER</p></div><div style="text-align:right"><h3 style="margin:0">${order.id}</h3><p style="margin:4px 0;font-size:13px">Status: ${order.status}</p><p style="margin:4px 0;font-size:13px">Prioritas: <span class="${order.priority==='Urgent'?'priority-urgent':''}">${order.priority}</span></p></div></div>
+                <div class="info-grid"><div><div class="info-label">Customer</div><div class="info-value">${order.customer}</div></div><div><div class="info-label">No. PO Customer</div><div class="info-value">${order.poNumber}</div></div><div><div class="info-label">Tanggal Pengiriman</div><div class="info-value">${order.deliveryDate}</div></div><div><div class="info-label">Dibuat oleh</div><div class="info-value">${order.createdBy}</div></div></div>
+                <table><thead><tr><th>Produk</th><th style="text-align:center">Qty</th><th style="text-align:right">Harga Satuan</th><th style="text-align:right">Subtotal</th></tr></thead><tbody>${items}</tbody></table>
+                <div class="total-section">Grand Total: ${order.total.toLocaleString('id-ID')}</div>
+                ${order.notes ? `<p style="margin-top:16px;font-size:13px;color:#6b7280">Catatan: ${order.notes}</p>` : ''}
+                <table class="sign-table"><tr><td>Sales<br><br><br></td><td>Manager<br><br><br></td><td>Accounting<br><br><br></td><td>Direktur Utama<br><br><br></td></tr></table>
+                <p style="text-align:center;margin-top:24px;font-size:12px;color:#9ca3af">Dicetak ${new Date().toLocaleString('id-ID')}</p>
+                <script>window.print()</script></body></html>`)
+                win.document.close()
+              }}>
                 <Printer className="h-4 w-4" />
                 Cetak Order
               </Button>
               {order.status === 'DRAFT' && (
-                <Button className="bg-primary hover:bg-primary/90">Edit Order</Button>
+                <Button className="gap-2 bg-primary hover:bg-primary/90" onClick={openEdit}>
+                  <Pencil className="h-4 w-4" />Edit Order
+                </Button>
               )}
               {order.status === 'APPROVED' && (
                 <Link href={`/production/wo/new?so=${order.id}`}>
@@ -185,24 +249,41 @@ export default function SalesOrderDetailPage() {
                       <thead className="bg-muted/50">
                         <tr className="border-b">
                           <th className="h-10 px-4 text-left font-medium">Produk</th>
+                          <th className="h-10 px-4 text-left font-medium">Kode</th>
                           <th className="h-10 px-4 text-right font-medium">Qty</th>
+                          <th className="h-10 px-4 text-right font-medium">Satuan</th>
                           <th className="h-10 px-4 text-right font-medium">Harga Satuan</th>
-                          <th className="h-10 px-4 text-right font-medium">Total</th>
+                          <th className="h-10 px-4 text-right font-medium">Subtotal</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td className="p-4">{order.product}</td>
-                          <td className="p-4 text-right">{order.quantity.toLocaleString()} carton</td>
-                          <td className="p-4 text-right">Rp {order.unitPrice.toLocaleString()}</td>
-                          <td className="p-4 text-right font-semibold">Rp {order.total.toLocaleString()}</td>
-                        </tr>
+                        {order.lineItems && order.lineItems.length > 0 ? (
+                          order.lineItems.map((item, i) => (
+                            <tr key={item.id} className={i % 2 === 0 ? '' : 'bg-muted/20'}>
+                              <td className="p-4 font-medium">{item.namaBarang}</td>
+                              <td className="p-4 text-muted-foreground font-mono text-xs">{item.kodeBarang || '—'}</td>
+                              <td className="p-4 text-right">{item.qty.toLocaleString()}</td>
+                              <td className="p-4 text-right text-muted-foreground">{item.satuan}</td>
+                              <td className="p-4 text-right">{item.hargaSatuan.toLocaleString()}</td>
+                              <td className="p-4 text-right font-semibold">{(item.qty * item.hargaSatuan).toLocaleString()}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td className="p-4 font-medium">{order.product}</td>
+                            <td className="p-4 text-muted-foreground">—</td>
+                            <td className="p-4 text-right">{order.quantity.toLocaleString()}</td>
+                            <td className="p-4 text-right text-muted-foreground">carton</td>
+                            <td className="p-4 text-right">{order.unitPrice.toLocaleString()}</td>
+                            <td className="p-4 text-right font-semibold">{order.total.toLocaleString()}</td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
                   <div className="flex justify-end mt-4">
                     <div className="text-lg font-bold">
-                      Total: Rp {order.total.toLocaleString()}
+                      Grand Total: {order.total.toLocaleString()}
                     </div>
                   </div>
                 </CardContent>
@@ -229,6 +310,48 @@ export default function SalesOrderDetailPage() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Progress Fulfillment */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Truck className="h-4 w-4 text-blue-600" />
+                    Progress Fulfillment
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="rounded-lg border p-3 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Target Qty SO</p>
+                      <p className="text-xl font-bold">{order.quantity.toLocaleString()}</p>
+                    </div>
+                    <div className="rounded-lg border p-3 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">BJ Sudah Masuk Gudang</p>
+                      <p className={`text-xl font-bold ${totalFGReceived >= order.quantity ? 'text-green-600' : 'text-amber-600'}`}>{totalFGReceived.toLocaleString()}</p>
+                      {soFGReceipts.length > 1 && <p className="text-xs text-muted-foreground">({soFGReceipts.length}x penerimaan)</p>}
+                    </div>
+                    <div className="rounded-lg border p-3 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Sudah Dikirim ke Customer</p>
+                      <p className={`text-xl font-bold ${totalShipped >= order.quantity ? 'text-green-600' : remainingToShip > 0 ? 'text-red-600' : 'text-foreground'}`}>{totalShipped.toLocaleString()}</p>
+                      {remainingToShip > 0 && <p className="text-xs text-red-500">Sisa: {remainingToShip.toLocaleString()}</p>}
+                    </div>
+                  </div>
+                  {soFGReceipts.length > 0 && (
+                    <div className="text-xs space-y-1">
+                      <p className="font-medium text-muted-foreground">Detail Penerimaan BJ:</p>
+                      {soFGReceipts.map(r => (
+                        <div key={r.id} className="flex justify-between text-muted-foreground border-b pb-1">
+                          <span>{r.id} · {r.tanggal}</span>
+                          <span className="font-medium">{r.qtyReceived.toLocaleString()} {r.unit} ({r.gudangTujuan})</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {soFGReceipts.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-2">Belum ada BJ yang masuk dari WO terkait.</p>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* History */}
               <Card>
@@ -354,6 +477,43 @@ export default function SalesOrderDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Order Dialog */}
+      <Dialog open={showEdit} onOpenChange={v => { if (!v) setShowEdit(false) }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-4 w-4" />Edit Order — {order.id}
+            </DialogTitle>
+            <DialogDescription>Revisi data Sales Order (hanya untuk status DRAFT)</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Qty</Label>
+                <Input type="number" value={editQty} onChange={e => setEditQty(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>Harga Satuan (USD)</Label>
+                <Input type="number" value={editUnitPrice} onChange={e => setEditUnitPrice(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Tanggal Pengiriman</Label>
+              <Input type="text" placeholder="e.g. 15 Feb 2026" value={editDelivery} onChange={e => setEditDelivery(e.target.value)} />
+            </div>
+            {editQty && editUnitPrice && (
+              <div className="rounded-md bg-muted/50 p-3 text-sm">
+                <p className="text-muted-foreground">Total baru: <strong>USD {(parseInt(editQty) * parseInt(editUnitPrice)).toLocaleString('id-ID')}</strong></p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setShowEdit(false)}>Batal</Button>
+            <Button onClick={saveEdit} className="gap-2"><Pencil className="h-4 w-4" />Simpan Perubahan</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   )
 }

@@ -1,17 +1,27 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import {
-  DollarSign, TrendingUp, Calendar, FileText,
-  CheckCircle, Clock, ArrowRight, Package
+  DollarSign, TrendingUp, FileText, Minus
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import Link from 'next/link'
+
+const USAGE_KEY = 'jkj_tax_asset_usage'
+
+interface UsageRecord {
+  id: string          // assetId-type e.g. "1-ppn"
+  amountUsed: number
+  entries: Array<{ tanggal: string; jumlah: number; keterangan: string }>
+}
 
 // Mock data - akan di-replace dengan API call
 const MOCK_TAX_ASSET_SUMMARY = {
@@ -118,6 +128,50 @@ const MOCK_TAX_ASSET_SUMMARY = {
 export default function TaxAssetsPage() {
   const summary = MOCK_TAX_ASSET_SUMMARY
 
+  // Usage state (localStorage-backed)
+  const [usages, setUsages] = useState<Record<string, UsageRecord>>({})
+  const [pakaDialog, setPakaDialog] = useState<{ id: string; label: string; max: number } | null>(null)
+  const [pakaJumlah, setPakaJumlah] = useState('')
+  const [pakaKet, setPakaKet] = useState('')
+  const [pakaTgl, setPakaTgl] = useState(new Date().toISOString().slice(0, 10))
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(USAGE_KEY)
+      if (raw) setUsages(JSON.parse(raw))
+    } catch { /* ignore */ }
+  }, [])
+
+  function getUsed(id: string): number {
+    return usages[id]?.amountUsed ?? 0
+  }
+
+  function openPakai(id: string, label: string, totalAsset: number) {
+    const used = getUsed(id)
+    setPakaDialog({ id, label, max: totalAsset - used })
+    setPakaJumlah('')
+    setPakaKet('')
+    setPakaTgl(new Date().toISOString().slice(0, 10))
+  }
+
+  function savePakai() {
+    if (!pakaDialog) return
+    const jumlah = parseInt(pakaJumlah.replace(/\D/g, '')) || 0
+    if (!jumlah) return
+    const prev = usages[pakaDialog.id] ?? { id: pakaDialog.id, amountUsed: 0, entries: [] }
+    const updated = {
+      ...usages,
+      [pakaDialog.id]: {
+        id: pakaDialog.id,
+        amountUsed: prev.amountUsed + jumlah,
+        entries: [...prev.entries, { tanggal: pakaTgl, jumlah, keterangan: pakaKet || '-' }],
+      },
+    }
+    localStorage.setItem(USAGE_KEY, JSON.stringify(updated))
+    setUsages(updated)
+    setPakaDialog(null)
+  }
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -126,17 +180,16 @@ export default function TaxAssetsPage() {
     }).format(amount)
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'AVAILABLE':
-        return 'bg-green-100 text-green-700'
-      case 'PARTIALLY_USED':
-        return 'bg-blue-100 text-blue-700'
-      case 'FULLY_USED':
-        return 'bg-gray-100 text-gray-700'
-      default:
-        return 'bg-gray-100 text-gray-700'
-    }
+  const getStatusColor = (remaining: number, total: number) => {
+    if (remaining <= 0) return 'bg-gray-100 text-gray-700'
+    if (remaining < total) return 'bg-blue-100 text-blue-700'
+    return 'bg-green-100 text-green-700'
+  }
+
+  const getStatusLabel = (remaining: number, total: number) => {
+    if (remaining <= 0) return 'FULLY_USED'
+    if (remaining < total) return 'PARTIALLY_USED'
+    return 'AVAILABLE'
   }
 
   return (
@@ -239,66 +292,55 @@ export default function TaxAssetsPage() {
           </CardHeader>
           <CardContent className="pt-6">
             <div className="space-y-4">
-              {summary.ppnImport.assets.map((asset) => (
-                <div
-                  key={asset.id}
-                  className="p-4 border border-green-100 rounded-lg hover:bg-green-50/50 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <p className="font-mono font-semibold">
-                        BC 2.0: {asset.bc20Number}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Period: {asset.period}
-                      </p>
+              {summary.ppnImport.assets.map((asset) => {
+                const uid = `${asset.id}-ppn`
+                const used = getUsed(uid)
+                const remaining = asset.amount - used
+                return (
+                  <div key={asset.id} className="p-4 border border-green-100 rounded-lg">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="font-mono font-semibold">BC 2.0: {asset.bc20Number}</p>
+                        <p className="text-sm text-muted-foreground">Period: {asset.period}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={getStatusColor(remaining, asset.amount)}>
+                          {getStatusLabel(remaining, asset.amount)}
+                        </Badge>
+                        {remaining > 0 && (
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openPakai(uid, `PPN ${asset.bc20Number}`, asset.amount)}>
+                            <Minus className="h-3 w-3" />Catat Pemakaian
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    <Badge className={getStatusColor(asset.status)}>
-                      {asset.status}
-                    </Badge>
+                    <Separator className="my-2" />
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div><p className="text-muted-foreground">Total Asset</p><p className="font-semibold text-green-600">{formatCurrency(asset.amount)}</p></div>
+                      <div><p className="text-muted-foreground">Terpakai</p><p className="font-semibold">{formatCurrency(used)}</p></div>
+                      <div><p className="text-muted-foreground">Remaining</p><p className="font-semibold text-green-600">{formatCurrency(Math.max(0, remaining))}</p></div>
+                    </div>
+                    <div className="mt-3">
+                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                        <span>Utilization</span>
+                        <span>{asset.amount > 0 ? ((used / asset.amount) * 100).toFixed(1) : 0}%</span>
+                      </div>
+                      <Progress value={asset.amount > 0 ? Math.min(100, (used / asset.amount) * 100) : 0} className="h-2" />
+                    </div>
+                    {(usages[uid]?.entries ?? []).length > 0 && (
+                      <div className="mt-3 space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground">Riwayat Pemakaian:</p>
+                        {usages[uid].entries.map((e, i) => (
+                          <div key={i} className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>{e.tanggal} — {e.keterangan}</span>
+                            <span className="text-red-600">-{formatCurrency(e.jumlah)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <Separator className="my-2" />
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Total Asset</p>
-                      <p className="font-semibold text-green-600">
-                        {formatCurrency(asset.amount)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Used</p>
-                      <p className="font-semibold">
-                        {formatCurrency(asset.amountUsed)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Remaining</p>
-                      <p className="font-semibold text-green-600">
-                        {formatCurrency(asset.amountRemaining)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                      <span>Utilization</span>
-                      <span>
-                        {asset.amount > 0
-                          ? ((asset.amountUsed / asset.amount) * 100).toFixed(1)
-                          : 0}
-                        %
-                      </span>
-                    </div>
-                    <Progress
-                      value={
-                        asset.amount > 0
-                          ? (asset.amountUsed / asset.amount) * 100
-                          : 0
-                      }
-                      className="h-2"
-                    />
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </CardContent>
         </Card>
@@ -313,7 +355,7 @@ export default function TaxAssetsPage() {
                   PPh 22 Import Prepaid
                 </CardTitle>
                 <CardDescription>
-                  Prepaid income tax (2.5%) from BC 2.0 imports
+                  Prepaid income tax (2.5%) from BC 2.0 imports — terhubung ke Dual Billing BC 2.0 (<Link href="/finance/ap/dual-billing" className="text-blue-600 underline">lihat Dual Billing</Link>)
                 </CardDescription>
               </div>
               <Badge className="bg-blue-100 text-blue-700">
@@ -323,66 +365,55 @@ export default function TaxAssetsPage() {
           </CardHeader>
           <CardContent className="pt-6">
             <div className="space-y-4">
-              {summary.pph22Import.assets.map((asset) => (
-                <div
-                  key={asset.id}
-                  className="p-4 border border-blue-100 rounded-lg hover:bg-blue-50/50 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <p className="font-mono font-semibold">
-                        BC 2.0: {asset.bc20Number}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        FY {asset.fiscalYear}
-                      </p>
+              {summary.pph22Import.assets.map((asset) => {
+                const uid = `${asset.id}-pph22`
+                const used = getUsed(uid)
+                const remaining = asset.amount - used
+                return (
+                  <div key={asset.id} className="p-4 border border-blue-100 rounded-lg">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="font-mono font-semibold">BC 2.0: {asset.bc20Number}</p>
+                        <p className="text-sm text-muted-foreground">FY {asset.fiscalYear}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={getStatusColor(remaining, asset.amount)}>
+                          {getStatusLabel(remaining, asset.amount)}
+                        </Badge>
+                        {remaining > 0 && (
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openPakai(uid, `PPh 22 ${asset.bc20Number}`, asset.amount)}>
+                            <Minus className="h-3 w-3" />Catat Pemakaian
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    <Badge className={getStatusColor(asset.status)}>
-                      {asset.status}
-                    </Badge>
+                    <Separator className="my-2" />
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div><p className="text-muted-foreground">Total Asset</p><p className="font-semibold text-blue-600">{formatCurrency(asset.amount)}</p></div>
+                      <div><p className="text-muted-foreground">Terpakai</p><p className="font-semibold">{formatCurrency(used)}</p></div>
+                      <div><p className="text-muted-foreground">Remaining</p><p className="font-semibold text-blue-600">{formatCurrency(Math.max(0, remaining))}</p></div>
+                    </div>
+                    <div className="mt-3">
+                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                        <span>Utilization</span>
+                        <span>{asset.amount > 0 ? ((used / asset.amount) * 100).toFixed(1) : 0}%</span>
+                      </div>
+                      <Progress value={asset.amount > 0 ? Math.min(100, (used / asset.amount) * 100) : 0} className="h-2" />
+                    </div>
+                    {(usages[uid]?.entries ?? []).length > 0 && (
+                      <div className="mt-3 space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground">Riwayat Pemakaian:</p>
+                        {usages[uid].entries.map((e, i) => (
+                          <div key={i} className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>{e.tanggal} — {e.keterangan}</span>
+                            <span className="text-red-600">-{formatCurrency(e.jumlah)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <Separator className="my-2" />
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Total Asset</p>
-                      <p className="font-semibold text-blue-600">
-                        {formatCurrency(asset.amount)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Credited</p>
-                      <p className="font-semibold">
-                        {formatCurrency(asset.amountUsed)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Remaining</p>
-                      <p className="font-semibold text-blue-600">
-                        {formatCurrency(asset.amountRemaining)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                      <span>Utilization</span>
-                      <span>
-                        {asset.amount > 0
-                          ? ((asset.amountUsed / asset.amount) * 100).toFixed(1)
-                          : 0}
-                        %
-                      </span>
-                    </div>
-                    <Progress
-                      value={
-                        asset.amount > 0
-                          ? (asset.amountUsed / asset.amount) * 100
-                          : 0
-                      }
-                      className="h-2"
-                    />
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </CardContent>
         </Card>
@@ -474,6 +505,57 @@ export default function TaxAssetsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog Catat Pemakaian */}
+      <Dialog open={!!pakaDialog} onOpenChange={v => { if (!v) setPakaDialog(null) }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Minus className="h-4 w-4 text-blue-600" />Catat Pemakaian — {pakaDialog?.label}
+            </DialogTitle>
+            <DialogDescription>
+              Catat berapa pajak kredit yang digunakan untuk offset pajak keluaran atau PPh Badan
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <Label>Tanggal</Label>
+              <Input type="date" value={pakaTgl} onChange={e => setPakaTgl(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Jumlah yang Dipakai (Rp) <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="0"
+                value={pakaJumlah}
+                onChange={e => setPakaJumlah(e.target.value.replace(/\D/g, ''))}
+              />
+              {pakaDialog && (
+                <p className="text-xs text-muted-foreground">Max tersedia: {formatCurrency(pakaDialog.max)}</p>
+              )}
+              {pakaDialog && parseInt(pakaJumlah || '0') > pakaDialog.max && (
+                <p className="text-xs text-red-600">⚠ Melebihi saldo tersedia</p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label>Keterangan</Label>
+              <Input placeholder="Misal: Offset PPN Keluaran Mei 2026 / Bayar PPh Badan" value={pakaKet} onChange={e => setPakaKet(e.target.value)} />
+            </div>
+            <div className="rounded-md bg-blue-50 p-3 text-xs text-blue-700">
+              💡 Pastikan sesuai dengan pembayaran PPh 22 di <Link href="/finance/ap/dual-billing" className="underline font-medium">Dual Billing BC 2.0</Link> atau rekonsiliasi PPN bulanan.
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setPakaDialog(null)}>Batal</Button>
+            <Button
+              disabled={!pakaJumlah || !pakaTgl || (pakaDialog ? parseInt(pakaJumlah) > pakaDialog.max : false)}
+              onClick={savePakai}
+              className="gap-2"
+            >
+              <Minus className="h-4 w-4" />Simpan
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   )
 }

@@ -9,6 +9,15 @@ export interface ProductionLine {
   operator: string
 }
 
+export interface WorksheetStep {
+  id: string
+  label: string
+  status: 'pending' | 'done'
+  doneBy?: string
+  doneAt?: string
+  notes?: string
+}
+
 export interface WorkOrder {
   id: string
   soNumber: string // Link to Sales Order
@@ -21,6 +30,8 @@ export interface WorkOrder {
   line: string
   progress: number
   bomId: string
+  bbItems?: Array<{ code: string; name: string; qty: number; unit: string }>
+  worksheetSteps?: WorksheetStep[]
   history: Array<{
     date: string
     action: string
@@ -128,6 +139,25 @@ export const MOCK_WORK_ORDERS: WorkOrder[] = [
       { date: '2026-02-01 09:00', action: 'Started', user: 'Production Mgr', status: 'IN PROGRESS' },
       { date: '2026-02-04 16:00', action: 'Completed', user: 'Production Mgr', status: 'COMPLETED' },
       { date: '2026-02-04 17:00', action: 'QC Passed', user: 'QC Admin', status: 'COMPLETED' }
+    ]
+  },
+  {
+    id: 'WO-2026-004',
+    soNumber: 'SO-2026-007',
+    product: 'Latex Size M',
+    quantity: 1500,
+    startDate: '2026-05-10',
+    endDate: '2026-05-15',
+    status: 'COMPLETED',
+    priority: 'Normal',
+    line: 'Line B (Dipping)',
+    progress: 100,
+    bomId: 'BOM-LATEX-M',
+    history: [
+      { date: '2026-05-10 08:00', action: 'Created', user: 'System', status: 'PLANNED' },
+      { date: '2026-05-10 09:00', action: 'Started', user: 'Production Mgr', status: 'IN PROGRESS' },
+      { date: '2026-05-15 16:00', action: 'Completed', user: 'Production Mgr', status: 'COMPLETED' },
+      { date: '2026-05-15 17:00', action: 'QC Passed', user: 'QC Admin', status: 'COMPLETED' }
     ]
   }
 ]

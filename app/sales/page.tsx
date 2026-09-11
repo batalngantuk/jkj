@@ -66,12 +66,33 @@ export default function SalesOrderManagement() {
       )
     },
     { header: "Customer", accessorKey: "customer" as keyof SalesOrder },
-    { header: "Product", accessorKey: "product" as keyof SalesOrder },
+    {
+      header: "Produk",
+      accessorKey: "product" as keyof SalesOrder,
+      cell: (item: SalesOrder) => (
+        <div>
+          {item.lineItems && item.lineItems.length > 1
+            ? <span className="text-xs text-blue-600 font-medium">{item.lineItems.length} item</span>
+            : null
+          }
+          <p className="text-sm truncate max-w-[180px]">{item.product}</p>
+        </div>
+      )
+    },
     {
       header: "Qty",
       accessorKey: "quantity" as keyof SalesOrder,
       className: "text-right",
-      cell: (item: SalesOrder) => <span>{item.quantity.toLocaleString()}</span>
+      cell: (item: SalesOrder) => (
+        <div className="text-right">
+          {item.lineItems && item.lineItems.length > 1
+            ? item.lineItems.map(l => (
+                <p key={l.id} className="text-xs">{l.qty.toLocaleString()} {l.satuan}</p>
+              ))
+            : <span>{item.quantity.toLocaleString()}</span>
+          }
+        </div>
+      )
     },
     {
       header: "Total",

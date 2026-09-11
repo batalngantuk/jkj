@@ -20,18 +20,25 @@ import {
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import { useRouter } from 'next/navigation'
-import { usePEB } from '@/lib/store/hooks'
+import { usePEB, useSalesOrders, useWorkOrders } from '@/lib/store/hooks'
+import { AlertTriangle } from 'lucide-react'
 
 export default function PEBCreatePage() {
   const router = useRouter()
   const { createPEB } = usePEB()
+  const { orders: salesOrders } = useSalesOrders()
+  const { workOrders } = useWorkOrders()
   const [loading, setLoading] = useState(false)
+  const [soRef, setSoRef] = useState('')
 
   // Form State
   const [pebNumber, setPebNumber] = useState('')
-  const [npeNumber, setNpeNumber] = useState('NPE-123456') // Default NPE
+  const [npeNumber, setNpeNumber] = useState('')
   const [customerId, setCustomerId] = useState('')
   const [customerName, setCustomerName] = useState('')
+  const [customerManual, setCustomerManual] = useState(false)
+  const [invoiceNo, setInvoiceNo] = useState('')
+  const [invoiceDate, setInvoiceDate] = useState('')
   const [destinationCountry, setDestinationCountry] = useState('')
   const [destinationPort, setDestinationPort] = useState('')
   const [portOfLoading, setPortOfLoading] = useState('Tanjung Priok')
@@ -55,23 +62,7 @@ export default function PEBCreatePage() {
   const [bc20Reference, setBc20Reference] = useState('')
 
   // Items
-  const [items, setItems] = useState<any[]>([
-    {
-      materialId: '1',
-      materialCode: 'FG-001',
-      materialName: 'Steel Coil Grade A',
-      hsCode: '7208.10.00',
-      hsDescription: 'Flat-rolled products of iron',
-      quantity: 100,
-      uom: 'MT',
-      unitPrice: 1250,
-      totalPrice: 125000,
-      packagingType: 'Bundle',
-      numberOfPackages: 10,
-      grossWeight: 102000,
-      netWeight: 100000,
-    },
-  ])
+  const [items, setItems] = useState<any[]>([])
 
   // Calculations
   const [fobValue, setFobValue] = useState(0)
@@ -152,6 +143,8 @@ export default function PEBCreatePage() {
   const buildPayload = (status: 'DRAFT' | 'SUBMITTED') => ({
     documentDate: new Date().toISOString().split('T')[0],
     status,
+    invoiceNo: invoiceNo || undefined,
+    invoiceDate: invoiceDate || undefined,
     customerName,
     destinationCountry,
     portOfLoading,
@@ -258,20 +251,57 @@ export default function PEBCreatePage() {
               </div>
               <div>
                 <Label htmlFor="customerId">Customer *</Label>
-                <Select value={customerId} onValueChange={(value) => {
-                  setCustomerId(value)
-                  if (value === '1') setCustomerName('ABC Trading USA')
-                  if (value === '2') setCustomerName('XYZ Corp Japan')
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select customer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">ABC Trading USA</SelectItem>
-                    <SelectItem value="2">XYZ Corp Japan</SelectItem>
-                    <SelectItem value="3">EuroTech GmbH</SelectItem>
-                  </SelectContent>
-                </Select>
+                {customerManual ? (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Nama customer baru..."
+                      value={customerName}
+                      onChange={e => setCustomerName(e.target.value)}
+                      autoFocus
+                    />
+                    <Button type="button" variant="ghost" size="sm" className="shrink-0 text-xs" onClick={() => { setCustomerManual(false); setCustomerName('') }}>
+                      Batal
+                    </Button>
+                  </div>
+                ) : (
+                  <Select value={customerId} onValueChange={(value) => {
+                    if (value === '__manual__') { setCustomerManual(true); setCustomerId(''); return }
+                    setCustomerId(value)
+                    setCustomerName(value)
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[...new Set(salesOrders.map(s => s.customer))].map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                      <SelectItem value="__manual__">+ Input nama baru...</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </div>
+
+            {/* E1: No Invoice & Tanggal Invoice */}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="invoiceNo">No. Invoice</Label>
+                <Input
+                  id="invoiceNo"
+                  value={invoiceNo}
+                  onChange={(e) => setInvoiceNo(e.target.value)}
+                  placeholder="INV-2026-001"
+                />
+              </div>
+              <div>
+                <Label htmlFor="invoiceDate">Tanggal Invoice</Label>
+                <Input
+                  id="invoiceDate"
+                  type="date"
+                  value={invoiceDate}
+                  onChange={(e) => setInvoiceDate(e.target.value)}
+                />
               </div>
             </div>
           </CardContent>
@@ -460,6 +490,41 @@ export default function PEBCreatePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* SO Reference + Warning */}
+            <div>
+              <Label>No. Sales Order Referensi (Opsional)</Label>
+              <Select value={soRef} onValueChange={setSoRef}>
+                <SelectTrigger>
+                  <SelectValue placeholder="— Pilih SO yang terkait —" />
+                </SelectTrigger>
+                <SelectContent>
+                  {salesOrders.map(so => (
+                    <SelectItem key={so.id} value={so.id}>
+                      {so.id} — {so.customer} ({so.quantity.toLocaleString('id-ID')} {so.lineItems && so.lineItems.length > 1 ? 'multi-item' : 'carton'})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {soRef && (() => {
+                const so = salesOrders.find(s => s.id === soRef)
+                const totalPEBQty = items.reduce((s: number, i: {quantity: string|number}) => s + (parseFloat(String(i.quantity)) || 0), 0)
+                if (!so) return null
+                return (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs text-muted-foreground">
+                      Qty SO: <strong>{so.quantity.toLocaleString('id-ID')}</strong> | Total Qty PEB ini: <strong>{totalPEBQty.toLocaleString('id-ID')}</strong>
+                    </p>
+                    {totalPEBQty > so.quantity && (
+                      <div className="flex items-center gap-2 text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded px-2 py-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                        <span>⚠ Total qty PEB ({totalPEBQty.toLocaleString()}) melebihi qty SO ({so.quantity.toLocaleString()}). Pertimbangkan revisi SO sebelum lanjut.</span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+            </div>
+
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="bc20Reference">BC 2.0 Reference (Optional)</Label>
@@ -475,12 +540,18 @@ export default function PEBCreatePage() {
               </div>
               <div>
                 <Label htmlFor="workOrderId">Work Order (Optional)</Label>
-                <Input
-                  id="workOrderId"
-                  value={workOrderId}
-                  onChange={(e) => setWorkOrderId(e.target.value)}
-                  placeholder="WO-2026-001"
-                />
+                <Select value={workOrderId} onValueChange={setWorkOrderId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="— Pilih WO —" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(workOrders as Array<{id: string; product: string}>).map(wo => (
+                      <SelectItem key={wo.id} value={wo.id}>
+                        {wo.id} — {wo.product}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="fgLotNumber">Kode Barang FG (Optional)</Label>
@@ -578,6 +649,9 @@ export default function PEBCreatePage() {
                         <SelectItem value="KG">KG (Kilogram)</SelectItem>
                         <SelectItem value="PCS">PCS (Pieces)</SelectItem>
                         <SelectItem value="CTN">CTN (Carton)</SelectItem>
+                        <SelectItem value="SHT">SHT (Sheet)</SelectItem>
+                        <SelectItem value="ROLL">ROLL</SelectItem>
+                        <SelectItem value="YARD">YARD</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

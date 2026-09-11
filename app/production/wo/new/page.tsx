@@ -36,6 +36,19 @@ function CreateWOForm({ soId }: { soId: string | null }) {
   const { createWorkOrder } = useWorkOrders()
   const [isLoading, setIsLoading] = useState(false)
 
+  // Build product list: MOCK hardcoded + unique products from SO store
+  const soProductNames = [...new Set(
+    salesOrders
+      .filter((s: SalesOrder) => s.product)
+      .map((s: SalesOrder) => s.product as string)
+  )]
+  const allProducts = [
+    ...MOCK_PRODUCTS,
+    ...soProductNames
+      .filter(name => !MOCK_PRODUCTS.find(p => p.name === name))
+      .map(name => ({ id: name, name, stock: 0, unit: 'cartons', type: 'Custom' as const })),
+  ]
+
   // Section 1: Order Info
   const [selectedSo, setSelectedSo] = useState(soId || '')
   const [selectedProduct, setSelectedProduct] = useState('')
@@ -44,8 +57,19 @@ function CreateWOForm({ soId }: { soId: string | null }) {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
-  // Section 2: BOM — auto-filled from product
+  // Section 2: BOM — auto-filled or manual
   const [showBom, setShowBom] = useState(true)
+  const [manualBBItems, setManualBBItems] = useState([{ code: '', name: '', qty: '', unit: 'kg' }])
+
+  function addManualBBItem() {
+    setManualBBItems(prev => [...prev, { code: '', name: '', qty: '', unit: 'kg' }])
+  }
+  function updateManualBBItem(i: number, field: string, value: string) {
+    setManualBBItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: value } : item))
+  }
+  function removeManualBBItem(i: number) {
+    setManualBBItems(prev => prev.filter((_, idx) => idx !== i))
+  }
 
   // Section 3: Production Assignment
   const [selectedLine, setSelectedLine] = useState('')
@@ -61,15 +85,15 @@ function CreateWOForm({ soId }: { soId: string | null }) {
     if (selectedSo && selectedSo !== 'manual') {
       const so = salesOrders.find((s: SalesOrder) => s.id === selectedSo)
       if (so) {
-        const prod = MOCK_PRODUCTS.find(p => p.name === so.product)
-        if (prod) setSelectedProduct(prod.id)
+        const prod = allProducts.find(p => p.name === so.product)
+        setSelectedProduct(prod ? prod.id : (so.product || ''))
         setQuantity(so.quantity?.toString() || '')
         if (so.priority) setPriority(so.priority)
       }
     }
   }, [selectedSo, salesOrders])
 
-  const selectedProductData = MOCK_PRODUCTS.find(p => p.id === selectedProduct)
+  const selectedProductData = allProducts.find(p => p.id === selectedProduct)
   const bom = MOCK_BOMS.find(b => b.productId === selectedProduct)
   const qty = parseInt(quantity) || 0
 
@@ -88,6 +112,9 @@ function CreateWOForm({ soId }: { soId: string | null }) {
       line: line?.name || selectedLine,
       progress: 0,
       bomId: bom?.id || '',
+      bbItems: !bom
+        ? manualBBItems.filter(i => i.code && i.name).map(i => ({ code: i.code, name: i.name, qty: parseFloat(i.qty) || 0, unit: i.unit }))
+        : undefined,
     })
     setTimeout(() => {
       setIsLoading(false)
@@ -131,7 +158,7 @@ function CreateWOForm({ soId }: { soId: string | null }) {
                 <SelectValue placeholder="Pilih produk" />
               </SelectTrigger>
               <SelectContent>
-                {MOCK_PRODUCTS.map(p => (
+                {allProducts.map(p => (
                   <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -232,7 +259,24 @@ function CreateWOForm({ soId }: { soId: string | null }) {
                 </Table>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">BOM belum tersedia untuk produk ini.</p>
+              <div className="space-y-3">
+                <p className="text-xs text-amber-600 font-medium">BOM belum tersedia. Tambahkan bahan baku manual (opsional — untuk deduct stok dan laporan KITE):</p>
+                {manualBBItems.map((item, i) => (
+                  <div key={i} className="grid grid-cols-12 gap-2 items-center">
+                    <Input className="col-span-2 h-8 text-xs" placeholder="Kode BB" value={item.code} onChange={e => updateManualBBItem(i, 'code', e.target.value)} />
+                    <Input className="col-span-4 h-8 text-xs" placeholder="Nama Bahan Baku" value={item.name} onChange={e => updateManualBBItem(i, 'name', e.target.value)} />
+                    <Input className="col-span-2 h-8 text-xs" placeholder="Qty/unit" type="number" value={item.qty} onChange={e => updateManualBBItem(i, 'qty', e.target.value)} />
+                    <Select value={item.unit} onValueChange={v => updateManualBBItem(i, 'unit', v)}>
+                      <SelectTrigger className="col-span-3 h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {['kg','mtr','liter','pcs','prs','pce','roll','ctn','yard','yrd','sf','sht','tne','kgm','ftk','st','npr'].map(s => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Button type="button" variant="ghost" size="icon" className="col-span-1 h-8 w-8" onClick={() => removeManualBBItem(i)}>×</Button>
+                  </div>
+                ))}
+                <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={addManualBBItem}>+ Tambah Bahan Baku</Button>
+              </div>
             )
           )}
         </div>

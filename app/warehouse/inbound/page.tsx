@@ -20,30 +20,12 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter
 } from '@/components/ui/dialog'
+import { Pencil, Trash2 as Trash, Printer } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
-import { MOCK_PURCHASE_ORDERS, type PurchaseOrder } from '@/lib/mock-data/purchasing'
-
-// Mock GR history
-const MOCK_GR_HISTORY = [
-  {
-    id: 'GR-2026-001', tglMasuk: '2026-01-20', noPIB: 'PIB-2026-001234', noPO: 'PO-2026-001',
-    supplier: 'Baosteel Co., Ltd', jenisDoc: 'BC 2.0',
-    items: [{ kode: 'BB-HRC-001', nama: 'Hot Rolled Coil (HRC)', satuan: 'KG', qtyPO: 100000, qtyDiterima: 100000 }],
-    gudang: 'Gudang RM-A', penerima: 'Ahmad Fauzi', noSuratJalan: 'SJ-2026-001', status: 'Selesai'
-  },
-  {
-    id: 'GR-2026-002', tglMasuk: '2026-01-28', noPIB: 'PIB-2026-001567', noPO: 'PO-2026-002',
-    supplier: 'Korea Petrochemical', jenisDoc: 'BC 2.0',
-    items: [{ kode: 'BB-HDPE-001', nama: 'Polyethylene Resin HDPE', satuan: 'KG', qtyPO: 10000, qtyDiterima: 10000 }],
-    gudang: 'Gudang RM-B', penerima: 'Budi Santoso', noSuratJalan: 'SJ-2026-002', status: 'Selesai'
-  },
-  {
-    id: 'GR-2026-003', tglMasuk: '2026-02-15', noPIB: '-', noPO: 'PO-2026-003',
-    supplier: 'PT. Supplier Lokal Jaya', jenisDoc: 'PO Lokal',
-    items: [{ kode: 'BB-LOCAL-001', nama: 'Cat Primer Anti Karat', satuan: 'LITER', qtyPO: 500, qtyDiterima: 490 }],
-    gudang: 'Gudang RM-B', penerima: 'Siti Rahayu', noSuratJalan: 'SJ-2026-003', status: 'Selesai'
-  },
-]
+import type { PurchaseOrder } from '@/lib/mock-data/purchasing'
+import { useGoodsReceipts, type GoodsReceipt } from '@/lib/store/useGoodsReceipts'
+import { useStock } from '@/lib/store/useStock'
+import { usePurchaseOrders } from '@/lib/store/usePurchaseOrders'
 
 interface MaterialLineGR {
   id: string
@@ -65,6 +47,9 @@ function newLineGR(): MaterialLineGR {
 }
 
 export default function InboundPage() {
+  const { receipts, createReceipt, updateReceipt, deleteReceipt } = useGoodsReceipts()
+  const { addStock, deductStock } = useStock()
+  const { orders: allPOs, updateOrder: updatePO } = usePurchaseOrders()
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null)
   const [showManualForm, setShowManualForm] = useState(false)
 
@@ -82,9 +67,72 @@ export default function InboundPage() {
   const [lines, setLines] = useState<MaterialLineGR[]>([newLineGR()])
   const [expandedLine, setExpandedLine] = useState<string | null>(lines[0]?.id)
 
-  const incomingPOs = MOCK_PURCHASE_ORDERS.filter(po =>
+  // State edit/hapus GR
+  const [deleteTarget, setDeleteTarget] = useState<GoodsReceipt | null>(null)
+  const [editTarget, setEditTarget] = useState<GoodsReceipt | null>(null)
+  const [editSupplier, setEditSupplier] = useState('')
+  const [editNoPIB, setEditNoPIB] = useState('')
+  const [editTgl, setEditTgl] = useState('')
+  const [editGudang, setEditGudang] = useState('')
+  const [editPenerima, setEditPenerima] = useState('')
+  const [editSJ, setEditSJ] = useState('')
+  const [editCatatan, setEditCatatan] = useState('')
+  const [editItems, setEditItems] = useState<GoodsReceipt['items']>([])
+
+  function openEdit(gr: GoodsReceipt) {
+    setEditTarget(gr)
+    setEditSupplier(gr.supplier)
+    setEditNoPIB(gr.noPIB)
+    setEditTgl(gr.tglMasuk)
+    setEditGudang(gr.gudang)
+    setEditPenerima(gr.penerima)
+    setEditSJ(gr.noSuratJalan)
+    setEditCatatan(gr.catatan || '')
+    setEditItems(gr.items.map(i => ({ ...i })))
+  }
+
+  function updateEditItem(idx: number, patch: Partial<GoodsReceipt['items'][0]>) {
+    setEditItems(prev => prev.map((item, i) => i === idx ? { ...item, ...patch } : item))
+  }
+
+  function saveEdit() {
+    if (!editTarget) return
+    updateReceipt(editTarget.id, {
+      supplier: editSupplier,
+      noPIB: editNoPIB,
+      tglMasuk: editTgl,
+      gudang: editGudang,
+      penerima: editPenerima,
+      noSuratJalan: editSJ,
+      catatan: editCatatan,
+      items: editItems,
+    })
+    setEditTarget(null)
+  }
+
+  // State untuk dialog terima dari PO
+  const [poSuratJalan, setPoSuratJalan] = useState('')
+  const [poKendaraan, setPoKendaraan] = useState('')
+  const [poTanggal, setPoTanggal] = useState('')
+  const [poGudang, setPoGudang] = useState('')
+  const [poPenerima, setPoPenerima] = useState('')
+  const [poQtyReceived, setPoQtyReceived] = useState<Record<string, number>>({})
+
+  const incomingPOs = allPOs.filter(po =>
     po.status === 'APPROVED' || po.status === 'PARTIAL'
   )
+
+  const alreadyReceivedPerItem = React.useMemo(() => {
+    if (!selectedPO) return {} as Record<string, number>
+    return receipts
+      .filter(r => r.noPO === selectedPO.id)
+      .reduce((acc, gr) => {
+        gr.items.forEach(item => {
+          acc[item.kode] = (acc[item.kode] || 0) + item.qtyDiterima
+        })
+        return acc
+      }, {} as Record<string, number>)
+  }, [selectedPO, receipts])
 
   function updateLine(id: string, field: keyof MaterialLineGR, value: string) {
     setLines(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l))
@@ -162,10 +210,11 @@ export default function InboundPage() {
                       <TableHead>Gudang</TableHead>
                       <TableHead>Penerima</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="w-[80px]">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {MOCK_GR_HISTORY.map(gr => (
+                    {receipts.map(gr => (
                       <TableRow key={gr.id} className="cursor-pointer hover:bg-muted/30">
                         <TableCell className="font-mono text-xs font-medium">{gr.id}</TableCell>
                         <TableCell className="whitespace-nowrap">{gr.tglMasuk}</TableCell>
@@ -190,6 +239,19 @@ export default function InboundPage() {
                         <TableCell className="text-sm">{gr.penerima}</TableCell>
                         <TableCell>
                           <Badge variant="default" className="text-xs bg-green-600">{gr.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600 hover:text-green-800" title="Print BC 1.1" onClick={() => window.open(`/warehouse/inbound/print?id=${gr.id}`, '_blank')}>
+                              <Printer className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-blue-600 hover:text-blue-800" onClick={() => openEdit(gr)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-700" onClick={() => setDeleteTarget(gr)}>
+                              <Trash className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -410,6 +472,14 @@ export default function InboundPage() {
                               <SelectItem value="MTR">MTR</SelectItem>
                               <SelectItem value="LTR">LTR</SelectItem>
                               <SelectItem value="SET">SET</SelectItem>
+                              <SelectItem value="YARD">YARD</SelectItem>
+                              <SelectItem value="SF">SF</SelectItem>
+                              <SelectItem value="TNE">TNE</SelectItem>
+                              <SelectItem value="PCE">PCE</SelectItem>
+                              <SelectItem value="ST">ST</SelectItem>
+                              <SelectItem value="FTK">FTK</SelectItem>
+                              <SelectItem value="KGM">KGM</SelectItem>
+                              <SelectItem value="SHT">SHT (Sheet)</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -421,7 +491,10 @@ export default function InboundPage() {
                           <Label className="text-xs">Qty Diterima <span className="text-red-500">*</span></Label>
                           <Input type="number" value={line.qtyDiterima} onChange={e => updateLine(line.id, 'qtyDiterima', e.target.value)} placeholder="0" />
                           {line.qtyDipesan && line.qtyDiterima && parseFloat(line.qtyDiterima) < parseFloat(line.qtyDipesan) && (
-                            <p className="text-xs text-orange-600">⚠ Kurang: {(parseFloat(line.qtyDipesan) - parseFloat(line.qtyDiterima)).toLocaleString('id-ID')} {line.satuan}</p>
+                            <p className="text-xs text-orange-600">⚠ Kurang dari pesanan: {(parseFloat(line.qtyDipesan) - parseFloat(line.qtyDiterima)).toLocaleString('id-ID')} {line.satuan}</p>
+                          )}
+                          {line.qtyDipesan && line.qtyDiterima && parseFloat(line.qtyDiterima) > parseFloat(line.qtyDipesan) && (
+                            <p className="text-xs text-red-600 font-medium">⚠ MELEBIHI pesanan: +{(parseFloat(line.qtyDiterima) - parseFloat(line.qtyDipesan)).toLocaleString('id-ID')} {line.satuan}</p>
                           )}
                         </div>
                         <div className="space-y-1">
@@ -460,7 +533,36 @@ export default function InboundPage() {
             <Button
               className="gap-2 bg-green-600 hover:bg-green-700"
               disabled={!jenisDoc || !supplier || !tglMasuk || !gudang}
-              onClick={() => { setShowManualForm(false); resetManualForm() }}
+              onClick={() => {
+                createReceipt({
+                  tglMasuk,
+                  noPIB: noPIB || '-',
+                  noPO: noRefDoc || '-',
+                  supplier,
+                  jenisDoc,
+                  items: lines.map(l => ({
+                    kode: l.kodeBarang,
+                    nama: l.namaBarang,
+                    satuan: l.satuan,
+                    qtyPO: Number(l.qtyDipesan) || 0,
+                    qtyDiterima: Number(l.qtyDiterima) || 0,
+                  })),
+                  gudang,
+                  penerima,
+                  noSuratJalan,
+                  noKendaraan,
+                  catatan,
+                  status: 'Selesai',
+                })
+                lines.forEach(l => {
+                  const qty = Number(l.qtyDiterima) || 0
+                  if (qty > 0 && l.kodeBarang) {
+                    addStock(l.kodeBarang, l.namaBarang, qty, noRefDoc || jenisDoc, 'GR', 'BB', l.satuan, gudang)
+                  }
+                })
+                setShowManualForm(false)
+                resetManualForm()
+              }}
             >
               <CheckCircle className="h-4 w-4" />
               Konfirmasi Penerimaan
@@ -482,19 +584,19 @@ export default function InboundPage() {
               <p className="font-semibold text-sm border-b pb-2">Detail Pengiriman</p>
               <div className="space-y-2">
                 <Label className="text-xs">No. Surat Jalan</Label>
-                <Input placeholder="cth: SJ-2026-010" />
+                <Input placeholder="cth: SJ-2026-010" value={poSuratJalan} onChange={e => setPoSuratJalan(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">No. Kendaraan</Label>
-                <Input placeholder="cth: B 1234 XY" />
+                <Input placeholder="cth: B 1234 XY" value={poKendaraan} onChange={e => setPoKendaraan(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Tanggal Diterima</Label>
-                <Input type="datetime-local" />
+                <Input type="date" value={poTanggal} onChange={e => setPoTanggal(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Gudang Tujuan</Label>
-                <Select>
+                <Select value={poGudang} onValueChange={setPoGudang}>
                   <SelectTrigger><SelectValue placeholder="Pilih gudang..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Gudang RM-A">Gudang RM-A</SelectItem>
@@ -504,44 +606,229 @@ export default function InboundPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Penerima</Label>
-                <Input placeholder="Nama penerima di gudang" />
+                <Input placeholder="Nama penerima di gudang" value={poPenerima} onChange={e => setPoPenerima(e.target.value)} />
               </div>
             </div>
 
             <div className="space-y-3">
               <p className="font-semibold text-sm border-b pb-2">Item yang Diterima</p>
               <div className="space-y-3 max-h-64 overflow-auto pr-1">
-                {selectedPO?.items.map((item, idx) => (
-                  <div key={idx} className="bg-muted/20 p-3 rounded-lg border">
-                    <div className="flex justify-between mb-2">
-                      <span className="font-medium text-sm">{item.name}</span>
-                      <span className="text-xs font-mono bg-white px-1 rounded border">{item.code}</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 items-end">
-                      <div>
-                        <span className="text-xs text-muted-foreground block">Dipesan</span>
-                        <span className="font-bold text-sm">{item.quantity.toLocaleString()} {item.unit}</span>
+                {selectedPO?.items.map((item, idx) => {
+                  const alreadyQty = alreadyReceivedPerItem[item.code] || 0
+                  const remainingQty = Math.max(0, item.quantity - alreadyQty)
+                  const inputQty = poQtyReceived[item.code] ?? remainingQty
+                  const isOverQty = inputQty > remainingQty
+                  return (
+                    <div key={idx} className={`bg-muted/20 p-3 rounded-lg border ${isOverQty ? 'border-red-400 bg-red-50/30' : ''}`}>
+                      <div className="flex justify-between mb-2">
+                        <span className="font-medium text-sm">{item.name}</span>
+                        <span className="text-xs font-mono bg-white px-1 rounded border">{item.code}</span>
                       </div>
-                      <div>
-                        <Label className="text-xs mb-1 block">Qty Diterima</Label>
-                        <div className="flex items-center gap-1">
-                          <Input type="number" defaultValue={item.quantity} className="h-8 text-sm" />
-                          <span className="text-xs text-muted-foreground">{item.unit}</span>
+                      <div className="grid grid-cols-3 gap-2 items-end">
+                        <div>
+                          <span className="text-xs text-muted-foreground block">Dipesan</span>
+                          <span className="font-bold text-sm">{item.quantity.toLocaleString()} {item.unit}</span>
+                        </div>
+                        {alreadyQty > 0 && (
+                          <div>
+                            <span className="text-xs text-muted-foreground block">Sudah Diterima</span>
+                            <span className="text-sm text-amber-700 font-medium">{alreadyQty.toLocaleString()} {item.unit}</span>
+                          </div>
+                        )}
+                        <div className={alreadyQty > 0 ? '' : 'col-span-2'}>
+                          <Label className="text-xs mb-1 block">
+                            Qty Diterima {alreadyQty > 0 && <span className="text-muted-foreground">(sisa: {remainingQty.toLocaleString()})</span>}
+                          </Label>
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number"
+                              key={`${selectedPO?.id}-${item.code}`}
+                              defaultValue={remainingQty}
+                              className={`h-8 text-sm ${isOverQty ? 'border-red-400 text-red-700' : ''}`}
+                              onChange={e => setPoQtyReceived(prev => ({ ...prev, [item.code]: Number(e.target.value) }))}
+                            />
+                            <span className="text-xs text-muted-foreground">{item.unit}</span>
+                          </div>
+                          {isOverQty && (
+                            <p className="text-xs text-red-600 mt-0.5">Melebihi sisa {remainingQty.toLocaleString()} {item.unit}</p>
+                          )}
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedPO(null)}>Batal</Button>
-            <Button className="bg-green-600 hover:bg-green-700 gap-2" onClick={() => setSelectedPO(null)}>
+            <Button
+              className="bg-green-600 hover:bg-green-700 gap-2"
+              onClick={() => {
+                if (!selectedPO) return
+                const today = poTanggal || new Date().toISOString().split('T')[0]
+                createReceipt({
+                  tglMasuk: today,
+                  noPIB: '-',
+                  noPO: selectedPO.id,
+                  supplier: selectedPO.supplier,
+                  jenisDoc: selectedPO.poType === 'Impor' ? 'BC 2.0' : 'PO Lokal',
+                  items: selectedPO.items.map(item => ({
+                    kode: item.code,
+                    nama: item.name,
+                    satuan: item.unit,
+                    qtyPO: item.quantity,
+                    qtyDiterima: poQtyReceived[item.code] ?? Math.max(0, item.quantity - (alreadyReceivedPerItem[item.code] || 0)),
+                  })),
+                  gudang: poGudang || 'Gudang RM-A',
+                  penerima: poPenerima,
+                  noSuratJalan: poSuratJalan,
+                  noKendaraan: poKendaraan,
+                  status: 'Selesai',
+                })
+                selectedPO.items.forEach(item => {
+                  const qty = poQtyReceived[item.code] ?? Math.max(0, item.quantity - (alreadyReceivedPerItem[item.code] || 0))
+                  if (qty > 0) addStock(item.code, item.name, qty, selectedPO.id, 'GR', 'BB', item.unit, poGudang || 'Gudang RM-A')
+                })
+                const allItemsReceived = selectedPO.items.every(item => {
+                  const alreadyQty = alreadyReceivedPerItem[item.code] || 0
+                  const remainingQty = Math.max(0, item.quantity - alreadyQty)
+                  const newQty = poQtyReceived[item.code] ?? remainingQty
+                  return alreadyQty + newQty >= item.quantity
+                })
+                updatePO(selectedPO.id, { status: allItemsReceived ? 'RECEIVED' : 'PARTIAL' })
+                setSelectedPO(null)
+                setPoSuratJalan(''); setPoKendaraan(''); setPoTanggal(''); setPoGudang(''); setPoPenerima(''); setPoQtyReceived({})
+              }}
+            >
               <CheckCircle className="h-4 w-4" />
               Konfirmasi Penerimaan
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog Hapus GR ── */}
+      <Dialog open={!!deleteTarget} onOpenChange={v => { if (!v) setDeleteTarget(null) }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Hapus GR?</DialogTitle>
+            <DialogDescription>
+              Yakin hapus <span className="font-mono font-semibold">{deleteTarget?.id}</span>?<br />
+              Stok akan otomatis dikurangi kembali sesuai qty yang pernah diterima di GR ini.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Batal</Button>
+            <Button variant="destructive" onClick={() => {
+              if (deleteTarget) {
+                deleteTarget.items.forEach(item => {
+                  if (item.qtyDiterima > 0) deductStock(item.kode, item.qtyDiterima, deleteTarget.id, 'GR_DELETE', 'ADJUSTMENT')
+                })
+                deleteReceipt(deleteTarget.id)
+                setDeleteTarget(null)
+              }
+            }}>
+              Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog Edit GR ── */}
+      <Dialog open={!!editTarget} onOpenChange={v => { if (!v) setEditTarget(null) }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit GR — <span className="font-mono">{editTarget?.id}</span></DialogTitle>
+            <DialogDescription>Edit header dan item/qty penerimaan.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Supplier</Label>
+                <Input value={editSupplier} onChange={e => setEditSupplier(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>No. PIB</Label>
+                <Input value={editNoPIB} onChange={e => setEditNoPIB(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Tgl Masuk</Label>
+                <Input type="date" value={editTgl} onChange={e => setEditTgl(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Gudang</Label>
+                <Input value={editGudang} onChange={e => setEditGudang(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Penerima</Label>
+                <Input value={editPenerima} onChange={e => setEditPenerima(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>No. Surat Jalan</Label>
+                <Input value={editSJ} onChange={e => setEditSJ(e.target.value)} />
+              </div>
+              <div className="col-span-2 space-y-1.5">
+                <Label>Catatan</Label>
+                <Input value={editCatatan} onChange={e => setEditCatatan(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Item Diterima</Label>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Kode</TableHead>
+                    <TableHead>Nama</TableHead>
+                    <TableHead>Satuan</TableHead>
+                    <TableHead className="text-right">Qty Diterima</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {editItems.map((item, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>
+                        <Input
+                          className="h-8 text-xs"
+                          value={item.kode}
+                          onChange={e => updateEditItem(idx, { kode: e.target.value })}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          className="h-8 text-xs"
+                          value={item.nama}
+                          onChange={e => updateEditItem(idx, { nama: e.target.value })}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          className="h-8 w-20 text-xs"
+                          value={item.satuan}
+                          onChange={e => updateEditItem(idx, { satuan: e.target.value })}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="any"
+                          className="h-8 w-24 text-xs text-right"
+                          value={item.qtyDiterima}
+                          onChange={e => updateEditItem(idx, { qtyDiterima: parseFloat(e.target.value) || 0 })}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditTarget(null)}>Batal</Button>
+            <Button onClick={saveEdit}>Simpan Perubahan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

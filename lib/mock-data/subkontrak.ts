@@ -31,6 +31,9 @@ export interface SubkonRecord {
   // Job
   jobNo: string
   jobTgl: string
+  noSO?: string
+  qtyCMT?: number       // total qty barang jadi yang akan diproduksi CMT
+  satuanCMT?: string    // satuan qty CMT (carton, pcs, dll)
   deskripsiPekerjaan: string
   targetSelesai: string
   tglSelesaiAktual: string

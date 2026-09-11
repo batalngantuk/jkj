@@ -1,7 +1,10 @@
 export interface PurchaseOrder {
   id: string
+  poNumber?: string
   poType: 'Lokal' | 'Impor'
   supplier: string
+  currency?: 'IDR' | 'USD' | 'KRW'
+  exchangeRate?: number
   items: Array<{
     code: string
     name: string
@@ -13,8 +16,9 @@ export interface PurchaseOrder {
   totalAmount: number
   orderDate: string
   expectedDelivery: string
-  status: 'DRAFT' | 'APPROVED' | 'PARTIAL' | 'RECEIVED' | 'CANCELLED'
+  status: 'DRAFT' | 'APPROVED' | 'PARTIAL' | 'RECEIVED' | 'CANCELLED' | 'CANCELLED_WITH_STOCK'
   paymentStatus: 'UNPAID' | 'PARTIAL' | 'PAID'
+  attachments?: Array<{ name: string; size: number; type: string }>
 }
 
 export interface Supplier {
@@ -73,7 +77,20 @@ export const MOCK_PURCHASE_ORDERS: PurchaseOrder[] = [
     totalAmount: 60000000,
     orderDate: '2026-01-25',
     expectedDelivery: '2026-01-30',
-    status: 'RECEIVED', // Already received
+    status: 'RECEIVED',
     paymentStatus: 'PAID'
+  },
+  {
+    id: 'PO-2026-004',
+    poType: 'Impor',
+    supplier: 'Global Chemicals Ltd',
+    items: [
+      { code: 'RM-NITRILE', name: 'Nitrile Latex', quantity: 15000, unit: 'kg', unitPrice: 18000, total: 270000000 }
+    ],
+    totalAmount: 270000000,
+    orderDate: '2026-01-28',
+    expectedDelivery: '2026-02-03',
+    status: 'RECEIVED',
+    paymentStatus: 'PARTIAL'
   }
 ]

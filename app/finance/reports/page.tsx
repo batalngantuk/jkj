@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 import AppLayout from '@/components/app-layout'
 import { useARInvoices, useAPInvoices, useStock, useJournal, useAccounts } from '@/lib/store/hooks'
+import { usePenjualanLokal } from '@/lib/store/usePenjualanLokal'
 import { exportToExcelMultiSheet } from '@/lib/utils/export-excel'
 
 const BULAN_LABEL = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des']
@@ -43,6 +44,7 @@ export default function FinanceReportsPage() {
   const { stock } = useStock()
   const { entries: journal } = useJournal()
   const { balances } = useAccounts()
+  const { documents: penjualanLokalDocs } = usePenjualanLokal()
 
   const currentYear = new Date().getFullYear()
   const [filterPeriode, setFilterPeriode] = useState<string>('2026')
@@ -54,12 +56,18 @@ export default function FinanceReportsPage() {
     return tgl.startsWith(filterPeriode)
   }
 
-  // ── Revenue: dari AR invoices (totalAmount - taxAmount = nilai sebelum PPN) ──
+  // ── Revenue: dari AR invoices (ekspor) + penjualan lokal (BC 2.4) ──
   const revenue = useMemo(() => {
     return arInvoices
       .filter(i => ['APPROVED', 'SENT', 'PARTIALLY_PAID', 'PAID'].includes(i.status) && inPeriode(i.invoiceDate))
       .reduce((s, i) => s + (i.totalAmount - i.taxAmount), 0)
   }, [arInvoices, filterPeriode, filterBulan])
+
+  const revenuePenjualanLokal = useMemo(() => {
+    return penjualanLokalDocs
+      .filter(d => d.status === 'Approved' && inPeriode(d.tanggal))
+      .reduce((s, d) => s + d.totalNilaiIDR, 0)
+  }, [penjualanLokalDocs, filterPeriode, filterBulan])
 
   // ── HPP: dari AP invoices (pembelian bahan baku) ──
   const hpp = useMemo(() => {
@@ -68,19 +76,20 @@ export default function FinanceReportsPage() {
       .reduce((s, i) => s + (i.totalAmount - i.taxAmount), 0)
   }, [apInvoices, filterPeriode, filterBulan])
 
-  // ── Beban operasional dari jurnal ──
+  // ── Beban operasional dari jurnal (pakai akunLawan COA atau kategori Pengeluaran) ──
   const bebanJurnal = useMemo(() => {
     const filtered = journal.filter(e => e.tipe === 'KELUAR' && inPeriode(e.tanggal))
-    const gaji = filtered.filter(e => e.kategori === 'Beban Gaji').reduce((s, e) => s + e.nominal, 0)
-    const utilitas = filtered.filter(e => e.kategori === 'Beban Listrik & Utilitas').reduce((s, e) => s + e.nominal, 0)
-    const sewa = filtered.filter(e => e.kategori === 'Beban Sewa').reduce((s, e) => s + e.nominal, 0)
-    const angkut = filtered.filter(e => e.kategori === 'Beban Angkut').reduce((s, e) => s + e.nominal, 0)
-    const lainlain = filtered.filter(e => e.kategori === 'Beban Lain-lain').reduce((s, e) => s + e.nominal, 0)
-    const total = gaji + utilitas + sewa + angkut + lainlain
+    const gaji = filtered.filter(e => e.akunLawan === '5-0100').reduce((s, e) => s + e.nominal, 0)
+    const utilitas = filtered.filter(e => e.akunLawan === '5-9000' && e.keterangan?.toLowerCase().includes('listrik')).reduce((s, e) => s + e.nominal, 0)
+    const sewa = filtered.filter(e => e.akunLawan === '5-9000' && e.keterangan?.toLowerCase().includes('sewa')).reduce((s, e) => s + e.nominal, 0)
+    const angkut = filtered.filter(e => e.akunLawan === '5-0400').reduce((s, e) => s + e.nominal, 0)
+    const lainlain = filtered.filter(e => !e.akunLawan || (e.akunLawan === '5-9000' && !e.keterangan?.toLowerCase().includes('listrik') && !e.keterangan?.toLowerCase().includes('sewa'))).reduce((s, e) => s + e.nominal, 0)
+    const total = filtered.reduce((s, e) => s + e.nominal, 0)
     return { gaji, utilitas, sewa, angkut, lainlain, total }
   }, [journal, filterPeriode, filterBulan])
 
-  const labaKotor = revenue - hpp
+  const totalRevenue = revenue + revenuePenjualanLokal
+  const labaKotor = totalRevenue - hpp
   const labaOperasi = labaKotor - bebanJurnal.total
   const labaBersih = labaOperasi  // simplified (no tax/interest in this model)
 
@@ -183,7 +192,9 @@ export default function FinanceReportsPage() {
       {
         name: 'Laba Rugi',
         data: [
-          { Akun: 'Pendapatan Usaha', Nominal: revenue },
+          { Akun: 'Penjualan Ekspor (AR Invoice)', Nominal: revenue },
+          { Akun: 'Penjualan Material Lokal (BC 2.4)', Nominal: revenuePenjualanLokal },
+          { Akun: 'Total Pendapatan', Nominal: totalRevenue },
           { Akun: 'Harga Pokok Penjualan', Nominal: hpp },
           { Akun: 'Laba Kotor', Nominal: labaKotor },
           { Akun: 'Beban Gaji', Nominal: bebanJurnal.gaji },
@@ -321,8 +332,9 @@ export default function FinanceReportsPage() {
               </CardHeader>
               <CardContent className="max-w-lg mx-auto">
                 <SectionTitle>Pendapatan</SectionTitle>
-                <Row label="Pendapatan Usaha" value={revenue} indent={1} />
-                <Row label="Total Pendapatan" value={revenue} bold subtotal />
+                <Row label="Penjualan Ekspor (AR Invoice)" value={revenue} indent={1} />
+                <Row label="Penjualan Material Lokal (BC 2.4)" value={revenuePenjualanLokal} indent={1} />
+                <Row label="Total Pendapatan" value={totalRevenue} bold subtotal />
 
                 <SectionTitle>Harga Pokok Penjualan</SectionTitle>
                 <Row label="Pembelian Bahan Baku (AP)" value={hpp} indent={1} minus />
