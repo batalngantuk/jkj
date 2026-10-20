@@ -87,10 +87,11 @@ export function usePEB() {
     setPebs(getStore(STORE_KEYS.PEB, SEED))
   }, [])
 
-  const createPEB = useCallback((data: Omit<PEBDocument, 'id' | 'pebNumber' | 'createdAt' | 'history'>) => {
+  // pebNumber opsional: nomor resmi dari Bea Cukai bila diisi user, selain itu dibuat otomatis
+  const createPEB = useCallback((data: Omit<PEBDocument, 'id' | 'pebNumber' | 'createdAt' | 'history'> & { pebNumber?: string }) => {
     const current = getStore<PEBDocument>(STORE_KEYS.PEB, SEED)
     const id = generateId('PEB', current.map(p => p.id))
-    const pebNumber = generateId('PEB', current.map(p => p.pebNumber))
+    const pebNumber = data.pebNumber?.trim() || generateId('PEB', current.map(p => p.pebNumber))
     const now = new Date().toISOString()
     const newPEB: PEBDocument = {
       ...data,

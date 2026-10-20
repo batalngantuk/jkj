@@ -121,8 +121,10 @@ test.describe.serial('Alur penuh SO → KITE', () => {
     await page.locator('#exportDate').fill('2026-11-15')
     await page.locator('#estimatedDeparture').fill('2026-11-16')
     await page.getByRole('button', { name: 'Add Item' }).click()
+    await page.locator('#pebNumber').fill('PEB-E2E-001') // nomor resmi dari user harus dipakai
     await page.getByPlaceholder('FG-001').fill(FG_CODE)
-    await page.getByPlaceholder('Steel Coil Grade A').fill(PRODUCT)
+    // kode cocok stok FG → nama terisi otomatis
+    await expect(page.getByPlaceholder('Steel Coil Grade A')).toHaveValue(PRODUCT)
     await page.getByText('Quantity', { exact: true }).locator('xpath=following::input[1]').fill('100')
     await page.getByText(/^Unit Price/).locator('xpath=following::input[1]').fill('5')
     await page.getByRole('button', { name: 'Create PEB' }).click()
@@ -132,7 +134,13 @@ test.describe.serial('Alur penuh SO → KITE', () => {
     const peb = pebs.find(p => p.customerName === 'E2E Buyer')
     expect(peb, 'PEB tersimpan').toBeTruthy()
     expect(peb!.status).toBe('SUBMITTED')
+    expect((peb as unknown as { pebNumber: string }).pebNumber).toBe('PEB-E2E-001')
     expect(peb!.items[0]).toMatchObject({ quantity: 100, materialCode: FG_CODE })
+
+    // PEB baru berstatus SUBMITTED belum masuk Lap 5 (hanya setelah Approved)
+    await page.goto('/reports/kite-inventory')
+    await page.getByRole('tab', { name: /5\. Pengeluaran HP/ }).click()
+    await expect(page.getByRole('row').filter({ hasText: 'PEB-E2E-001' })).toHaveCount(0)
 
     await page.goto(`/logistics/peb/${peb!.id}`)
     await page.getByRole('button', { name: 'Approve' }).click()
@@ -152,7 +160,15 @@ test.describe.serial('Alur penuh SO → KITE', () => {
     await expect(page.getByRole('row').filter({ hasText: woId })).toContainText('100')
 
     await page.getByRole('tab', { name: /5\. Pengeluaran HP/ }).click()
-    await expect(page.getByRole('row').filter({ hasText: 'E2E Buyer' })).toContainText('100')
+    const lap5 = page.getByRole('row').filter({ hasText: 'E2E Buyer' })
+    await expect(lap5).toContainText('100')
+    await expect(lap5).toContainText('PEB-E2E-001')
+
+    // Filter tanggal berfungsi: periode di masa depan menyembunyikan baris, periode lebar menampilkannya
+    await page.getByText('Tanggal Dari').locator('xpath=following::input[1]').fill('2098-01-01')
+    await expect(lap5).toHaveCount(0)
+    await page.getByText('Tanggal Dari').locator('xpath=following::input[1]').fill('2026-01-01')
+    await expect(lap5).toHaveCount(1)
 
     // Lap 7: satu baris per kode, saldo = pemasukan − pengeluaran = 0
     await page.getByRole('tab', { name: /7\. Mutasi HP/ }).click()

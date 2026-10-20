@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import AppLayout from '@/components/app-layout'
 import { useRouter } from 'next/navigation'
-import { usePEB, useSalesOrders, useWorkOrders } from '@/lib/store/hooks'
+import { usePEB, useSalesOrders, useWorkOrders, useStock } from '@/lib/store/hooks'
 import { AlertTriangle } from 'lucide-react'
 
 export default function PEBCreatePage() {
@@ -28,6 +28,8 @@ export default function PEBCreatePage() {
   const { createPEB } = usePEB()
   const { orders: salesOrders } = useSalesOrders()
   const { workOrders } = useWorkOrders()
+  const { stock } = useStock()
+  const fgStock = stock.filter(s => s.category === 'FG')
   const [loading, setLoading] = useState(false)
   const [soRef, setSoRef] = useState('')
 
@@ -76,15 +78,6 @@ export default function PEBCreatePage() {
     setFobValue(total)
     setFobIdr(total * exchangeRate)
   }, [items, exchangeRate])
-
-  // Auto-generate PEB number
-  useEffect(() => {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const seq = String(Math.floor(Math.random() * 1000)).padStart(3, '0')
-    setPebNumber(`PEB-${year}-${seq}`)
-  }, [])
 
   const formatCurrency = (amount: number, curr: string = 'USD') => {
     if (curr === 'USD') {
@@ -141,6 +134,7 @@ export default function PEBCreatePage() {
   }
 
   const buildPayload = (status: 'DRAFT' | 'SUBMITTED') => ({
+    pebNumber: pebNumber.trim() || undefined,
     documentDate: new Date().toISOString().split('T')[0],
     status,
     invoiceNo: invoiceNo || undefined,
@@ -232,12 +226,12 @@ export default function PEBCreatePage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="pebNumber">PEB Number *</Label>
+                <Label htmlFor="pebNumber">PEB Number</Label>
                 <Input
                   id="pebNumber"
                   value={pebNumber}
                   onChange={(e) => setPebNumber(e.target.value)}
-                  placeholder="PEB-2026-001"
+                  placeholder="Kosongkan = nomor otomatis"
                 />
               </div>
               <div>
@@ -603,10 +597,21 @@ export default function PEBCreatePage() {
                   <div>
                     <Label>Material Code</Label>
                     <Input
+                      list="fg-stock-codes"
                       value={item.materialCode}
-                      onChange={(e) => handleItemChange(index, 'materialCode', e.target.value)}
+                      onChange={(e) => {
+                        handleItemChange(index, 'materialCode', e.target.value)
+                        // Kode cocok dengan stok FG → isi nama otomatis agar laporan KITE (Lap 4/5/7) memakai kode yang sama
+                        const fg = fgStock.find(s => s.materialCode === e.target.value)
+                        if (fg && !item.materialName) handleItemChange(index, 'materialName', fg.materialName)
+                      }}
                       placeholder="FG-001"
                     />
+                    <datalist id="fg-stock-codes">
+                      {fgStock.map(s => (
+                        <option key={s.materialCode} value={s.materialCode}>{s.materialName} — stok {s.qtyOnHand.toLocaleString('id-ID')}</option>
+                      ))}
+                    </datalist>
                   </div>
                   <div className="col-span-2">
                     <Label>Material Name</Label>

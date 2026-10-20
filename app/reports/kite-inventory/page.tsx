@@ -49,7 +49,7 @@ export default function KiteInventoryPage() {
   const { receipts: grReceipts } = useGoodsReceipts()
 
   const [dateFrom, setDateFrom] = useState('2026-01-01')
-  const [dateTo, setDateTo] = useState('2026-12-31')
+  const [dateTo, setDateTo] = useState('2099-12-31')
   const [filterMaterial, setFilterMaterial] = useState('')
 
   // Lap 1: Pemasukan BB — seed + live GR receipts (sumber langsung dari modul Inbound)
@@ -154,7 +154,8 @@ export default function KiteInventoryPage() {
 
   // Lap 5: Pengeluaran HP — seed + PEB exported dari live store
   const livePengeluaranHP: PengeluaranHP[] = pebs
-    .filter(p => p.status === 'EXPORTED' || p.status === 'SUBMITTED' || p.status === 'APPROVED')
+    // Hanya PEB yang sudah disetujui (APPROVED) atau diekspor yang masuk laporan; SUBMITTED belum final
+    .filter(p => p.status === 'EXPORTED' || p.status === 'APPROVED')
     // Nomor PEB baru bisa sama dengan nomor PEB di data contoh (mis. PEB-2026-002) — cocokkan juga pembelinya agar PEB baru tidak ikut tersaring
     .filter(p => !MOCK_PENGELUARAN_HP.find(m => m.pebNo === p.pebNumber && m.pembeliPenerima === p.customerName))
     .flatMap((p, pi) =>
@@ -235,25 +236,33 @@ export default function KiteInventoryPage() {
 
   // F2: filter per material (kode atau nama), reactive tanpa tombol
   const matQ = filterMaterial.toLowerCase()
-  const fPemasukanBB   = matQ ? allPemasukanBB.filter(r => r.kodeBB.toLowerCase().includes(matQ) || r.namaBarang.toLowerCase().includes(matQ)) : allPemasukanBB
-  const fPemakaianBB   = matQ ? allPemakaianBB.filter(r => r.kodeBarang.toLowerCase().includes(matQ) || r.namaBarang.toLowerCase().includes(matQ)) : allPemakaianBB
-  const fPemakaianSubkon = matQ ? allPemakaianBBSubkon.filter(r => r.kodeBarang.toLowerCase().includes(matQ) || r.namaBarang.toLowerCase().includes(matQ)) : allPemakaianBBSubkon
-  const fPemasukanHP   = matQ ? allPemasukanHP.filter(r => r.kodeBarang.toLowerCase().includes(matQ) || r.namaBarang.toLowerCase().includes(matQ)) : allPemasukanHP
-  const fPengeluaranHP = matQ ? allPengeluaranHP.filter(r => r.kodeBarang.toLowerCase().includes(matQ) || r.namaBarang.toLowerCase().includes(matQ)) : allPengeluaranHP
+  // Filter periode (dateFrom–dateTo) memakai tanggal dokumen tiap laporan; tanggal tak terbaca ikut ditampilkan.
+  // Lap 6 & 7 adalah saldo posisi (turunan dari stok/Lap 4–5) sehingga tidak difilter tanggal.
+  const inRange = (d?: string) => {
+    const day = (d || '').slice(0, 10)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return true
+    return (!dateFrom || day >= dateFrom) && (!dateTo || day <= dateTo)
+  }
+  const matchMat = (kode: string, nama: string) => !matQ || kode.toLowerCase().includes(matQ) || nama.toLowerCase().includes(matQ)
+  const fPemasukanBB   = allPemasukanBB.filter(r => inRange(r.tglRekam) && matchMat(r.kodeBB, r.namaBarang))
+  const fPemakaianBB   = allPemakaianBB.filter(r => inRange(r.buktiPengeluaranTgl) && matchMat(r.kodeBarang, r.namaBarang))
+  const fPemakaianSubkon = allPemakaianBBSubkon.filter(r => inRange(r.buktiPengeluaranTgl) && matchMat(r.kodeBarang, r.namaBarang))
+  const fPemasukanHP   = allPemasukanHP.filter(r => inRange(r.dokumenTgl) && matchMat(r.kodeBarang, r.namaBarang))
+  const fPengeluaranHP = allPengeluaranHP.filter(r => inRange(r.buktiPengeluaranTgl) && matchMat(r.kodeBarang, r.namaBarang))
   const fMutasiBB      = matQ ? allMutasiBB.filter(r => r.kodeBarang.toLowerCase().includes(matQ) || r.namaBarang.toLowerCase().includes(matQ)) : allMutasiBB
   const fMutasiHP      = matQ ? allMutasiHP.filter(r => r.kodeBarang.toLowerCase().includes(matQ) || r.namaBarang.toLowerCase().includes(matQ)) : allMutasiHP
-  const fWasteScrap    = matQ ? allWasteScrap.filter(r => r.kodeBarang.toLowerCase().includes(matQ) || r.namaBarang.toLowerCase().includes(matQ)) : allWasteScrap
+  const fWasteScrap    = allWasteScrap.filter(r => inRange(r.bc24Tgl) && matchMat(r.kodeBarang, r.namaBarang))
 
   const handleExportSemua = () => {
     exportToExcelMultiSheet([
-      { name: '1-Pemasukan BB', data: allPemasukanBB as unknown as Record<string, unknown>[] },
-      { name: '2-Pemakaian BB', data: allPemakaianBB as unknown as Record<string, unknown>[] },
-      { name: '3-Pemakaian BB Subkon', data: allPemakaianBBSubkon as unknown as Record<string, unknown>[] },
-      { name: '4-Pemasukan HP', data: allPemasukanHP as unknown as Record<string, unknown>[] },
-      { name: '5-Pengeluaran HP', data: allPengeluaranHP as unknown as Record<string, unknown>[] },
+      { name: '1-Pemasukan BB', data: fPemasukanBB as unknown as Record<string, unknown>[] },
+      { name: '2-Pemakaian BB', data: fPemakaianBB as unknown as Record<string, unknown>[] },
+      { name: '3-Pemakaian BB Subkon', data: fPemakaianSubkon as unknown as Record<string, unknown>[] },
+      { name: '4-Pemasukan HP', data: fPemasukanHP as unknown as Record<string, unknown>[] },
+      { name: '5-Pengeluaran HP', data: fPengeluaranHP as unknown as Record<string, unknown>[] },
       { name: '6-Mutasi BB', data: allMutasiBB as unknown as Record<string, unknown>[] },
       { name: '7-Mutasi HP', data: allMutasiHP as unknown as Record<string, unknown>[] },
-      { name: '8-Waste Scrap', data: allWasteScrap as unknown as Record<string, unknown>[] },
+      { name: '8-Waste Scrap', data: fWasteScrap as unknown as Record<string, unknown>[] },
     ], `KITE_IT_Inventory_${dateFrom}_sd_${dateTo}`)
   }
 
