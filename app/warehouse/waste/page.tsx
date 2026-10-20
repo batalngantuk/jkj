@@ -80,7 +80,7 @@ function StatusStepper({ status }: { status: WasteStatus }) {
 }
 
 export default function WasteManagementPage() {
-  const { records: wasteRecords, createWaste } = useWaste()
+  const { records: wasteRecords, createWaste, updateWaste } = useWaste()
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [selectedRecord, setSelectedRecord] = useState<WasteRecord | null>(null)
   const [showFormDialog, setShowFormDialog] = useState(false)
@@ -114,6 +114,22 @@ export default function WasteManagementPage() {
     setFormBC24Tgl('')
     setFormCatatan('')
     setFormSubmitted(false)
+  }
+
+  // Majukan status waste (Draft → Diajukan BC 2.4 → Diverifikasi BC → Selesai) dan sinkronkan dialog detail
+  function advanceStatus(rec: WasteRecord, status: WasteRecord['status']) {
+    const today = new Date().toISOString().slice(0, 10)
+    const patch: Partial<WasteRecord> = { status }
+    if (status === 'Diajukan BC 2.4') {
+      if (!rec.bc24No || rec.bc24No === '-') {
+        const nums = wasteRecords.map(r => parseInt(r.bc24No.match(/(\d+)$/)?.[1] || '0'))
+        patch.bc24No = `BC24-${new Date().getFullYear()}-${String(Math.max(0, ...nums) + 1).padStart(3, '0')}`
+      }
+      if (!rec.bc24Tgl || rec.bc24Tgl === '-') patch.bc24Tgl = today
+    }
+    if (status === 'Diverifikasi BC') patch.tglVerifikasi = today
+    updateWaste(rec.id, patch)
+    setSelectedRecord({ ...rec, ...patch })
   }
 
   function handleSubmitForm() {
@@ -628,13 +644,19 @@ export default function WasteManagementPage() {
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setSelectedRecord(null)}>Tutup</Button>
               {selectedRecord.status === 'Draft' && (
-                <Button className="gap-2">
+                <Button className="gap-2" onClick={() => advanceStatus(selectedRecord, 'Diajukan BC 2.4')}>
                   <FileText className="h-4 w-4" />
                   Ajukan BC 2.4
                 </Button>
               )}
+              {selectedRecord.status === 'Diajukan BC 2.4' && (
+                <Button variant="outline" className="gap-2" onClick={() => advanceStatus(selectedRecord, 'Diverifikasi BC')}>
+                  <AlertTriangle className="h-4 w-4" />
+                  Tandai Diverifikasi BC
+                </Button>
+              )}
               {selectedRecord.status === 'Diverifikasi BC' && (
-                <Button variant="default" className="gap-2">
+                <Button variant="default" className="gap-2" onClick={() => advanceStatus(selectedRecord, 'Selesai')}>
                   <CheckCircle2 className="h-4 w-4" />
                   Konfirmasi Selesai
                 </Button>

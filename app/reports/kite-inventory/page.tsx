@@ -104,6 +104,8 @@ export default function KiteInventoryPage() {
 
   // Lap 3: Pemakaian BB Subkontrak — seed + live subkon records (KITE items)
   const livePemakaianBBSubkon: PemakaianBBSubkon[] = subkonRecords
+    // Job Draft belum mengirim BB ke subkon — belum boleh masuk laporan pemakaian BB
+    .filter(r => r.status !== 'Draft')
     .filter(r => !MOCK_PEMAKAIAN_BB_SUBKON.find(s => s.buktiPengeluaranNo === r.subkKiteKirimNo))
     .flatMap((r, ri) =>
       r.items
@@ -218,7 +220,7 @@ export default function KiteInventoryPage() {
   // Lap 8: Waste Scrap — seed + live waste (status Selesai / Diajukan BC 2.4)
   const liveWasteScrap: WasteScrap[] = wasteRecords
     .filter(w => w.status === 'Diajukan BC 2.4' || w.status === 'Diverifikasi BC' || w.status === 'Selesai')
-    .filter(w => !MOCK_WASTE_SCRAP.find(m => m.bc24No === w.bc24No))
+    .filter(w => !MOCK_WASTE_SCRAP.find(m => m.bc24No === w.bc24No && m.kodeBarang === w.kodeBB))
     .map((w, i) => ({
       no: MOCK_WASTE_SCRAP.length + i + 1,
       bc24No: w.bc24No || `BC24-LIVE-${i + 1}`,
