@@ -88,7 +88,7 @@ export default function WarehouseDashboard() {
        cell: (item: typeof MOCK_INVENTORY[0]) => (
            <div className="w-32">
                <div className="flex justify-between text-xs mb-1">
-                   <span>{item.quantity.toLocaleString()} {item.unit}</span>
+                   <span>{item.quantity.toLocaleString('id-ID')} {item.unit}</span>
                    <span className="text-muted-foreground">{Math.round((item.quantity / item.maxStock) * 100)}%</span>
                </div>
                <Progress 
@@ -396,7 +396,7 @@ export default function WarehouseDashboard() {
                                     </div>
                                 </div>
                                 <div className="font-bold">
-                                    {trx.type === 'IN' ? '+' : '-'}{trx.quantity.toLocaleString()}
+                                    {trx.type === 'IN' ? '+' : '-'}{trx.quantity.toLocaleString('id-ID')}
                                 </div>
                             </div>
                         ))}

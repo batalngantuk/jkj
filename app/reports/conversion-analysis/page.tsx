@@ -287,7 +287,7 @@ export default function ConversionAnalysisPage() {
                           <p className="text-xs text-muted-foreground">RM Input</p>
                           <p className="font-bold">{cv.rmInput.toLocaleString('id-ID')} kg</p>
                           <p className="text-xs text-muted-foreground">{cv.rmMaterial}</p>
-                          <p className="text-xs text-blue-600">Rp {cv.rmUnitCost.toLocaleString()}/kg</p>
+                          <p className="text-xs text-blue-600">Rp {cv.rmUnitCost.toLocaleString('id-ID')}/kg</p>
                         </div>
                         <ArrowRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
                         <div className="flex-1 p-3 bg-green-50 rounded-lg text-center border border-green-200">
@@ -295,7 +295,7 @@ export default function ConversionAnalysisPage() {
                           <p className="text-xs text-muted-foreground">FG Output</p>
                           <p className="font-bold text-green-700">{cv.fgOutput.toLocaleString('id-ID')} kg</p>
                           <p className="text-xs text-muted-foreground">{cv.productName}</p>
-                          <p className="text-xs text-green-600">Rp {cv.fgUnitCost.toLocaleString()}/kg</p>
+                          <p className="text-xs text-green-600">Rp {cv.fgUnitCost.toLocaleString('id-ID')}/kg</p>
                         </div>
                         <ArrowRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
                         <div className="flex-1 p-3 bg-orange-50 rounded-lg text-center border border-orange-200">
@@ -313,12 +313,12 @@ export default function ConversionAnalysisPage() {
                           <div
                             className="bg-green-500"
                             style={{ width: `${(cv.fgOutput / cv.rmInput) * 100}%` }}
-                            title={`FG: ${cv.fgOutput.toLocaleString()} kg`}
+                            title={`FG: ${cv.fgOutput.toLocaleString('id-ID')} kg`}
                           />
                           <div
                             className="bg-orange-400"
                             style={{ width: `${(cv.waste / cv.rmInput) * 100}%` }}
-                            title={`Waste: ${cv.waste.toLocaleString()} kg`}
+                            title={`Waste: ${cv.waste.toLocaleString('id-ID')} kg`}
                           />
                         </div>
                       </div>
@@ -337,7 +337,7 @@ export default function ConversionAnalysisPage() {
                             <div className="flex h-1.5 bg-gray-100 rounded overflow-hidden">
                               <div className="bg-orange-400" style={{ width: `${(wb.pct / cv.wastePct) * 100}%` }} />
                             </div>
-                            <p className="text-xs text-muted-foreground">{wb.qty.toLocaleString()} kg</p>
+                            <p className="text-xs text-muted-foreground">{wb.qty.toLocaleString('id-ID')} kg</p>
                           </div>
                         ))}
                       </div>

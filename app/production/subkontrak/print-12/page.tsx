@@ -139,7 +139,7 @@ function PrintSubk12Content() {
                 <td style={{ fontFamily: 'monospace', fontSize: '9px' }}>{item.kodeBB}</td>
                 <td>{item.namaBB}</td>
                 <td style={{ textAlign: 'center' }}>{item.satuanBB}</td>
-                <td style={{ textAlign: 'right' }}>{item.qtyKirim.toLocaleString()}</td>
+                <td style={{ textAlign: 'right' }}>{item.qtyKirim.toLocaleString('id-ID')}</td>
               </tr>
             ))}
           </tbody>
@@ -170,7 +170,7 @@ function PrintSubk12Content() {
                   <td style={{ fontFamily: 'monospace', fontSize: '9px' }}>{item.kodeBB}</td>
                   <td>{item.namaBB}</td>
                   <td style={{ textAlign: 'center' }}>{item.satuanBB}</td>
-                  <td style={{ textAlign: 'right' }}>{(item.qtyKembali ?? 0).toLocaleString()}</td>
+                  <td style={{ textAlign: 'right' }}>{(item.qtyKembali ?? 0).toLocaleString('id-ID')}</td>
                   <td style={{ textAlign: 'center' }}>Baik</td>
                 </tr>
               ))

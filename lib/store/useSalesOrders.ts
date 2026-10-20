@@ -42,7 +42,8 @@ export function useSalesOrders() {
       : []
     const updated = updateInStore(STORE_KEYS.SALES_ORDERS, id, {
       ...patch,
-      history: [...(existing.history || []), ...historyEntry],
+      // patch.history (mis. catatan revisi) harus dihormati, bukan ditimpa riwayat lama
+      history: [...(patch.history ?? existing.history ?? []), ...historyEntry],
     }, MOCK_SALES_ORDERS)
     setOrders(updated)
   }, [])

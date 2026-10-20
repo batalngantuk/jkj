@@ -225,7 +225,7 @@ export default function GoodsReceiptPage() {
                             {item.description}
                           </TableCell>
                           <TableCell className="text-right text-sm text-foreground">
-                            {item.poQty.toLocaleString()}
+                            {item.poQty.toLocaleString('id-ID')}
                           </TableCell>
                           <TableCell className="text-right">
                             <Input
@@ -303,7 +303,7 @@ export default function GoodsReceiptPage() {
                     Total Ordered
                   </p>
                   <p className="text-2xl font-bold text-foreground">
-                    {totalOrdered.toLocaleString()}
+                    {totalOrdered.toLocaleString('id-ID')}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -311,7 +311,7 @@ export default function GoodsReceiptPage() {
                     Total Received
                   </p>
                   <p className="text-2xl font-bold text-foreground">
-                    {totalReceived.toLocaleString()}
+                    {totalReceived.toLocaleString('id-ID')}
                   </p>
                 </div>
                 <div className="space-y-1">

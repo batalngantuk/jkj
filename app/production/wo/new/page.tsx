@@ -236,9 +236,9 @@ function CreateWOForm({ soId }: { soId: string | null }) {
                           <TableCell className="text-sm">{item.materialName}</TableCell>
                           <TableCell className="text-right text-sm">{item.quantityPerUnit} {item.unit}</TableCell>
                           <TableCell className="text-right text-sm font-semibold">
-                            {qty > 0 ? `${totalNeeded.toLocaleString()} ${item.unit}` : '—'}
+                            {qty > 0 ? `${totalNeeded.toLocaleString('id-ID')} ${item.unit}` : '—'}
                           </TableCell>
-                          <TableCell className="text-right text-sm">{item.stockAvailable.toLocaleString()} {item.unit}</TableCell>
+                          <TableCell className="text-right text-sm">{item.stockAvailable.toLocaleString('id-ID')} {item.unit}</TableCell>
                           <TableCell className="text-center">
                             {isShort && qty > 0 ? (
                               <div className="flex items-center justify-center gap-1 text-red-600">

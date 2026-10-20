@@ -29,7 +29,7 @@ export default function TraceabilityReportPage() {
       number: selectedRecord.bc20Number,
       description: selectedRecord.rmDescription,
       date: selectedRecord.grDate,
-      quantity: `${selectedRecord.rmQuantity.toLocaleString()} ${selectedRecord.rmUnit}`,
+      quantity: `${selectedRecord.rmQuantity.toLocaleString('id-ID')} ${selectedRecord.rmUnit}`,
       lotNumber: selectedRecord.rmLotNumber,
       href: `/purchasing/bc20/${selectedRecord.bc20Id}`
     },
@@ -39,7 +39,7 @@ export default function TraceabilityReportPage() {
       number: selectedRecord.grNumber,
       description: `PO: ${selectedRecord.poNumber}`,
       date: selectedRecord.grDate,
-      quantity: `${selectedRecord.rmQuantity.toLocaleString()} ${selectedRecord.rmUnit}`,
+      quantity: `${selectedRecord.rmQuantity.toLocaleString('id-ID')} ${selectedRecord.rmUnit}`,
       lotNumber: selectedRecord.rmLotNumber
     },
     {
@@ -48,7 +48,7 @@ export default function TraceabilityReportPage() {
       number: selectedRecord.woNumber,
       description: selectedRecord.productName,
       date: selectedRecord.productionDate,
-      quantity: `${selectedRecord.fgQuantity.toLocaleString()} ${selectedRecord.fgUnit}`,
+      quantity: `${selectedRecord.fgQuantity.toLocaleString('id-ID')} ${selectedRecord.fgUnit}`,
       lotNumber: selectedRecord.fgLotNumber,
       href: `/production/wo/${selectedRecord.woId}`
     },
@@ -58,7 +58,7 @@ export default function TraceabilityReportPage() {
       number: selectedRecord.fgLotNumber,
       description: selectedRecord.productName,
       date: selectedRecord.productionDate,
-      quantity: `${selectedRecord.fgQuantity.toLocaleString()} ${selectedRecord.fgUnit}`,
+      quantity: `${selectedRecord.fgQuantity.toLocaleString('id-ID')} ${selectedRecord.fgUnit}`,
       lotNumber: selectedRecord.fgLotNumber
     }
   ]
@@ -71,7 +71,7 @@ export default function TraceabilityReportPage() {
       number: selectedRecord.pebNumber!,
       description: `Export to customer`,
       date: selectedRecord.exportDate!,
-      quantity: `${selectedRecord.exportQuantity!.toLocaleString()} ${selectedRecord.fgUnit}`,
+      quantity: `${selectedRecord.exportQuantity!.toLocaleString('id-ID')} ${selectedRecord.fgUnit}`,
       lotNumber: selectedRecord.fgLotNumber,
       href: `/logistics/peb/${selectedRecord.pebId}`
     })
@@ -175,7 +175,7 @@ export default function TraceabilityReportPage() {
                     <p><span className="text-muted-foreground">BC 2.0 (PIB):</span> <span className="font-mono">{selectedRecord.bc20Number}</span></p>
                     <p><span className="text-muted-foreground">Description:</span> {selectedRecord.rmDescription}</p>
                     <p><span className="text-muted-foreground">Kode Barang:</span> <span className="font-mono text-primary">{selectedRecord.rmLotNumber}</span></p>
-                    <p><span className="text-muted-foreground">Quantity:</span> {selectedRecord.rmQuantity.toLocaleString()} {selectedRecord.rmUnit}</p>
+                    <p><span className="text-muted-foreground">Quantity:</span> {selectedRecord.rmQuantity.toLocaleString('id-ID')} {selectedRecord.rmUnit}</p>
                     <p><span className="text-muted-foreground">GR Date:</span> {new Date(selectedRecord.grDate).toLocaleDateString('id-ID')}</p>
                   </div>
                 </div>
@@ -188,7 +188,7 @@ export default function TraceabilityReportPage() {
                         <p><span className="text-muted-foreground">PEB:</span> <span className="font-mono">{selectedRecord.pebNumber}</span></p>
                         <p><span className="text-muted-foreground">Product:</span> {selectedRecord.productName}</p>
                         <p><span className="text-muted-foreground">Kode Barang:</span> <span className="font-mono text-primary">{selectedRecord.fgLotNumber}</span></p>
-                        <p><span className="text-muted-foreground">Quantity:</span> {selectedRecord.fgQuantity.toLocaleString()} {selectedRecord.fgUnit}</p>
+                        <p><span className="text-muted-foreground">Quantity:</span> {selectedRecord.fgQuantity.toLocaleString('id-ID')} {selectedRecord.fgUnit}</p>
                         <p><span className="text-muted-foreground">Export Date:</span> {selectedRecord.exportDate ? new Date(selectedRecord.exportDate).toLocaleDateString('id-ID') : '-'}</p>
                       </>
                     ) : (

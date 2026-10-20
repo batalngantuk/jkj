@@ -127,11 +127,11 @@ export function TraceabilityChain({ steps, showConversion, conversionData }: Tra
           <div className="grid gap-4 md:grid-cols-5">
             <div className="p-3 bg-white rounded-lg border">
               <p className="text-xs text-muted-foreground">Raw Material Input</p>
-              <p className="text-lg font-bold">{conversionData.input.toLocaleString()}</p>
+              <p className="text-lg font-bold">{conversionData.input.toLocaleString('id-ID')}</p>
             </div>
             <div className="p-3 bg-white rounded-lg border">
               <p className="text-xs text-muted-foreground">Finished Goods Output</p>
-              <p className="text-lg font-bold text-green-600">{conversionData.output.toLocaleString()}</p>
+              <p className="text-lg font-bold text-green-600">{conversionData.output.toLocaleString('id-ID')}</p>
             </div>
             <div className="p-3 bg-white rounded-lg border">
               <p className="text-xs text-muted-foreground">Actual Ratio</p>
@@ -154,7 +154,7 @@ export function TraceabilityChain({ steps, showConversion, conversionData }: Tra
           </div>
           <div className="mt-4 p-3 bg-white rounded-lg border">
             <p className="text-xs text-muted-foreground">Waste / Scrap</p>
-            <p className="text-sm font-semibold text-orange-600">{conversionData.waste.toLocaleString()} units</p>
+            <p className="text-sm font-semibold text-orange-600">{conversionData.waste.toLocaleString('id-ID')} units</p>
           </div>
         </Card>
       )}

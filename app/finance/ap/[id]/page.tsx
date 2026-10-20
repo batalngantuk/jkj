@@ -164,7 +164,7 @@ export default function APDetailPage() {
                 <FileText className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground">Purchase Order</p>
-                  <Link href={`/purchasing/po/${invoice.poId}`} className="font-medium text-primary hover:underline font-mono">
+                  <Link href="/purchasing/po" className="font-medium text-primary hover:underline font-mono">
                     {invoice.poNumber}
                   </Link>
                 </div>

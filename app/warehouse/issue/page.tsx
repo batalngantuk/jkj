@@ -279,7 +279,7 @@ export default function WarehouseIssuePage() {
                       <div className="space-y-0.5">
                         {h.items.map((item, i) => (
                           <p key={i} className="text-xs text-muted-foreground">
-                            {item.materialCode} — {item.qty.toLocaleString()} {item.satuan}
+                            {item.materialCode} — {item.qty.toLocaleString('id-ID')} {item.satuan}
                           </p>
                         ))}
                       </div>
@@ -416,7 +416,7 @@ export default function WarehouseIssuePage() {
                                 <SelectContent>
                                   {bbStock.map(s => (
                                     <SelectItem key={s.materialCode} value={s.materialCode}>
-                                      {s.materialCode} — {s.materialName} ({s.qtyAvailable.toLocaleString()} {s.unit})
+                                      {s.materialCode} — {s.materialName} ({s.qtyAvailable.toLocaleString('id-ID')} {s.unit})
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -424,7 +424,7 @@ export default function WarehouseIssuePage() {
                               {stockInfo && (
                                 <p className="text-xs text-muted-foreground mt-0.5">
                                   Stok tersedia: <span className={stockInfo.qtyAvailable < (Number(item.qtyIssued) || 0) ? 'text-red-600 font-medium' : 'text-green-700'}>
-                                    {stockInfo.qtyAvailable.toLocaleString()} {stockInfo.unit}
+                                    {stockInfo.qtyAvailable.toLocaleString('id-ID')} {stockInfo.unit}
                                   </span>
                                 </p>
                               )}

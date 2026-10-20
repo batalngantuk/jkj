@@ -66,7 +66,7 @@ export async function GET(
         blockingDetails.push(
           'Import duties and taxes must be paid before customs clearance',
           `Tax bill status: ${bc20Doc.taxPaymentStatus}`,
-          `Total tax amount: Rp ${bc20Doc.totalTax?.toLocaleString() || 'N/A'}`
+          `Total tax amount: Rp ${bc20Doc.totalTax?.toLocaleString('id-ID') || 'N/A'}`
         )
       }
 

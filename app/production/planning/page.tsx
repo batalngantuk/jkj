@@ -28,7 +28,7 @@ export default function ProductionPlanningPage() {
     { 
       header: "Qty", 
       accessorKey: "quantity" as keyof typeof MOCK_SALES_ORDERS[0],
-      cell: (item: typeof MOCK_SALES_ORDERS[0]) => <span>{item.quantity.toLocaleString()}</span>
+      cell: (item: typeof MOCK_SALES_ORDERS[0]) => <span>{item.quantity.toLocaleString('id-ID')}</span>
     },
     {
       header: "Deadline",

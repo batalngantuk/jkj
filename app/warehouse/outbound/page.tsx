@@ -251,11 +251,11 @@ export default function OutboundPage() {
                           <TableCell className="font-medium text-primary">{wo.id}</TableCell>
                           <TableCell className="text-muted-foreground">{wo.soNumber}</TableCell>
                           <TableCell>{wo.product}</TableCell>
-                          <TableCell className="text-right font-medium">{wo.quantity.toLocaleString()}</TableCell>
+                          <TableCell className="text-right font-medium">{wo.quantity.toLocaleString('id-ID')}</TableCell>
                           <TableCell className="text-right text-green-600 font-medium">
-                            {alreadyRec > 0 ? alreadyRec.toLocaleString() : '—'}
+                            {alreadyRec > 0 ? alreadyRec.toLocaleString('id-ID') : '—'}
                           </TableCell>
-                          <TableCell className="text-right text-amber-600 font-semibold">{sisa.toLocaleString()}</TableCell>
+                          <TableCell className="text-right text-amber-600 font-semibold">{sisa.toLocaleString('id-ID')}</TableCell>
                           <TableCell>{wo.endDate}</TableCell>
                           <TableCell>
                             <Button size="sm" onClick={() => openFGForm(wo)} className="gap-1">
@@ -308,7 +308,7 @@ export default function OutboundPage() {
                         <TableCell>{r.tanggal}</TableCell>
                         <TableCell className="text-muted-foreground">{r.woId}</TableCell>
                         <TableCell>{r.productName}</TableCell>
-                        <TableCell className="text-right font-medium">{r.qtyReceived.toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-medium">{r.qtyReceived.toLocaleString('id-ID')}</TableCell>
                         <TableCell className="text-right">
                           {r.qtyReject > 0 ? (
                             <span className="text-red-600 font-medium">{r.qtyReject}</span>
@@ -388,9 +388,9 @@ export default function OutboundPage() {
                           <TableCell className="font-medium text-primary">{so.id}</TableCell>
                           <TableCell>{so.customer}</TableCell>
                           <TableCell>{so.product}</TableCell>
-                          <TableCell className="text-right font-medium">{so.quantity.toLocaleString()}</TableCell>
+                          <TableCell className="text-right font-medium">{so.quantity.toLocaleString('id-ID')}</TableCell>
                           <TableCell className="text-right">
-                            <span className={fgAvail >= so.quantity ? 'text-green-600 font-semibold' : 'text-amber-600 font-semibold'}>{fgAvail.toLocaleString()}</span>
+                            <span className={fgAvail >= so.quantity ? 'text-green-600 font-semibold' : 'text-amber-600 font-semibold'}>{fgAvail.toLocaleString('id-ID')}</span>
                             {fgCount > 1 && <span className="text-xs text-muted-foreground ml-1">({fgCount}x)</span>}
                           </TableCell>
                           <TableCell className={so.priority === 'Urgent' ? 'text-red-600 font-medium' : ''}>
@@ -543,7 +543,7 @@ export default function OutboundPage() {
                 </div>
                 <div>
                   <p className="text-muted-foreground">Qty Produksi</p>
-                  <p className="font-bold">{selectedWO?.quantity.toLocaleString()} carton</p>
+                  <p className="font-bold">{selectedWO?.quantity.toLocaleString('id-ID')} carton</p>
                 </div>
                 {selectedWO && (() => {
                   const prev = receipts.filter(r => r.woId === selectedWO.id).reduce((s, r) => s + r.qtyReceived, 0)
@@ -552,11 +552,11 @@ export default function OutboundPage() {
                     <>
                       <div>
                         <p className="text-muted-foreground">Sudah Diterima</p>
-                        <p className="font-medium text-green-600">{prev > 0 ? `${prev.toLocaleString()} carton` : '—'}</p>
+                        <p className="font-medium text-green-600">{prev > 0 ? `${prev.toLocaleString('id-ID')} carton` : '—'}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Sisa (belum diterima)</p>
-                        <p className="font-bold text-amber-600">{remaining.toLocaleString()} carton</p>
+                        <p className="font-bold text-amber-600">{remaining.toLocaleString('id-ID')} carton</p>
                       </div>
                     </>
                   )
@@ -575,7 +575,7 @@ export default function OutboundPage() {
                   {selectedWO && (() => {
                     const prev = receipts.filter(r => r.woId === selectedWO.id).reduce((s, r) => s + r.qtyReceived, 0)
                     const rem = Math.max(0, selectedWO.quantity - prev)
-                    return <p className="text-xs text-muted-foreground">Maks sisa: {rem.toLocaleString()} carton</p>
+                    return <p className="text-xs text-muted-foreground">Maks sisa: {rem.toLocaleString('id-ID')} carton</p>
                   })()}
                 </div>
                 <div className="space-y-2">
@@ -590,7 +590,7 @@ export default function OutboundPage() {
 
               {qtyAcc > 0 && (
                 <div className="text-sm bg-green-50 border border-green-200 rounded px-3 py-2">
-                  <span className="text-green-700 font-medium">Qty Diterima (accepted): {qtyAcc.toLocaleString()} carton</span>
+                  <span className="text-green-700 font-medium">Qty Diterima (accepted): {qtyAcc.toLocaleString('id-ID')} carton</span>
                   {qtyRejek > 0 && (
                     <span className="text-red-600 ml-3">({qtyRejek} rejek)</span>
                   )}
@@ -600,7 +600,7 @@ export default function OutboundPage() {
                 <div className="text-sm bg-orange-50 border border-orange-200 rounded px-3 py-2 flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5 shrink-0" />
                   <span className="text-orange-700 font-medium">
-                    ⚠ Qty diterima ({qtyAcc.toLocaleString()}) melebihi qty WO ({selectedWO.quantity.toLocaleString()} carton). Periksa kembali sebelum menyimpan.
+                    ⚠ Qty diterima ({qtyAcc.toLocaleString('id-ID')}) melebihi qty WO ({selectedWO.quantity.toLocaleString('id-ID')} carton). Periksa kembali sebelum menyimpan.
                   </span>
                 </div>
               )}
@@ -705,18 +705,18 @@ export default function OutboundPage() {
                 </div>
                 <div>
                   <p className="text-muted-foreground">Qty SO</p>
-                  <p className="font-bold">{selectedSO?.quantity.toLocaleString()} carton</p>
+                  <p className="font-bold">{selectedSO?.quantity.toLocaleString('id-ID')} carton</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Stok BJ Tersedia</p>
                   <p className={`font-bold ${selectedSOFGAvail >= (selectedSO?.quantity || 0) ? 'text-green-600' : 'text-amber-600'}`}>
-                    {selectedSOFGAvail.toLocaleString()} carton
+                    {selectedSOFGAvail.toLocaleString('id-ID')} carton
                   </p>
                 </div>
                 {selectedSOFGAvail < (selectedSO?.quantity || 0) && (
                   <div>
                     <p className="text-muted-foreground">Kurang</p>
-                    <p className="font-bold text-red-600">{((selectedSO?.quantity || 0) - selectedSOFGAvail).toLocaleString()} carton</p>
+                    <p className="font-bold text-red-600">{((selectedSO?.quantity || 0) - selectedSOFGAvail).toLocaleString('id-ID')} carton</p>
                   </div>
                 )}
               </div>
@@ -732,13 +732,13 @@ export default function OutboundPage() {
                   {selectedSO && Number(shipForm.qtyDikirim) > selectedSO.quantity && (
                     <p className="text-xs text-red-600 font-medium flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
-                      ⚠ Melebihi qty SO ({selectedSO.quantity.toLocaleString()} carton). Pertimbangkan revisi SO.
+                      ⚠ Melebihi qty SO ({selectedSO.quantity.toLocaleString('id-ID')} carton). Pertimbangkan revisi SO.
                     </p>
                   )}
                   {selectedSOFGAvail > 0 && Number(shipForm.qtyDikirim) > selectedSOFGAvail && (
                     <p className="text-xs text-red-600 font-medium flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
-                      Stok BJ hanya {selectedSOFGAvail.toLocaleString()} — tidak bisa kirim melebihi stok. Kurangi qty atau terima lebih dulu dari produksi.
+                      Stok BJ hanya {selectedSOFGAvail.toLocaleString('id-ID')} — tidak bisa kirim melebihi stok. Kurangi qty atau terima lebih dulu dari produksi.
                     </p>
                   )}
                 </div>

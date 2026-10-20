@@ -250,7 +250,7 @@ export default function WorkOrderDetailPage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Target Qty</p>
-                  <p className="font-semibold text-lg">{wo.quantity.toLocaleString()} carton</p>
+                  <p className="font-semibold text-lg">{wo.quantity.toLocaleString('id-ID')} carton</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Jadwal</p>

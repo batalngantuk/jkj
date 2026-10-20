@@ -317,20 +317,20 @@ export default function SalesOrderDetailPage() {
                             <tr key={item.id} className={i % 2 === 0 ? '' : 'bg-muted/20'}>
                               <td className="p-4 font-medium">{item.namaBarang}</td>
                               <td className="p-4 text-muted-foreground font-mono text-xs">{item.kodeBarang || '—'}</td>
-                              <td className="p-4 text-right">{item.qty.toLocaleString()}</td>
+                              <td className="p-4 text-right">{item.qty.toLocaleString('id-ID')}</td>
                               <td className="p-4 text-right text-muted-foreground">{item.satuan}</td>
-                              <td className="p-4 text-right">{item.hargaSatuan.toLocaleString()}</td>
-                              <td className="p-4 text-right font-semibold">{(item.qty * item.hargaSatuan).toLocaleString()}</td>
+                              <td className="p-4 text-right">{item.hargaSatuan.toLocaleString('id-ID')}</td>
+                              <td className="p-4 text-right font-semibold">{(item.qty * item.hargaSatuan).toLocaleString('id-ID')}</td>
                             </tr>
                           ))
                         ) : (
                           <tr>
                             <td className="p-4 font-medium">{order.product}</td>
                             <td className="p-4 text-muted-foreground">—</td>
-                            <td className="p-4 text-right">{order.quantity.toLocaleString()}</td>
+                            <td className="p-4 text-right">{order.quantity.toLocaleString('id-ID')}</td>
                             <td className="p-4 text-right text-muted-foreground">carton</td>
-                            <td className="p-4 text-right">{order.unitPrice.toLocaleString()}</td>
-                            <td className="p-4 text-right font-semibold">{order.total.toLocaleString()}</td>
+                            <td className="p-4 text-right">{order.unitPrice.toLocaleString('id-ID')}</td>
+                            <td className="p-4 text-right font-semibold">{order.total.toLocaleString('id-ID')}</td>
                           </tr>
                         )}
                       </tbody>
@@ -338,7 +338,7 @@ export default function SalesOrderDetailPage() {
                   </div>
                   <div className="flex justify-end mt-4">
                     <div className="text-lg font-bold">
-                      Grand Total: {order.total.toLocaleString()}
+                      Grand Total: {order.total.toLocaleString('id-ID')}
                     </div>
                   </div>
                 </CardContent>
@@ -378,17 +378,17 @@ export default function SalesOrderDetailPage() {
                   <div className="grid grid-cols-3 gap-4 mb-4">
                     <div className="rounded-lg border p-3 text-center">
                       <p className="text-xs text-muted-foreground mb-1">Target Qty SO</p>
-                      <p className="text-xl font-bold">{order.quantity.toLocaleString()}</p>
+                      <p className="text-xl font-bold">{order.quantity.toLocaleString('id-ID')}</p>
                     </div>
                     <div className="rounded-lg border p-3 text-center">
                       <p className="text-xs text-muted-foreground mb-1">BJ Sudah Masuk Gudang</p>
-                      <p className={`text-xl font-bold ${totalFGReceived >= order.quantity ? 'text-green-600' : 'text-amber-600'}`}>{totalFGReceived.toLocaleString()}</p>
+                      <p className={`text-xl font-bold ${totalFGReceived >= order.quantity ? 'text-green-600' : 'text-amber-600'}`}>{totalFGReceived.toLocaleString('id-ID')}</p>
                       {soFGReceipts.length > 1 && <p className="text-xs text-muted-foreground">({soFGReceipts.length}x penerimaan)</p>}
                     </div>
                     <div className="rounded-lg border p-3 text-center">
                       <p className="text-xs text-muted-foreground mb-1">Sudah Dikirim ke Customer</p>
-                      <p className={`text-xl font-bold ${totalShipped >= order.quantity ? 'text-green-600' : remainingToShip > 0 ? 'text-red-600' : 'text-foreground'}`}>{totalShipped.toLocaleString()}</p>
-                      {remainingToShip > 0 && <p className="text-xs text-red-500">Sisa: {remainingToShip.toLocaleString()}</p>}
+                      <p className={`text-xl font-bold ${totalShipped >= order.quantity ? 'text-green-600' : remainingToShip > 0 ? 'text-red-600' : 'text-foreground'}`}>{totalShipped.toLocaleString('id-ID')}</p>
+                      {remainingToShip > 0 && <p className="text-xs text-red-500">Sisa: {remainingToShip.toLocaleString('id-ID')}</p>}
                     </div>
                   </div>
                   {soFGReceipts.length > 0 && (
@@ -397,7 +397,7 @@ export default function SalesOrderDetailPage() {
                       {soFGReceipts.map(r => (
                         <div key={r.id} className="flex justify-between text-muted-foreground border-b pb-1">
                           <span>{r.id} · {r.tanggal}</span>
-                          <span className="font-medium">{r.qtyReceived.toLocaleString()} {r.unit} ({r.gudangTujuan})</span>
+                          <span className="font-medium">{r.qtyReceived.toLocaleString('id-ID')} {r.unit} ({r.gudangTujuan})</span>
                         </div>
                       ))}
                     </div>

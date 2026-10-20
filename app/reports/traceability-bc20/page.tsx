@@ -139,7 +139,7 @@ export default function TraceabilityBC20Page() {
         type: 'BC20', icon: <FileText className="h-5 w-5" />, label: 'BC 2.0 Import',
         number: tr.bc20Number, date: tr.bc20Date,
         detail: `${tr.supplier} — ${tr.rmDescription}`,
-        lotNumber: tr.rmLotNumber, quantity: `${tr.rmQuantity.toLocaleString()} ${tr.rmUnit}`,
+        lotNumber: tr.rmLotNumber, quantity: `${tr.rmQuantity.toLocaleString('id-ID')} ${tr.rmUnit}`,
         href: `/purchasing/bc20/${tr.bc20Id}`, optional: false,
         color: 'bg-blue-100 border-blue-300 text-blue-800',
       },
@@ -147,7 +147,7 @@ export default function TraceabilityBC20Page() {
         type: 'GR', icon: <Package className="h-5 w-5" />, label: 'Goods Receipt',
         number: tr.grNumber, date: tr.grDate,
         detail: `Received at warehouse`,
-        lotNumber: tr.rmLotNumber, quantity: `${tr.grQuantity.toLocaleString()} ${tr.rmUnit}`,
+        lotNumber: tr.rmLotNumber, quantity: `${tr.grQuantity.toLocaleString('id-ID')} ${tr.rmUnit}`,
         optional: false,
         color: 'bg-purple-100 border-purple-300 text-purple-800',
       },
@@ -155,7 +155,7 @@ export default function TraceabilityBC20Page() {
         type: 'WO', icon: <Factory className="h-5 w-5" />, label: 'Work Order (Production)',
         number: tr.woNumber, date: tr.woDate,
         detail: tr.productName,
-        lotNumber: tr.fgLotNumber, quantity: `${tr.fgQuantity.toLocaleString()} ${tr.fgUnit}`,
+        lotNumber: tr.fgLotNumber, quantity: `${tr.fgQuantity.toLocaleString('id-ID')} ${tr.fgUnit}`,
         optional: true,
         color: 'bg-orange-100 border-orange-300 text-orange-800',
       },
@@ -166,7 +166,7 @@ export default function TraceabilityBC20Page() {
         type: 'PEB', icon: <Ship className="h-5 w-5" />, label: 'PEB Export',
         number: tr.pebNumber!, date: tr.pebDate!,
         detail: `${tr.customer} — ${tr.destinationCountry}`,
-        lotNumber: tr.fgLotNumber, quantity: `${tr.exportQuantity!.toLocaleString()} ${tr.fgUnit}`,
+        lotNumber: tr.fgLotNumber, quantity: `${tr.exportQuantity!.toLocaleString('id-ID')} ${tr.fgUnit}`,
         href: `/logistics/peb/${tr.pebId}`, optional: true,
         color: 'bg-green-100 border-green-300 text-green-800',
       })
@@ -175,7 +175,7 @@ export default function TraceabilityBC20Page() {
         type: 'DOM', icon: <CheckCircle className="h-5 w-5" />, label: 'Domestic Sales',
         number: 'SO-Domestic', date: tr.woDate,
         detail: `${tr.customer} — ${tr.destinationCountry}`,
-        lotNumber: null, quantity: `${tr.fgQuantity.toLocaleString()} ${tr.fgUnit}`,
+        lotNumber: null, quantity: `${tr.fgQuantity.toLocaleString('id-ID')} ${tr.fgUnit}`,
         optional: true,
         color: 'bg-teal-100 border-teal-300 text-teal-800',
       })
@@ -328,16 +328,16 @@ export default function TraceabilityBC20Page() {
                   <div className="grid grid-cols-4 gap-4 text-sm">
                     <div>
                       <p className="text-xs text-muted-foreground">Input (RM)</p>
-                      <p className="font-bold">{selected.rmQuantity.toLocaleString()} kg</p>
+                      <p className="font-bold">{selected.rmQuantity.toLocaleString('id-ID')} kg</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Output (FG)</p>
-                      <p className="font-bold">{selected.fgQuantity.toLocaleString()} kg</p>
+                      <p className="font-bold">{selected.fgQuantity.toLocaleString('id-ID')} kg</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Waste / Loss</p>
                       <p className={`font-bold ${selected.wastePct > 6 ? 'text-orange-600' : ''}`}>
-                        {selected.waste.toLocaleString()} kg ({selected.wastePct.toFixed(1)}%)
+                        {selected.waste.toLocaleString('id-ID')} kg ({selected.wastePct.toFixed(1)}%)
                       </p>
                     </div>
                     <div>
@@ -404,7 +404,7 @@ export default function TraceabilityBC20Page() {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Quantity:</span>
-                          <span>{selected.rmQuantity.toLocaleString()} {selected.rmUnit}</span>
+                          <span>{selected.rmQuantity.toLocaleString('id-ID')} {selected.rmUnit}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">GR Date:</span>
@@ -438,7 +438,7 @@ export default function TraceabilityBC20Page() {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">FG Quantity:</span>
-                          <span>{selected.fgQuantity.toLocaleString()} {selected.fgUnit}</span>
+                          <span>{selected.fgQuantity.toLocaleString('id-ID')} {selected.fgUnit}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Prod. Date:</span>
@@ -461,7 +461,7 @@ export default function TraceabilityBC20Page() {
                             </div>
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">FOB:</span>
-                              <span>USD {selected.fobValue?.toLocaleString()}</span>
+                              <span>USD {selected.fobValue?.toLocaleString('id-ID')}</span>
                             </div>
                           </>
                         )}

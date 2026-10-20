@@ -121,8 +121,8 @@ export default function BC20ManagementPage() {
       header: "CIF Value",
       cell: (item: typeof MOCK_BC20[0]) => (
         <div className="text-right">
-          <p className="font-semibold">{item.currency} {item.cifValue.toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground">Tax: Rp {item.totalTax.toLocaleString()}</p>
+          <p className="font-semibold">{item.currency} {item.cifValue.toLocaleString('id-ID')}</p>
+          <p className="text-xs text-muted-foreground">Tax: Rp {item.totalTax.toLocaleString('id-ID')}</p>
         </div>
       )
     },
@@ -196,7 +196,7 @@ export default function BC20ManagementPage() {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">USD {totalValue.toLocaleString()}</div>
+              <div className="text-2xl font-bold">USD {totalValue.toLocaleString('id-ID')}</div>
               <p className="text-xs text-muted-foreground">
                 Current month
               </p>

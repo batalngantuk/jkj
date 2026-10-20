@@ -130,7 +130,7 @@ function PrintSubk11Content() {
                 {rec.qtyCMT && (
                   <>
                     <td style={{ border: 'none', padding: '2px 0', width: '30%' }}><b>Target Qty CMT</b></td>
-                    <td style={{ border: 'none', padding: '2px 0' }}>: {rec.qtyCMT.toLocaleString()} {rec.satuanCMT || ''}</td>
+                    <td style={{ border: 'none', padding: '2px 0' }}>: {rec.qtyCMT.toLocaleString('id-ID')} {rec.satuanCMT || ''}</td>
                   </>
                 )}
               </tr>
@@ -160,9 +160,9 @@ function PrintSubk11Content() {
                 <td style={{ fontFamily: 'monospace', fontSize: '9px' }}>{item.kodeBB}</td>
                 <td>{item.namaBB}</td>
                 <td style={{ textAlign: 'center' }}>{item.satuanBB}</td>
-                <td style={{ textAlign: 'right' }}>{item.qtyKirim.toLocaleString()}</td>
+                <td style={{ textAlign: 'right' }}>{item.qtyKirim.toLocaleString('id-ID')}</td>
                 <td style={{ textAlign: 'center', fontSize: '9px' }}>{rec.noSO || '—'}</td>
-                <td style={{ textAlign: 'right' }}>{rec.qtyCMT ? rec.qtyCMT.toLocaleString() : '—'}</td>
+                <td style={{ textAlign: 'right' }}>{rec.qtyCMT ? rec.qtyCMT.toLocaleString('id-ID') : '—'}</td>
                 <td style={{ textAlign: 'center' }}>{rec.satuanCMT || '—'}</td>
               </tr>
             )) : rec.items.map((item, i) => (
@@ -171,9 +171,9 @@ function PrintSubk11Content() {
                 <td style={{ fontFamily: 'monospace', fontSize: '9px' }}>{item.kodeBB}</td>
                 <td>{item.namaBB}</td>
                 <td style={{ textAlign: 'center' }}>{item.satuanBB}</td>
-                <td style={{ textAlign: 'right' }}>{item.qtyKirim.toLocaleString()}</td>
+                <td style={{ textAlign: 'right' }}>{item.qtyKirim.toLocaleString('id-ID')}</td>
                 <td style={{ textAlign: 'center', fontSize: '9px' }}>{rec.noSO || '—'}</td>
-                <td style={{ textAlign: 'right' }}>{rec.qtyCMT ? rec.qtyCMT.toLocaleString() : '—'}</td>
+                <td style={{ textAlign: 'right' }}>{rec.qtyCMT ? rec.qtyCMT.toLocaleString('id-ID') : '—'}</td>
                 <td style={{ textAlign: 'center' }}>{rec.satuanCMT || '—'}</td>
               </tr>
             ))}

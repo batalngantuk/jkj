@@ -35,7 +35,7 @@ export default function ProductionDashboard() {
     { 
       header: "Qty", 
       accessorKey: "quantity" as keyof typeof MOCK_WORK_ORDERS[0],
-      cell: (item: typeof MOCK_WORK_ORDERS[0]) => <span>{item.quantity.toLocaleString()}</span>
+      cell: (item: typeof MOCK_WORK_ORDERS[0]) => <span>{item.quantity.toLocaleString('id-ID')}</span>
     },
     {
       header: "Line",
@@ -112,14 +112,14 @@ export default function ProductionDashboard() {
               <Card className="p-6">
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Daily Target</p>
-                  <p className="text-2xl font-bold text-foreground">{totalTarget.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-foreground">{totalTarget.toLocaleString('id-ID')}</p>
                   <p className="text-xs text-muted-foreground">Cartons</p>
                 </div>
               </Card>
               <Card className="p-6">
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Actual Production</p>
-                  <p className="text-2xl font-bold text-foreground">{totalCompleted.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-foreground">{totalCompleted.toLocaleString('id-ID')}</p>
                   <p className={`text-xs ${efficiency >= 80 ? 'text-green-600' : 'text-yellow-600'}`}>
                     {efficiency}% Efficiency
                   </p>
@@ -166,7 +166,7 @@ export default function ProductionDashboard() {
                                </div>
                                <Progress value={(line.completed / line.target) * 100 || 0} className="h-2" />
                                <p className="text-xs text-center text-muted-foreground mt-1">
-                                   {line.completed.toLocaleString()} / {line.target.toLocaleString()}
+                                   {line.completed.toLocaleString('id-ID')} / {line.target.toLocaleString('id-ID')}
                                </p>
                            </div>
                        </CardContent>

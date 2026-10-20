@@ -87,9 +87,9 @@ export default function SalesOrderManagement() {
         <div className="text-right">
           {item.lineItems && item.lineItems.length > 1
             ? item.lineItems.map(l => (
-                <p key={l.id} className="text-xs">{l.qty.toLocaleString()} {l.satuan}</p>
+                <p key={l.id} className="text-xs">{l.qty.toLocaleString('id-ID')} {l.satuan}</p>
               ))
-            : <span>{item.quantity.toLocaleString()}</span>
+            : <span>{item.quantity.toLocaleString('id-ID')}</span>
           }
         </div>
       )
@@ -98,7 +98,7 @@ export default function SalesOrderManagement() {
       header: "Total",
       accessorKey: "total" as keyof SalesOrder,
       className: "text-right",
-      cell: (item: SalesOrder) => <span className="font-medium">Rp {item.total.toLocaleString()}</span>
+      cell: (item: SalesOrder) => <span className="font-medium">Rp {item.total.toLocaleString('id-ID')}</span>
     },
     { header: "Delivery Date", accessorKey: "deliveryDate" as keyof SalesOrder },
     {

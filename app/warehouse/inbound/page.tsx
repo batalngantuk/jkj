@@ -627,17 +627,17 @@ export default function InboundPage() {
                       <div className="grid grid-cols-3 gap-2 items-end">
                         <div>
                           <span className="text-xs text-muted-foreground block">Dipesan</span>
-                          <span className="font-bold text-sm">{item.quantity.toLocaleString()} {item.unit}</span>
+                          <span className="font-bold text-sm">{item.quantity.toLocaleString('id-ID')} {item.unit}</span>
                         </div>
                         {alreadyQty > 0 && (
                           <div>
                             <span className="text-xs text-muted-foreground block">Sudah Diterima</span>
-                            <span className="text-sm text-amber-700 font-medium">{alreadyQty.toLocaleString()} {item.unit}</span>
+                            <span className="text-sm text-amber-700 font-medium">{alreadyQty.toLocaleString('id-ID')} {item.unit}</span>
                           </div>
                         )}
                         <div className={alreadyQty > 0 ? '' : 'col-span-2'}>
                           <Label className="text-xs mb-1 block">
-                            Qty Diterima {alreadyQty > 0 && <span className="text-muted-foreground">(sisa: {remainingQty.toLocaleString()})</span>}
+                            Qty Diterima {alreadyQty > 0 && <span className="text-muted-foreground">(sisa: {remainingQty.toLocaleString('id-ID')})</span>}
                           </Label>
                           <div className="flex items-center gap-1">
                             <Input
@@ -650,7 +650,7 @@ export default function InboundPage() {
                             <span className="text-xs text-muted-foreground">{item.unit}</span>
                           </div>
                           {isOverQty && (
-                            <p className="text-xs text-red-600 mt-0.5">Melebihi sisa {remainingQty.toLocaleString()} {item.unit}</p>
+                            <p className="text-xs text-red-600 mt-0.5">Melebihi sisa {remainingQty.toLocaleString('id-ID')} {item.unit}</p>
                           )}
                         </div>
                       </div>

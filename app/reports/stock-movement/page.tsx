@@ -159,7 +159,7 @@ export default function StockMovementReportPage() {
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm text-blue-900 font-medium">Opening Balance</p>
                   <p className="text-2xl font-bold text-blue-600 mt-1">
-                    {summary.openingBalance.toLocaleString()}
+                    {summary.openingBalance.toLocaleString('id-ID')}
                   </p>
                 </div>
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -168,7 +168,7 @@ export default function StockMovementReportPage() {
                     Total In
                   </p>
                   <p className="text-2xl font-bold text-green-600 mt-1">
-                    {summary.totalIn.toLocaleString()}
+                    {summary.totalIn.toLocaleString('id-ID')}
                   </p>
                 </div>
                 <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -177,13 +177,13 @@ export default function StockMovementReportPage() {
                     Total Out
                   </p>
                   <p className="text-2xl font-bold text-red-600 mt-1">
-                    {summary.totalOut.toLocaleString()}
+                    {summary.totalOut.toLocaleString('id-ID')}
                   </p>
                 </div>
                 <div className="p-4 bg-primary/10 border-2 border-primary rounded-lg">
                   <p className="text-sm font-semibold">Closing Balance</p>
                   <p className="text-2xl font-bold text-primary mt-1">
-                    {summary.closingBalance.toLocaleString()}
+                    {summary.closingBalance.toLocaleString('id-ID')}
                   </p>
                 </div>
               </div>
@@ -192,27 +192,27 @@ export default function StockMovementReportPage() {
               <div className="grid gap-3 md:grid-cols-3 mb-6 p-4 bg-secondary/20 rounded-lg">
                 <div>
                   <p className="text-xs text-muted-foreground">Import (BC 2.0)</p>
-                  <p className="font-semibold text-blue-600">{summary.importQty.toLocaleString()}</p>
+                  <p className="font-semibold text-blue-600">{summary.importQty.toLocaleString('id-ID')}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Production</p>
-                  <p className="font-semibold text-orange-600">{summary.productionOutQty.toLocaleString()}</p>
+                  <p className="font-semibold text-orange-600">{summary.productionOutQty.toLocaleString('id-ID')}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Export (PEB)</p>
-                  <p className="font-semibold text-green-600">{summary.exportQty.toLocaleString()}</p>
+                  <p className="font-semibold text-green-600">{summary.exportQty.toLocaleString('id-ID')}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Waste/Scrap</p>
-                  <p className="font-semibold text-red-600">{summary.wasteQty.toLocaleString()}</p>
+                  <p className="font-semibold text-red-600">{summary.wasteQty.toLocaleString('id-ID')}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Local Purchase</p>
-                  <p className="font-semibold">{summary.localPurchaseQty.toLocaleString()}</p>
+                  <p className="font-semibold">{summary.localPurchaseQty.toLocaleString('id-ID')}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Adjustment</p>
-                  <p className="font-semibold">{summary.adjustmentQty.toLocaleString()}</p>
+                  <p className="font-semibold">{summary.adjustmentQty.toLocaleString('id-ID')}</p>
                 </div>
               </div>
 
@@ -260,13 +260,13 @@ export default function StockMovementReportPage() {
                               )}
                             </TableCell>
                             <TableCell className="text-right font-semibold text-green-600">
-                              {movement.quantityIn > 0 ? movement.quantityIn.toLocaleString() : '-'}
+                              {movement.quantityIn > 0 ? movement.quantityIn.toLocaleString('id-ID') : '-'}
                             </TableCell>
                             <TableCell className="text-right font-semibold text-red-600">
-                              {movement.quantityOut > 0 ? movement.quantityOut.toLocaleString() : '-'}
+                              {movement.quantityOut > 0 ? movement.quantityOut.toLocaleString('id-ID') : '-'}
                             </TableCell>
                             <TableCell className="text-right font-bold">
-                              {movement.runningBalance.toLocaleString()}
+                              {movement.runningBalance.toLocaleString('id-ID')}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
                               {movement.notes || '-'}

@@ -157,7 +157,7 @@ export default function WorkOrderListPage() {
                       <TableCell className="font-medium text-primary">{wo.id}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">{wo.soNumber}</TableCell>
                       <TableCell>{wo.product}</TableCell>
-                      <TableCell className="text-right font-medium">{wo.quantity.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-medium">{wo.quantity.toLocaleString('id-ID')}</TableCell>
                       <TableCell className="text-sm">{wo.line}</TableCell>
                       <TableCell className="text-sm">{wo.startDate}</TableCell>
                       <TableCell className="text-sm">{wo.endDate}</TableCell>

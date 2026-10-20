@@ -124,7 +124,7 @@ export default function POListPage() {
       header: 'Total Amount',
       cell: (item: PurchaseOrder) => (
         <div>
-          <span className="font-medium">Rp {item.totalAmount.toLocaleString()}</span>
+          <span className="font-medium">Rp {item.totalAmount.toLocaleString('id-ID')}</span>
           {item.currency && item.currency !== 'IDR' && (
             <p className="text-xs text-muted-foreground">{item.currency}</p>
           )}
@@ -252,7 +252,7 @@ export default function POListPage() {
                         onChange={e => setAmendQtys(prev => ({ ...prev, [i]: e.target.value }))}
                         className="h-8 text-sm"
                       />
-                      <p className="text-xs text-muted-foreground mt-0.5">Saat ini: {item.quantity.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Saat ini: {item.quantity.toLocaleString('id-ID')}</p>
                     </div>
                   </div>
                 ))}
@@ -326,7 +326,7 @@ export default function POListPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total</span>
-                  <span>Rp {cancelTarget.totalAmount.toLocaleString()}</span>
+                  <span>Rp {cancelTarget.totalAmount.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Status saat ini</span>
@@ -352,7 +352,7 @@ export default function POListPage() {
                     <div key={i} className="flex items-center gap-2 rounded border px-3 py-2 text-sm">
                       <Package className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                       <span className="flex-1">{item.name}</span>
-                      <span className="text-muted-foreground">{item.quantity.toLocaleString()} {item.unit}</span>
+                      <span className="text-muted-foreground">{item.quantity.toLocaleString('id-ID')} {item.unit}</span>
                     </div>
                   ))}
                 </div>

@@ -63,7 +63,7 @@ export default function InvoicesPage() {
        header: "Amount",
        accessorKey: "amount" as keyof typeof combinedInvoices[0],
        cell: (item: typeof combinedInvoices[0]) => (
-           <span className="font-semibold">Rp {item.amount.toLocaleString()}</span>
+           <span className="font-semibold">Rp {item.amount.toLocaleString('id-ID')}</span>
        )
     },
     {

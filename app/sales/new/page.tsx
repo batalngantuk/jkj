@@ -251,13 +251,13 @@ export default function NewSalesOrderPage() {
                           </span>
                           {qty > 0 && (
                             <span className="text-xs text-muted-foreground">
-                              {qty.toLocaleString()} {line.satuan}
-                              {harga > 0 && ` × ${currency} ${harga.toLocaleString()}`}
+                              {qty.toLocaleString('id-ID')} {line.satuan}
+                              {harga > 0 && ` × ${currency} ${harga.toLocaleString('id-ID')}`}
                             </span>
                           )}
                           {subtotalIDR > 0 && (
                             <Badge variant="outline" className="text-xs">
-                              Rp {subtotalIDR.toLocaleString()}
+                              Rp {subtotalIDR.toLocaleString('id-ID')}
                             </Badge>
                           )}
                         </div>
@@ -351,8 +351,8 @@ export default function NewSalesOrderPage() {
                               <div className="col-span-2 bg-muted/30 rounded p-2 text-sm">
                                 <span className="text-muted-foreground">Subtotal: </span>
                                 <span className="font-semibold">
-                                  {currency !== 'IDR' && `${currency} ${(qty * harga).toLocaleString()} = `}
-                                  Rp {subtotalIDR.toLocaleString()}
+                                  {currency !== 'IDR' && `${currency} ${(qty * harga).toLocaleString('id-ID')} = `}
+                                  Rp {subtotalIDR.toLocaleString('id-ID')}
                                 </span>
                               </div>
                             )}
@@ -379,12 +379,12 @@ export default function NewSalesOrderPage() {
                     <div className="text-right space-y-1">
                       {currency !== 'IDR' && (
                         <p className="text-sm text-muted-foreground">
-                          {currency} {lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.hargaSatuan) || 0), 0).toLocaleString()}
-                          {' '}× kurs {Number(kurs).toLocaleString()}
+                          {currency} {lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.hargaSatuan) || 0), 0).toLocaleString('id-ID')}
+                          {' '}× kurs {Number(kurs).toLocaleString('id-ID')}
                         </p>
                       )}
                       <p className="text-lg font-bold">
-                        Total: Rp {totalIDR.toLocaleString()}
+                        Total: Rp {totalIDR.toLocaleString('id-ID')}
                       </p>
                     </div>
                   </div>

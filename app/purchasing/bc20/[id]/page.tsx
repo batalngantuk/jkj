@@ -372,20 +372,20 @@ export default function BC20DetailPage() {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-muted-foreground">Bea Masuk</p>
-                          <p className="font-semibold">Rp {bc20.taxBill.beaMasuk.toLocaleString()}</p>
+                          <p className="font-semibold">Rp {bc20.taxBill.beaMasuk.toLocaleString('id-ID')}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">PPN Import (11%)</p>
-                          <p className="font-semibold">Rp {bc20.taxBill.ppnImport.toLocaleString()}</p>
+                          <p className="font-semibold">Rp {bc20.taxBill.ppnImport.toLocaleString('id-ID')}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">PPh 22 (2.5%)</p>
-                          <p className="font-semibold">Rp {bc20.taxBill.pph22.toLocaleString()}</p>
+                          <p className="font-semibold">Rp {bc20.taxBill.pph22.toLocaleString('id-ID')}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Total Tax Bill</p>
                           <p className="font-bold text-lg text-orange-600">
-                            Rp {bc20.taxBill.totalAmount.toLocaleString()}
+                            Rp {bc20.taxBill.totalAmount.toLocaleString('id-ID')}
                           </p>
                         </div>
                       </div>
@@ -394,13 +394,13 @@ export default function BC20DetailPage() {
                         <div>
                           <p className="text-muted-foreground">Paid Amount</p>
                           <p className="font-semibold text-green-600">
-                            Rp {bc20.taxBill.paidAmount.toLocaleString()}
+                            Rp {bc20.taxBill.paidAmount.toLocaleString('id-ID')}
                           </p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Remaining Amount</p>
                           <p className="font-bold text-orange-600">
-                            Rp {bc20.taxBill.remainingAmount.toLocaleString()}
+                            Rp {bc20.taxBill.remainingAmount.toLocaleString('id-ID')}
                           </p>
                         </div>
                       </div>
@@ -419,7 +419,7 @@ export default function BC20DetailPage() {
                           max={bc20.taxBill.remainingAmount}
                         />
                         <p className="text-xs text-muted-foreground">
-                          Maximum: Rp {bc20.taxBill.remainingAmount.toLocaleString()}
+                          Maximum: Rp {bc20.taxBill.remainingAmount.toLocaleString('id-ID')}
                         </p>
                       </div>
 
@@ -530,7 +530,7 @@ export default function BC20DetailPage() {
             <CheckCircle className="h-4 w-4 text-cyan-600" />
             <AlertTitle className="text-cyan-900">Pembayaran Pajak Tercatat</AlertTitle>
             <AlertDescription className="text-cyan-700">
-              Rp {taxPaymentRecord.amount.toLocaleString()} — {taxPaymentRecord.method} — Ref: {taxPaymentRecord.ref || '-'} — Tgl: {new Date(taxPaymentRecord.date).toLocaleDateString('id-ID')}
+              Rp {taxPaymentRecord.amount.toLocaleString('id-ID')} — {taxPaymentRecord.method} — Ref: {taxPaymentRecord.ref || '-'} — Tgl: {new Date(taxPaymentRecord.date).toLocaleDateString('id-ID')}
             </AlertDescription>
           </Alert>
         )}
@@ -543,7 +543,7 @@ export default function BC20DetailPage() {
             <AlertDescription className="text-orange-700">
               Import duties and taxes must be paid before customs clearance.
               Payment due: <strong>{new Date(bc20.taxBill.dueDate).toLocaleDateString('id-ID')}</strong>
-              {' - '}Rp {bc20.totalTax.toLocaleString()}
+              {' - '}Rp {bc20.totalTax.toLocaleString('id-ID')}
             </AlertDescription>
           </Alert>
         )}
@@ -585,22 +585,22 @@ export default function BC20DetailPage() {
               <div>
                 <p className="text-sm text-muted-foreground">Amount (CIF Value in IDR)</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  Rp {bc20.vendorBill.amount.toLocaleString()}
+                  Rp {bc20.vendorBill.amount.toLocaleString('id-ID')}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {bc20.currency} {bc20.cifValue.toLocaleString()} × Rp {bc20.exchangeRate.toLocaleString()}
+                  {bc20.currency} {bc20.cifValue.toLocaleString('id-ID')} × Rp {bc20.exchangeRate.toLocaleString('id-ID')}
                 </p>
               </div>
               <Separator />
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Paid Amount</p>
-                  <p className="font-semibold">Rp {bc20.vendorBill.paidAmount.toLocaleString()}</p>
+                  <p className="font-semibold">Rp {bc20.vendorBill.paidAmount.toLocaleString('id-ID')}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Remaining</p>
                   <p className="font-semibold text-blue-600">
-                    Rp {bc20.vendorBill.remainingAmount.toLocaleString()}
+                    Rp {bc20.vendorBill.remainingAmount.toLocaleString('id-ID')}
                   </p>
                 </div>
               </div>
@@ -641,21 +641,21 @@ export default function BC20DetailPage() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Bea Masuk (5%)</span>
-                  <span className="font-medium">Rp {bc20.taxBill.beaMasuk.toLocaleString()}</span>
+                  <span className="font-medium">Rp {bc20.taxBill.beaMasuk.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">PPN Import (11%)</span>
-                  <span className="font-medium">Rp {bc20.taxBill.ppnImport.toLocaleString()}</span>
+                  <span className="font-medium">Rp {bc20.taxBill.ppnImport.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">PPh 22 (2.5%)</span>
-                  <span className="font-medium">Rp {bc20.taxBill.pph22.toLocaleString()}</span>
+                  <span className="font-medium">Rp {bc20.taxBill.pph22.toLocaleString('id-ID')}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between">
                   <span className="font-semibold">Total Tax Amount</span>
                   <span className="text-2xl font-bold text-orange-600">
-                    Rp {bc20.taxBill.totalAmount.toLocaleString()}
+                    Rp {bc20.taxBill.totalAmount.toLocaleString('id-ID')}
                   </span>
                 </div>
               </div>
@@ -664,12 +664,12 @@ export default function BC20DetailPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Paid Amount</p>
-                  <p className="font-semibold">Rp {bc20.taxBill.paidAmount.toLocaleString()}</p>
+                  <p className="font-semibold">Rp {bc20.taxBill.paidAmount.toLocaleString('id-ID')}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Remaining</p>
                   <p className="font-semibold text-orange-600">
-                    Rp {bc20.taxBill.remainingAmount.toLocaleString()}
+                    Rp {bc20.taxBill.remainingAmount.toLocaleString('id-ID')}
                   </p>
                 </div>
               </div>
@@ -705,34 +705,34 @@ export default function BC20DetailPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
               <div className="p-4 bg-white rounded-lg border">
                 <p className="text-sm text-muted-foreground">CIF Value</p>
-                <p className="text-lg font-bold">Rp {bc20.cifIdr.toLocaleString()}</p>
+                <p className="text-lg font-bold">Rp {bc20.cifIdr.toLocaleString('id-ID')}</p>
               </div>
               <div className="p-4 bg-white rounded-lg border">
                 <p className="text-sm text-muted-foreground">Bea Masuk</p>
-                <p className="text-lg font-bold text-orange-600">+ Rp {bc20.beaMasuk.toLocaleString()}</p>
+                <p className="text-lg font-bold text-orange-600">+ Rp {bc20.beaMasuk.toLocaleString('id-ID')}</p>
               </div>
               <div className="p-4 bg-white rounded-lg border">
                 <p className="text-sm text-muted-foreground">Freight</p>
-                <p className="text-lg font-bold">+ Rp {bc20.freightCost.toLocaleString()}</p>
+                <p className="text-lg font-bold">+ Rp {bc20.freightCost.toLocaleString('id-ID')}</p>
               </div>
               <div className="p-4 bg-white rounded-lg border">
                 <p className="text-sm text-muted-foreground">Insurance</p>
-                <p className="text-lg font-bold">+ Rp {bc20.insuranceCost.toLocaleString()}</p>
+                <p className="text-lg font-bold">+ Rp {bc20.insuranceCost.toLocaleString('id-ID')}</p>
               </div>
               <div className="p-4 bg-white rounded-lg border">
                 <p className="text-sm text-muted-foreground">Handling</p>
-                <p className="text-lg font-bold">+ Rp {bc20.handlingCost.toLocaleString()}</p>
+                <p className="text-lg font-bold">+ Rp {bc20.handlingCost.toLocaleString('id-ID')}</p>
               </div>
               <div className="p-4 bg-green-50 rounded-lg border-2 border-green-600">
                 <p className="text-sm font-semibold text-green-900">Total Landed Cost</p>
-                <p className="text-xl font-bold text-green-600">Rp {bc20.totalLandedCost.toLocaleString()}</p>
+                <p className="text-xl font-bold text-green-600">Rp {bc20.totalLandedCost.toLocaleString('id-ID')}</p>
               </div>
             </div>
             <Alert className="mt-4 border-blue-200 bg-blue-50">
               <AlertCircle className="h-4 w-4 text-blue-600" />
               <AlertTitle className="text-blue-900 text-sm">Note on Tax Assets</AlertTitle>
               <AlertDescription className="text-blue-700 text-sm">
-                PPN Import (Rp {bc20.ppnImport.toLocaleString()}) and PPh 22 (Rp {bc20.pph22.toLocaleString()}) are recorded as prepaid tax assets, NOT included in inventory cost.
+                PPN Import (Rp {bc20.ppnImport.toLocaleString('id-ID')}) and PPh 22 (Rp {bc20.pph22.toLocaleString('id-ID')}) are recorded as prepaid tax assets, NOT included in inventory cost.
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -769,16 +769,16 @@ export default function BC20DetailPage() {
                         <p className="font-mono text-sm font-semibold">{item.hsCode}</p>
                         <p className="text-xs text-muted-foreground">{item.hsCodeDescription}</p>
                       </td>
-                      <td className="p-3 text-right font-medium">{item.quantity.toLocaleString()} {item.unit}</td>
+                      <td className="p-3 text-right font-medium">{item.quantity.toLocaleString('id-ID')} {item.unit}</td>
                       <td className="p-3 text-right">
-                        <p className="font-medium">{bc20.currency} {item.unitPriceForeign.toLocaleString()}</p>
-                        <p className="text-xs text-muted-foreground">Rp {item.unitPriceIdr.toLocaleString()}</p>
+                        <p className="font-medium">{bc20.currency} {item.unitPriceForeign.toLocaleString('id-ID')}</p>
+                        <p className="text-xs text-muted-foreground">Rp {item.unitPriceIdr.toLocaleString('id-ID')}</p>
                       </td>
                       <td className="p-3 text-right">
-                        <p className="font-semibold">Rp {item.totalPriceIdr.toLocaleString()}</p>
+                        <p className="font-semibold">Rp {item.totalPriceIdr.toLocaleString('id-ID')}</p>
                       </td>
                       <td className="p-3 text-right">
-                        <p className="font-medium text-orange-600">Rp {item.dutyAmount.toLocaleString()}</p>
+                        <p className="font-medium text-orange-600">Rp {item.dutyAmount.toLocaleString('id-ID')}</p>
                         <p className="text-xs text-muted-foreground">{item.dutyRate}%</p>
                       </td>
                     </tr>
@@ -798,7 +798,7 @@ export default function BC20DetailPage() {
             <CardContent className="space-y-3">
               <div>
                 <p className="text-sm text-muted-foreground">PO Number</p>
-                <Link href={`/purchasing/po/${bc20.poId}`} className="font-mono text-primary hover:underline">
+                <Link href="/purchasing/po" className="font-mono text-primary hover:underline">
                   {bc20.poNumber}
                 </Link>
               </div>

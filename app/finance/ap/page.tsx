@@ -225,7 +225,7 @@ export default function APPage() {
                       </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">{invoice.vendorInvoiceNumber}</TableCell>
                       <TableCell>
-                        <Link href={`/purchasing/po/${invoice.poId}`} className="font-mono text-xs text-muted-foreground hover:underline">
+                        <Link href="/purchasing/po" className="font-mono text-xs text-muted-foreground hover:underline">
                           {invoice.poNumber}
                         </Link>
                       </TableCell>

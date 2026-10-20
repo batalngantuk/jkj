@@ -119,7 +119,7 @@ export default function ProductionReportPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">
-                {totalWaste.toLocaleString()}
+                {totalWaste.toLocaleString('id-ID')}
               </div>
               <p className="text-xs text-muted-foreground">Units of scrap/waste</p>
             </CardContent>
@@ -169,13 +169,13 @@ export default function ProductionReportPage() {
                       </TableCell>
                       <TableCell>
                         <div className="text-right">
-                          <p className="font-semibold">{record.rmQuantity.toLocaleString()}</p>
+                          <p className="font-semibold">{record.rmQuantity.toLocaleString('id-ID')}</p>
                           <p className="text-xs text-muted-foreground">{record.rmUnit}</p>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="text-right">
-                          <p className="font-semibold">{record.fgQuantity.toLocaleString()}</p>
+                          <p className="font-semibold">{record.fgQuantity.toLocaleString('id-ID')}</p>
                           <p className="text-xs text-muted-foreground">{record.fgUnit}</p>
                         </div>
                       </TableCell>
@@ -202,7 +202,7 @@ export default function ProductionReportPage() {
                       </TableCell>
                       <TableCell>
                         <div className="text-right">
-                          <p className="font-semibold text-orange-600">{record.waste.toLocaleString()}</p>
+                          <p className="font-semibold text-orange-600">{record.waste.toLocaleString('id-ID')}</p>
                           <p className="text-xs text-muted-foreground">{record.rmUnit}</p>
                         </div>
                       </TableCell>
@@ -245,7 +245,7 @@ export default function ProductionReportPage() {
                       <p className="font-semibold">{material}</p>
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-sm text-muted-foreground">Total Used</span>
-                        <span className="font-bold text-blue-600">{totalQty.toLocaleString()} {records[0].rmUnit}</span>
+                        <span className="font-bold text-blue-600">{totalQty.toLocaleString('id-ID')} {records[0].rmUnit}</span>
                       </div>
                       <div className="mt-2 pt-2 border-t">
                         <p className="text-xs text-muted-foreground">BC 2.0 References:</p>
@@ -285,7 +285,7 @@ export default function ProductionReportPage() {
                       <p className="font-semibold">{product}</p>
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-sm text-muted-foreground">Total Produced</span>
-                        <span className="font-bold text-green-600">{totalQty.toLocaleString()} {records[0].fgUnit}</span>
+                        <span className="font-bold text-green-600">{totalQty.toLocaleString('id-ID')} {records[0].fgUnit}</span>
                       </div>
                       <div className="mt-2 pt-2 border-t">
                         <div className="flex items-center justify-between text-xs">

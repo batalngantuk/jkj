@@ -469,7 +469,7 @@ export default function PEBCreatePage() {
               <div className="flex flex-col justify-end">
                 <div className="bg-muted/40 rounded p-3 space-y-1 text-sm">
                   <p className="text-muted-foreground text-xs">Nilai FOB (estimasi)</p>
-                  <p className="font-semibold">{currency} {fobValue.toLocaleString()}</p>
+                  <p className="font-semibold">{currency} {fobValue.toLocaleString('id-ID')}</p>
                   <p className="text-primary font-bold">
                     = Rp {fobIdr.toLocaleString('id-ID')}
                   </p>
@@ -517,7 +517,7 @@ export default function PEBCreatePage() {
                     {totalPEBQty > so.quantity && (
                       <div className="flex items-center gap-2 text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded px-2 py-1.5">
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                        <span>⚠ Total qty PEB ({totalPEBQty.toLocaleString()}) melebihi qty SO ({so.quantity.toLocaleString()}). Pertimbangkan revisi SO sebelum lanjut.</span>
+                        <span>⚠ Total qty PEB ({totalPEBQty.toLocaleString('id-ID')}) melebihi qty SO ({so.quantity.toLocaleString('id-ID')}). Pertimbangkan revisi SO sebelum lanjut.</span>
                       </div>
                     )}
                   </div>
