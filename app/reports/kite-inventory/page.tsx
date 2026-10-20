@@ -155,7 +155,8 @@ export default function KiteInventoryPage() {
   // Lap 5: Pengeluaran HP — seed + PEB exported dari live store
   const livePengeluaranHP: PengeluaranHP[] = pebs
     .filter(p => p.status === 'EXPORTED' || p.status === 'SUBMITTED' || p.status === 'APPROVED')
-    .filter(p => !MOCK_PENGELUARAN_HP.find(m => m.pebNo === p.pebNumber))
+    // Nomor PEB baru bisa sama dengan nomor PEB di data contoh (mis. PEB-2026-002) — cocokkan juga pembelinya agar PEB baru tidak ikut tersaring
+    .filter(p => !MOCK_PENGELUARAN_HP.find(m => m.pebNo === p.pebNumber && m.pembeliPenerima === p.customerName))
     .flatMap((p, pi) =>
       p.items.map((item, ii) => ({
         no: MOCK_PENGELUARAN_HP.length + pi + ii + 1,
