@@ -135,6 +135,7 @@ export default function CreatePOPage() {
       status: 'APPROVED',
       paymentStatus: 'UNPAID',
       attachments,
+      notes: notes.trim() || undefined,
     })
     setLoading(false)
     router.push('/purchasing/po')

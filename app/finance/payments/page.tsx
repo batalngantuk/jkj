@@ -10,22 +10,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import AppLayout from '@/components/app-layout'
-import { MOCK_PAYMENTS, MOCK_AR_INVOICES, MOCK_AP_INVOICES } from '@/lib/mock-data/finance'
+import { MOCK_AR_INVOICES, MOCK_AP_INVOICES } from '@/lib/mock-data/finance'
+import { useARInvoices, useAPInvoices, usePayments } from '@/lib/store/hooks'
 import { exportToExcel } from '@/lib/utils/export-excel'
 
 export default function PaymentsPage() {
+  const { payments } = usePayments()
+  const { invoices: liveAR } = useARInvoices()
+  const { invoices: liveAP } = useAPInvoices()
   const [searchTerm, setSearchTerm] = useState('')
   const [methodFilter, setMethodFilter] = useState<string>('ALL')
 
-  const paymentsWithDetails = MOCK_PAYMENTS.map(payment => {
-    const arInvoice = MOCK_AR_INVOICES.find(inv => inv.id === payment.invoiceId)
-    const apInvoice = MOCK_AP_INVOICES.find(inv => inv.id === payment.invoiceId)
-    
+  // Pembayaran dari store (data contoh + yang dicatat dari halaman AR/AP); detail diambil dari record bila ada,
+  // selain itu dicari dari invoice (data contoh atau live)
+  const paymentsWithDetails = payments.map(payment => {
+    const arInvoice = [...liveAR, ...MOCK_AR_INVOICES].find(inv => inv.id === payment.invoiceId)
+    const apInvoice = [...liveAP, ...MOCK_AP_INVOICES].find(inv => inv.id === payment.invoiceId)
+
     return {
       ...payment,
-      type: arInvoice ? 'AR' : 'AP',
-      invoiceNumber: arInvoice?.invoiceNumber || apInvoice?.invoiceNumber || '',
-      counterparty: arInvoice?.customerName || apInvoice?.vendorName || ''
+      type: payment.invoiceType || (arInvoice ? 'AR' : 'AP'),
+      invoiceNumber: payment.invoiceNumber || arInvoice?.invoiceNumber || apInvoice?.invoiceNumber || '',
+      counterparty: payment.counterparty || arInvoice?.customerName || apInvoice?.vendorName || ''
     }
   })
 

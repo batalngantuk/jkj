@@ -16,13 +16,14 @@ import {
 import AppLayout from '@/components/app-layout'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { exportToExcel } from '@/lib/utils/export-excel'
-import { useAPInvoices } from '@/lib/store/hooks'
+import { useAPInvoices, usePayments } from '@/lib/store/hooks'
 import type { APInvoice } from '@/lib/mock-data/finance'
 
 const CURRENCY_SYMBOL: Record<string, string> = { IDR: 'Rp', USD: '$', KRW: '₩' }
 
 export default function APPage() {
   const { invoices, updateInvoice } = useAPInvoices()
+  const { createPayment } = usePayments()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
 
@@ -81,7 +82,18 @@ export default function APPage() {
     const rawBalance = Math.max(0, Math.round((payTarget.totalAmount - newPaid) * 100) / 100)
     const newBalance = rawBalance < 1 ? 0 : rawBalance
     const newStatus: APInvoice['status'] = newBalance === 0 ? 'PAID' : 'SCHEDULED'
-    updateInvoice(payTarget.id, { paidAmount: newPaid, balance: newBalance, status: newStatus })
+    const payment = createPayment({
+      invoiceId: payTarget.id,
+      invoiceType: 'AP',
+      invoiceNumber: payTarget.invoiceNumber,
+      counterparty: payTarget.vendorName,
+      paymentDate: payForm.tanggal,
+      amount,
+      method: payForm.metode as 'BANK_TRANSFER' | 'CASH' | 'CHECK',
+      reference: payForm.referensi,
+      notes: payForm.catatan || undefined,
+    })
+    updateInvoice(payTarget.id, { paidAmount: newPaid, balance: newBalance, status: newStatus, paymentIds: [...(payTarget.paymentIds || []), payment.id] })
     setPayDialog(false)
   }
 

@@ -3,7 +3,7 @@ import { seedStore, readStore } from './helpers'
 
 type Stock = { materialCode: string; qtyOnHand: number }
 type PO = { id: string; poNumber?: string; status: string; supplier: string; items: { code: string; quantity: number }[] }
-type AP = { id: string; vendorInvoiceNumber: string; totalAmount: number; paidAmount: number; balance: number; status: string }
+type AP = { id: string; invoiceNumber: string; vendorInvoiceNumber: string; totalAmount: number; paidAmount: number; balance: number; status: string }
 
 const stockOf = async (page: Page, code: string) =>
   (await readStore<Stock[]>(page, 'jkj_stock'))?.find(s => s.materialCode === code)?.qtyOnHand
@@ -23,6 +23,7 @@ test.describe.serial('Pembelian → Penerimaan → AP', () => {
     await page.goto('/purchasing/po/create')
     await page.getByRole('combobox').filter({ hasText: 'Pilih Supplier' }).click()
     await page.getByRole('option').first().click()
+    await page.getByPlaceholder('Instruksi tambahan...').fill('Catatan uji PO')
     await page.getByPlaceholder('RM-001').fill(CODE)
     await page.getByPlaceholder('Nama barang').fill('Bahan Uji PO')
     await page.getByRole('combobox').filter({ hasText: 'Satuan' }).click()
@@ -37,6 +38,7 @@ test.describe.serial('Pembelian → Penerimaan → AP', () => {
     const po = pos.find(p => p.items.some(i => i.code === CODE))
     expect(po, 'PO tersimpan').toBeTruthy()
     expect(po!.items[0].quantity).toBe(100)
+    expect((po as unknown as { notes?: string }).notes).toBe('Catatan uji PO')
     poId = po!.id
   })
 
@@ -121,6 +123,14 @@ test.describe.serial('Pembelian → Penerimaan → AP', () => {
     after = (await readStore<AP[]>(page, 'jkj_ap_invoices_v2')).find(b => b.vendorInvoiceNumber === 'VND-E2E-001')!
     expect(after).toMatchObject({ paidAmount: 1110000, balance: 0, status: 'PAID' })
     await expect(page.getByRole('row').filter({ hasText: 'VND-E2E-001' }).getByRole('button', { name: 'Bayar' })).toHaveCount(0)
+
+    // Pembayaran tercatat sebagai record dan tampil di halaman Payments
+    const pays = (await readStore<{ invoiceId: string; amount: number; invoiceType: string }[]>(page, 'jkj_payments')).filter(p => p.invoiceId === after.id)
+    expect(pays.map(p => p.amount).sort((a, b) => a - b)).toEqual([500000, 610000])
+    expect(pays.every(p => p.invoiceType === 'AP')).toBe(true)
+    expect((after as unknown as { paymentIds: string[] }).paymentIds).toHaveLength(2)
+    await page.goto('/finance/payments')
+    await expect(page.getByRole('row').filter({ hasText: after.invoiceNumber })).toHaveCount(2)
   })
 
   test('5. saldo desimal (USD × kurs) tidak membengkak 100× saat dibayar penuh', async () => {

@@ -16,11 +16,12 @@ import {
 import AppLayout from '@/components/app-layout'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { exportToExcel } from '@/lib/utils/export-excel'
-import { useARInvoices } from '@/lib/store/hooks'
+import { useARInvoices, usePayments } from '@/lib/store/hooks'
 import type { ARInvoice } from '@/lib/mock-data/finance'
 
 export default function ARPage() {
   const { invoices, updateInvoice } = useARInvoices()
+  const { createPayment } = usePayments()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
 
@@ -81,7 +82,18 @@ export default function ARPage() {
     } else if (newPaid > 0) {
       newStatus = 'PARTIALLY_PAID'
     }
-    updateInvoice(payTarget.id, { paidAmount: newPaid, balance: newBalance, status: newStatus })
+    const payment = createPayment({
+      invoiceId: payTarget.id,
+      invoiceType: 'AR',
+      invoiceNumber: payTarget.invoiceNumber,
+      counterparty: payTarget.customerName,
+      paymentDate: payForm.tanggal,
+      amount,
+      method: payForm.metode as 'BANK_TRANSFER' | 'CASH' | 'CHECK',
+      reference: payForm.referensi,
+      notes: payForm.catatan || undefined,
+    })
+    updateInvoice(payTarget.id, { paidAmount: newPaid, balance: newBalance, status: newStatus, paymentIds: [...(payTarget.paymentIds || []), payment.id] })
     setPayDialog(false)
   }
 

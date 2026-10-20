@@ -30,7 +30,7 @@ export default function OutboundPage() {
   const { workOrders } = useWorkOrders()
   const { orders: salesOrders } = useSalesOrders()
   const { receipts, createReceipt, updateReceipt, deleteReceipt } = useFGReceipts()
-  const { addStock } = useStock()
+  const { addStock, deductStock } = useStock()
   const { shipments, createShipment } = useShipments()
 
   const [selectedWO, setSelectedWO] = useState<WorkOrder | null>(null)
@@ -813,7 +813,8 @@ export default function OutboundPage() {
                 }
                 onClick={() => {
                   if (!selectedSO) return
-                  createShipment({
+                  const qtyShip = parseInt(shipForm.qtyDikirim) || 0
+                  const shipment = createShipment({
                     tanggal: new Date().toISOString().split('T')[0],
                     soId: selectedSO.id,
                     soNumber: selectedSO.poNumber,
@@ -826,6 +827,10 @@ export default function OutboundPage() {
                     catatan: shipForm.catatan,
                     status: 'Dikirim',
                   })
+                  // Barang jadi keluar gudang saat dispatch (kode FG sama dengan saat penerimaan BJ)
+                  if (qtyShip > 0) {
+                    deductStock(selectedSO.product.replace(/\s+/g, '-').toUpperCase(), qtyShip, shipment.id, 'SHIPMENT', 'EXPORT', 'satuan:carton')
+                  }
                   setSelectedSO(null)
                   setActiveTab('ship-history')
                 }}

@@ -19,6 +19,7 @@ export interface PurchaseOrder {
   status: 'DRAFT' | 'APPROVED' | 'PARTIAL' | 'RECEIVED' | 'CANCELLED' | 'CANCELLED_WITH_STOCK'
   paymentStatus: 'UNPAID' | 'PARTIAL' | 'PAID'
   attachments?: Array<{ name: string; size: number; type: string }>
+  notes?: string
 }
 
 export interface Supplier {

@@ -111,6 +111,10 @@ test.describe.serial('Alur penuh SO → KITE', () => {
 
     const ships = await readStore<{ soId: string; items: { qtyDikirim: number }[] }[]>(page, 'jkj_shipments')
     expect(ships.find(s => s.soId === SO_ID)?.items[0].qtyDikirim).toBe(100)
+    // Barang jadi keluar dari gudang saat dispatch
+    expect(await stockOf(page, FG_CODE)).toBe(0)
+    const movs = await readStore<{ materialCode: string; transactionType: string; quantityOut: number }[]>(page, 'jkj_stock_movements')
+    expect(movs.find(m => m.materialCode === FG_CODE && m.transactionType === 'EXPORT')?.quantityOut).toBe(100)
   })
 
   test('5. PEB: submit → approve', async () => {
@@ -179,9 +183,8 @@ test.describe.serial('Alur penuh SO → KITE', () => {
     expect(cells.slice(4, 8).map(c => c.trim())).toEqual(['0', '+100', '-100', '0'])
   })
 
-  // CELAH DIKETAHUI: pengiriman/PEB belum mengurangi stok FG di gudang (tidak ada movement EXPORT).
-  // Tes ini sengaja ditandai fixme; aktifkan setelah logika stok pindah ke backend.
-  test.fixme('7. stok FG berkurang setelah dikirim/PEB approved', async () => {
+  test('7. stok FG tetap 0 setelah PEB approved (tidak keluar dua kali)', async () => {
+    await page.goto('/warehouse')
     expect(await stockOf(page, FG_CODE)).toBe(0)
   })
 })
