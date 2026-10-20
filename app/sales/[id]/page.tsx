@@ -29,8 +29,7 @@ export default function SalesOrderDetailPage() {
 
   // Edit dialog state
   const [showEdit, setShowEdit] = useState(false)
-  const [editQty, setEditQty] = useState('')
-  const [editUnitPrice, setEditUnitPrice] = useState('')
+  const [editLines, setEditLines] = useState<{ id: string; label: string; satuan: string; qty: string; price: string }[]>([])
   const [editDelivery, setEditDelivery] = useState('')
   const [editNotes, setEditNotes] = useState('')
 
@@ -105,30 +104,102 @@ export default function SalesOrderDetailPage() {
     updateOrder(order.id, { status: 'REJECTED' })
   }
 
+  const EDITABLE_STATUSES = ['DRAFT', 'PENDING APPROVAL', 'APPROVED', 'IN PRODUCTION']
+  const canEdit = EDITABLE_STATUSES.includes(order.status)
+
   function openEdit() {
     if (!order) return
-    setEditQty(String(order.quantity))
-    setEditUnitPrice(String(order.unitPrice))
+    setEditLines(order.lineItems && order.lineItems.length > 0
+      ? order.lineItems.map(i => ({ id: i.id, label: i.namaBarang, satuan: i.satuan, qty: String(i.qty), price: String(i.hargaSatuan) }))
+      : [{ id: 'single', label: order.product, satuan: 'carton', qty: String(order.quantity), price: String(order.unitPrice) }])
     setEditDelivery(order.deliveryDate)
-    setEditNotes('')
     setShowEdit(true)
   }
 
+  function updateEditLine(id: string, patch: Partial<{ qty: string; price: string }>) {
+    setEditLines(prev => prev.map(l => l.id === id ? { ...l, ...patch } : l))
+  }
+
+  const editTotalQty = editLines.reduce((s, l) => s + (Number(l.qty) || 0), 0)
+  const editGrandTotal = editLines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.price) || 0), 0)
+  const editBelowShipped = totalShipped > 0 && editTotalQty < totalShipped
+
   function saveEdit() {
-    if (!order) return
-    const qty = parseInt(editQty) || order.quantity
-    const price = parseInt(editUnitPrice) || order.unitPrice
-    updateOrder(order.id, {
-      quantity: qty,
-      unitPrice: price,
-      total: qty * price,
+    if (!order || editBelowShipped) return
+    const newLines = editLines.map(l => ({ ...l, qtyNum: Number(l.qty) || 0, priceNum: Number(l.price) || 0 }))
+    const detail = newLines.map(l => `${l.label}: qty ${l.qtyNum.toLocaleString('id-ID')}, harga ${l.priceNum.toLocaleString('id-ID')}`).join('; ')
+    const patch: Partial<typeof order> = {
+      quantity: editTotalQty,
+      unitPrice: newLines[0]?.priceNum ?? order.unitPrice,
+      total: editGrandTotal,
       deliveryDate: editDelivery || order.deliveryDate,
       history: [
         ...order.history,
-        { date: new Date().toLocaleString('id-ID'), action: `Revisi: qty=${qty}, harga=${price.toLocaleString()}`, user: 'Sales Admin', status: order.status }
+        { date: new Date().toLocaleString('id-ID'), action: `Revisi (${order.status}): ${detail}`, user: 'Sales Admin', status: order.status }
       ]
-    })
+    }
+    if (order.lineItems && order.lineItems.length > 0) {
+      patch.lineItems = order.lineItems.map(i => {
+        const l = newLines.find(x => x.id === i.id)
+        return l ? { ...i, qty: l.qtyNum, hargaSatuan: l.priceNum } : i
+      })
+    }
+    updateOrder(order.id, patch)
     setShowEdit(false)
+  }
+
+  function printOrder() {
+    if (!order) return
+    const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const num = (n: number) => n.toLocaleString('id-ID')
+    const lines = order.lineItems && order.lineItems.length > 0
+      ? order.lineItems.map(i => ({ nama: i.namaBarang, kode: i.kodeBarang || '', qty: i.qty, satuan: i.satuan, harga: i.hargaSatuan, catatan: i.catatan || '' }))
+      : [{ nama: order.product, kode: '', qty: order.quantity, satuan: 'carton', harga: order.unitPrice, catatan: '' }]
+    const totalQty = lines.reduce((s, l) => s + l.qty, 0)
+    const itemRows = lines.map((l, i) => `<tr><td class="c">${i + 1}</td><td>${esc(l.nama)}</td><td>${esc(l.kode)}</td><td class="r">${num(l.qty)}</td><td class="c">${esc(l.satuan)}</td><td class="r">${num(l.harga)}</td><td class="r b">${num(l.qty * l.harga)}</td></tr>`).join('')
+    const bom = order.bomItems || []
+    const bomRows = bom.map((b, i) => `<tr><td class="c">${i + 1}</td><td>${esc(b.namaMaterial)}</td><td>${esc(b.spesifikasi)}</td><td>${esc(b.warna)}</td><td class="r">${b.konsumsi === '' ? '' : esc(b.konsumsi)}</td><td class="c">${esc(b.satuan)}</td><td>${esc(b.penggunaan)}</td><td class="c">${esc(b.asalMaterial)}</td></tr>`).join('')
+    const bomSection = bom.length > 0
+      ? `<div class="section">MAIN MATERIAL</div><table><thead><tr><th class="c" style="width:32px">NO</th><th>MAIN MATERIAL NAME</th><th>SPEC</th><th>COLOR</th><th class="r">CONSUMTION</th><th class="c">SATUAN</th><th>USE</th><th class="c">SUPPLY</th></tr></thead><tbody>${bomRows}</tbody></table>`
+      : ''
+    const notesSection = order.notes ? `<div class="section">KETERANGAN</div><div class="notes">${esc(order.notes).split('\n').join('<br>')}</div>` : ''
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Sales Order ${esc(order.id)}</title><style>
+      @page{size:A4 landscape;margin:10mm}
+      body{font-family:Arial,sans-serif;font-size:11px;color:#111;margin:0;padding:12px}
+      table{width:100%;border-collapse:collapse;margin-bottom:8px}
+      th,td{border:1px solid #333;padding:3px 6px;vertical-align:top}
+      th{background:#e5e7eb;text-align:left;font-size:10px}
+      .c{text-align:center}.r{text-align:right}.b{font-weight:bold}
+      .title{text-align:center;font-size:15px;font-weight:bold;margin:0 0 8px}
+      .head td{border:1px solid #333}.head .lbl{background:#f3f4f6;font-size:9px;color:#444;width:14%}
+      .section{background:#d1d5db;text-align:center;font-weight:bold;border:1px solid #333;padding:2px;margin-top:6px}
+      .notes{border:1px solid #333;padding:6px;min-height:40px;margin-bottom:8px}
+      .sign td{width:25%;height:70px;text-align:center;font-size:11px}
+      .foot{text-align:center;color:#6b7280;font-size:10px;margin-top:8px}
+      @media print{button{display:none}}
+    </style></head><body>
+    <p class="title">${esc(order.customer).toUpperCase()} — SALES ORDER ${esc(order.id)}</p>
+    <table class="head"><tr>
+      <td class="lbl">MAIN FACTORY</td><td><b>PT. JKJ MANUFACTURING</b></td>
+      <td class="lbl">PO NUMBER</td><td><b>${esc(order.poNumber)}</b></td>
+      <td class="lbl">ORDER NUMBER</td><td><b>${esc(order.id)}</b></td>
+      <td class="lbl">DELIVERY</td><td><b>${esc(order.deliveryDate)}</b></td>
+    </tr><tr>
+      <td class="lbl">BUYER</td><td>${esc(order.customer)}</td>
+      <td class="lbl">STATUS</td><td>${esc(order.status)}</td>
+      <td class="lbl">PRIORITAS</td><td>${esc(order.priority)}</td>
+      <td class="lbl">DIBUAT OLEH</td><td>${esc(order.createdBy)}</td>
+    </tr></table>
+    <table><thead><tr><th class="c" style="width:32px">NO</th><th>PRODUK / TRADE NAME</th><th>KODE</th><th class="r">QTY</th><th class="c">SATUAN</th><th class="r">HARGA SATUAN</th><th class="r">SUBTOTAL</th></tr></thead>
+    <tbody>${itemRows}<tr class="b"><td colspan="3" class="r">GRAND TOTAL</td><td class="r">${num(totalQty)}</td><td></td><td></td><td class="r">${num(order.total)}</td></tr></tbody></table>
+    ${bomSection}
+    ${notesSection}
+    <table class="sign"><tr><td>Sales<br><br><br></td><td>Manager<br><br><br></td><td>Accounting<br><br><br></td><td>Direktur Utama<br><br><br></td></tr></table>
+    <p class="foot">Dicetak ${new Date().toLocaleString('id-ID')}</p>
+    <script>window.onload=function(){window.print()}</script></body></html>`)
+    win.document.close()
   }
 
   return (
@@ -156,27 +227,11 @@ export default function SalesOrderDetailPage() {
               )}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" className="gap-2" onClick={() => {
-                const items = order.lineItems && order.lineItems.length > 0
-                  ? order.lineItems.map(i => `<tr><td style="padding:8px;border:1px solid #ddd">${i.namaBarang}</td><td style="padding:8px;border:1px solid #ddd;text-align:center">${i.qty.toLocaleString('id-ID')} ${i.satuan}</td><td style="padding:8px;border:1px solid #ddd;text-align:right">${i.hargaSatuan.toLocaleString('id-ID')}</td><td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold">${(i.qty*i.hargaSatuan).toLocaleString('id-ID')}</td></tr>`).join('')
-                  : `<tr><td style="padding:8px;border:1px solid #ddd">${order.product}</td><td style="padding:8px;border:1px solid #ddd;text-align:center">${order.quantity.toLocaleString('id-ID')} carton</td><td style="padding:8px;border:1px solid #ddd;text-align:right">${order.unitPrice.toLocaleString('id-ID')}</td><td style="padding:8px;border:1px solid #ddd;text-align:right;font-weight:bold">${order.total.toLocaleString('id-ID')}</td></tr>`
-                const win = window.open('', '_blank')
-                if (!win) return
-                win.document.write(`<!DOCTYPE html><html><head><title>Sales Order ${order.id}</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#111}table{width:100%;border-collapse:collapse}th{background:#f3f4f6;padding:8px;border:1px solid #ddd;text-align:left}.header{display:flex;justify-content:space-between;margin-bottom:24px}.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}.info-label{font-size:12px;color:#6b7280}.info-value{font-weight:600}.total-section{text-align:right;margin-top:16px;font-size:18px;font-weight:bold}.sign-table{width:100%;margin-top:48px;border-collapse:collapse}.sign-table td{width:25%;border:1px solid #ddd;padding:12px;text-align:center;height:80px;vertical-align:top;font-size:13px}.priority-urgent{color:#dc2626;font-weight:bold}@media print{button{display:none}}</style></head><body>
-                <div class="header"><div><h2 style="margin:0">PT. JKJ MANUFACTURING</h2><p style="margin:4px 0;color:#6b7280;font-size:13px">SALES ORDER</p></div><div style="text-align:right"><h3 style="margin:0">${order.id}</h3><p style="margin:4px 0;font-size:13px">Status: ${order.status}</p><p style="margin:4px 0;font-size:13px">Prioritas: <span class="${order.priority==='Urgent'?'priority-urgent':''}">${order.priority}</span></p></div></div>
-                <div class="info-grid"><div><div class="info-label">Customer</div><div class="info-value">${order.customer}</div></div><div><div class="info-label">No. PO Customer</div><div class="info-value">${order.poNumber}</div></div><div><div class="info-label">Tanggal Pengiriman</div><div class="info-value">${order.deliveryDate}</div></div><div><div class="info-label">Dibuat oleh</div><div class="info-value">${order.createdBy}</div></div></div>
-                <table><thead><tr><th>Produk</th><th style="text-align:center">Qty</th><th style="text-align:right">Harga Satuan</th><th style="text-align:right">Subtotal</th></tr></thead><tbody>${items}</tbody></table>
-                <div class="total-section">Grand Total: ${order.total.toLocaleString('id-ID')}</div>
-                ${order.notes ? `<p style="margin-top:16px;font-size:13px;color:#6b7280">Catatan: ${order.notes}</p>` : ''}
-                <table class="sign-table"><tr><td>Sales<br><br><br></td><td>Manager<br><br><br></td><td>Accounting<br><br><br></td><td>Direktur Utama<br><br><br></td></tr></table>
-                <p style="text-align:center;margin-top:24px;font-size:12px;color:#9ca3af">Dicetak ${new Date().toLocaleString('id-ID')}</p>
-                <script>window.print()</script></body></html>`)
-                win.document.close()
-              }}>
+              <Button variant="outline" className="gap-2" onClick={printOrder}>
                 <Printer className="h-4 w-4" />
                 Cetak Order
               </Button>
-              {order.status === 'DRAFT' && (
+              {canEdit && (
                 <Button className="gap-2 bg-primary hover:bg-primary/90" onClick={openEdit}>
                   <Pencil className="h-4 w-4" />Edit Order
                 </Button>
@@ -480,37 +535,56 @@ export default function SalesOrderDetailPage() {
 
       {/* Edit Order Dialog */}
       <Dialog open={showEdit} onOpenChange={v => { if (!v) setShowEdit(false) }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Pencil className="h-4 w-4" />Edit Order — {order.id}
             </DialogTitle>
-            <DialogDescription>Revisi data Sales Order (hanya untuk status DRAFT)</DialogDescription>
+            <DialogDescription>Revisi qty, harga, dan tanggal pengiriman Sales Order. Setiap revisi tercatat di riwayat aktivitas.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label>Qty</Label>
-                <Input type="number" value={editQty} onChange={e => setEditQty(e.target.value)} />
+            {order.status !== 'DRAFT' && order.status !== 'PENDING APPROVAL' && (
+              <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 flex gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>SO sudah {order.status === 'APPROVED' ? 'disetujui' : 'masuk produksi'}. Pastikan Work Order dan kebutuhan material terkait disesuaikan setelah revisi.</span>
               </div>
-              <div className="space-y-1">
-                <Label>Harga Satuan (USD)</Label>
-                <Input type="number" value={editUnitPrice} onChange={e => setEditUnitPrice(e.target.value)} />
-              </div>
+            )}
+            <div className="rounded-md border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr className="border-b">
+                    <th className="h-9 px-3 text-left font-medium">Produk</th>
+                    <th className="h-9 px-3 text-right font-medium w-32">Qty</th>
+                    <th className="h-9 px-3 text-left font-medium w-16">Satuan</th>
+                    <th className="h-9 px-3 text-right font-medium w-36">Harga Satuan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {editLines.map(l => (
+                    <tr key={l.id} className="border-b last:border-0">
+                      <td className="px-3 py-2">{l.label}</td>
+                      <td className="px-3 py-2"><Input type="number" min={0} className="h-8 text-right" value={l.qty} onChange={e => updateEditLine(l.id, { qty: e.target.value })} /></td>
+                      <td className="px-3 py-2 text-muted-foreground">{l.satuan}</td>
+                      <td className="px-3 py-2"><Input type="number" min={0} step="any" className="h-8 text-right" value={l.price} onChange={e => updateEditLine(l.id, { price: e.target.value })} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
             <div className="space-y-1">
               <Label>Tanggal Pengiriman</Label>
               <Input type="text" placeholder="e.g. 15 Feb 2026" value={editDelivery} onChange={e => setEditDelivery(e.target.value)} />
             </div>
-            {editQty && editUnitPrice && (
-              <div className="rounded-md bg-muted/50 p-3 text-sm">
-                <p className="text-muted-foreground">Total baru: <strong>USD {(parseInt(editQty) * parseInt(editUnitPrice)).toLocaleString('id-ID')}</strong></p>
-              </div>
-            )}
+            <div className="rounded-md bg-muted/50 p-3 text-sm space-y-1">
+              <p className="text-muted-foreground">Total qty baru: <strong>{editTotalQty.toLocaleString('id-ID')}</strong> · Grand total baru: <strong>{editGrandTotal.toLocaleString('id-ID')}</strong></p>
+              {editBelowShipped && (
+                <p className="text-red-600">Total qty tidak boleh kurang dari qty yang sudah dikirim ({totalShipped.toLocaleString('id-ID')}).</p>
+              )}
+            </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => setShowEdit(false)}>Batal</Button>
-            <Button onClick={saveEdit} className="gap-2"><Pencil className="h-4 w-4" />Simpan Perubahan</Button>
+            <Button onClick={saveEdit} disabled={editBelowShipped || editTotalQty <= 0} className="gap-2"><Pencil className="h-4 w-4" />Simpan Perubahan</Button>
           </div>
         </DialogContent>
       </Dialog>

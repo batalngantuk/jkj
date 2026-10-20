@@ -3,23 +3,10 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { STORE_KEYS, getStore } from '@/lib/store/index'
+import { SEED_BPB, parseBpbTag, parseSatuan, type BPBEntry as BPBEntryShared } from '@/lib/mock-data/bpb-seed'
+import type { StockItem, StockMovement } from '@/lib/store/useStock'
 
-type BPBItem = { materialCode: string; materialName: string; qty: number; satuan: string }
-type BPBEntry = {
-  id: string; tanggal: string; noBukti: string; tujuan: 'Produksi' | 'Subkon'
-  referensi: string; items: BPBItem[]; catatan: string; status: 'Selesai'
-}
-
-const SEED: BPBEntry[] = [
-  {
-    id: 'BPB-2026-001', tanggal: '2026-01-22', noBukti: 'BPB-2026-001', tujuan: 'Produksi',
-    referensi: 'WO-2026-001', catatan: 'Pengeluaran BB untuk produksi latex gloves', status: 'Selesai',
-    items: [
-      { materialCode: 'BB-HRC-001', materialName: 'Hot Rolled Coil (HRC)', qty: 5000, satuan: 'KG' },
-      { materialCode: 'BB-HDPE-001', materialName: 'Polyethylene Resin HDPE', qty: 200, satuan: 'KG' }
-    ]
-  },
-]
+type BPBEntry = BPBEntryShared
 
 function PrintBC12Content() {
   const searchParams = useSearchParams()
@@ -28,8 +15,22 @@ function PrintBC12Content() {
   const didPrint = useRef(false)
 
   useEffect(() => {
-    const all = getStore<BPBEntry>(STORE_KEYS.BPB_HISTORY, SEED)
-    const found = all.find(b => b.id === bpbId) || SEED.find(b => b.id === bpbId) || null
+    let found: BPBEntry | null = null
+    if (bpbId?.startsWith('AUTO-')) {
+      // Pengeluaran otomatis dari WO/subkon — susun dari stock movement
+      const ref = bpbId.slice(5)
+      const stock = getStore<StockItem>(STORE_KEYS.STOCK, [])
+      const movs = getStore<StockMovement>('jkj_stock_movements', []).filter(m => m.transactionType === 'PRODUCTION_OUT' && !parseBpbTag(m.notes) && m.referenceNumber === ref)
+      if (movs.length) {
+        found = {
+          id: bpbId, tanggal: movs[0].date, noBukti: ref, tujuan: movs[0].referenceType === 'SUBKON' ? 'Subkon' : 'Produksi',
+          referensi: ref, catatan: 'Otomatis dari proses produksi', status: 'Selesai',
+          items: movs.map(m => ({ materialCode: m.materialCode, materialName: m.materialName, qty: m.quantityOut, satuan: parseSatuan(m.notes) || stock.find(s => s.materialCode === m.materialCode)?.unit || 'pcs' }))
+        }
+      }
+    } else {
+      found = getStore<BPBEntry>(STORE_KEYS.BPB_HISTORY, []).find(b => b.id === bpbId) || SEED_BPB.find(b => b.id === bpbId) || null
+    }
     setBpb(found)
   }, [bpbId])
 
@@ -44,7 +45,7 @@ function PrintBC12Content() {
     return (
       <div className="p-8 text-center text-gray-500">
         <p>Dokumen tidak ditemukan. ID: {bpbId}</p>
-        <p className="text-sm mt-2">Catatan: dokumen hanya tersedia untuk BPB yang dibuat di sesi ini.</p>
+        <p className="text-sm mt-2">Dokumen tersimpan di browser ini; pastikan dicetak dari perangkat yang sama dengan saat dibuat.</p>
         <button onClick={() => window.close()} className="mt-4 px-4 py-2 border rounded">Tutup</button>
       </div>
     )

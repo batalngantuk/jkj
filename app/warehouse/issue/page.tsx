@@ -17,6 +17,8 @@ import AppLayout from '@/components/app-layout'
 import { useStock, useWorkOrders, useSubkontrak } from '@/lib/store/hooks'
 import { STORE_KEYS, getStore, setStore } from '@/lib/store/index'
 import { exportToExcel } from '@/lib/utils/export-excel'
+import { SEED_BPB, bpbNotes, parseBpbTag, parseSatuan, type BPBEntry } from '@/lib/mock-data/bpb-seed'
+import type { StockItem, StockMovement } from '@/lib/store/useStock'
 
 interface IssueItem {
   id: string
@@ -34,49 +36,24 @@ function newItem(): IssueItem {
 
 function formatIDR(n: number) { return `Rp ${n.toLocaleString('id-ID')}` }
 
-type HistoryEntry = {
-  id: string
-  tanggal: string
-  noBukti: string
-  tujuan: 'Produksi' | 'Subkon'
-  referensi: string
-  items: { materialCode: string; materialName: string; qty: number; satuan: string }[]
-  catatan: string
-  status: 'Selesai'
+type HistoryEntry = BPBEntry & { auto?: boolean }
+
+function nextBpbNumber(entries: { noBukti: string }[]) {
+  const year = new Date().getFullYear()
+  const max = entries.reduce((m, e) => {
+    const n = Number(e.noBukti.match(/^BPB-\d{4}-(\d+)$/)?.[1])
+    return Number.isFinite(n) ? Math.max(m, n) : m
+  }, 0)
+  return `BPB-${year}-${String(max + 1).padStart(3, '0')}`
 }
 
-const SEED_HISTORY: HistoryEntry[] = [
-  {
-    id: 'BPB-2026-001', tanggal: '2026-01-22', noBukti: 'BPB-2026-001', tujuan: 'Produksi',
-    referensi: 'WO-2026-001', catatan: 'Pengeluaran BB untuk produksi latex gloves',
-    items: [
-      { materialCode: 'RM-LATEX', materialName: 'Natural Rubber Latex', qty: 500, satuan: 'kg' },
-      { materialCode: 'RM-SULFUR', materialName: 'Sulfur Dispersion', qty: 10, satuan: 'kg' },
-    ], status: 'Selesai'
-  },
-  {
-    id: 'BPB-2026-002', tanggal: '2026-01-30', noBukti: 'BPB-2026-002', tujuan: 'Subkon',
-    referensi: 'SUBK-2026-001', catatan: 'Kirim BB ke PT. Subkon Plastik Jaya',
-    items: [
-      { materialCode: 'BB-HDPE-001', materialName: 'Polyethylene Resin - HDPE Grade', qty: 2000, satuan: 'kg' },
-    ], status: 'Selesai'
-  },
-  {
-    id: 'BPB-2026-003', tanggal: '2026-02-06', noBukti: 'BPB-2026-003', tujuan: 'Produksi',
-    referensi: 'WO-2026-002', catatan: 'Pengeluaran BB untuk produksi nitrile gloves',
-    items: [
-      { materialCode: 'RM-NITRILE', materialName: 'Nitrile Latex', qty: 300, satuan: 'kg' },
-      { materialCode: 'RM-ZINC', materialName: 'Zinc Oxide', qty: 20, satuan: 'kg' },
-    ], status: 'Selesai'
-  },
-]
-
 export default function WarehouseIssuePage() {
-  const { stock, deductStock, addStock, movements } = useStock()
+  const { stock, deductStock, movements, refresh } = useStock()
   const { workOrders } = useWorkOrders()
   const { records: subkonRecords } = useSubkontrak()
 
-  const [history, setHistory] = useState<HistoryEntry[]>(SEED_HISTORY)
+  // BPB manual yang tersimpan (persisted) — sumber kebenaran untuk entri yang bisa diedit/dihapus
+  const [history, setHistory] = useState<HistoryEntry[]>(() => getStore<HistoryEntry>(STORE_KEYS.BPB_HISTORY, []))
   const [showForm, setShowForm] = useState(false)
   const [tujuan, setTujuan] = useState<'Produksi' | 'Subkon'>('Produksi')
   const [referensi, setReferensi] = useState('')
@@ -87,39 +64,58 @@ export default function WarehouseIssuePage() {
 
   const bbStock = stock.filter(s => s.category === 'BB' || s.category === 'Packaging')
 
-  // Derive persisted history from stock movements (covers WO auto-deductions + Issue page BPBs)
+  // Pengeluaran otomatis (WO "Mulai Produksi" dll) — movement tanpa tag BPB, dikelompokkan per referensi
   const movementHistory = useMemo<HistoryEntry[]>(() => {
     const grouped = new Map<string, HistoryEntry>()
     movements
-      .filter(m => m.transactionType === 'PRODUCTION_OUT')
+      .filter(m => m.transactionType === 'PRODUCTION_OUT' && !parseBpbTag(m.notes))
       .forEach(m => {
         const key = m.referenceNumber
-        const satuan = m.notes?.match(/satuan:(\w+)/)?.[1] || 'pcs'
+        const satuan = parseSatuan(m.notes) || stock.find(s => s.materialCode === m.materialCode)?.unit || 'pcs'
+        const item = { materialCode: m.materialCode, materialName: m.materialName, qty: m.quantityOut, satuan }
         const existing = grouped.get(key)
         if (existing) {
-          existing.items.push({ materialCode: m.materialCode, materialName: m.materialName, qty: m.quantityOut, satuan })
+          existing.items.push(item)
         } else {
           grouped.set(key, {
-            id: m.id,
+            id: `AUTO-${key}`,
+            auto: true,
             tanggal: m.date,
             noBukti: key,
             tujuan: m.referenceType === 'SUBKON' ? 'Subkon' : 'Produksi',
             referensi: key,
-            catatan: '',
+            catatan: 'Otomatis dari proses produksi',
             status: 'Selesai',
-            items: [{ materialCode: m.materialCode, materialName: m.materialName, qty: m.quantityOut, satuan }]
+            items: [item]
           })
         }
       })
     return Array.from(grouped.values())
-  }, [movements])
+  }, [movements, stock])
 
   const displayHistory = useMemo<HistoryEntry[]>(() => {
-    const movementRefs = new Set(movementHistory.map(m => m.referensi))
-    const seedOnly = SEED_HISTORY.filter(h => !movementRefs.has(h.referensi))
-    const sessionOnly = history.filter(h => !SEED_HISTORY.find(s => s.id === h.id) && !movementRefs.has(h.referensi))
-    return [...movementHistory, ...seedOnly, ...sessionOnly].sort((a, b) => b.tanggal.localeCompare(a.tanggal))
+    return [...history, ...movementHistory, ...SEED_BPB].sort((a, b) => b.tanggal.localeCompare(a.tanggal))
   }, [history, movementHistory])
+
+  // Kembalikan stok dari BPB manual & hapus movement-nya agar laporan (KITE, stock movement) ikut bersih
+  function restoreBpbStock(entry: HistoryEntry) {
+    const stockNow = getStore<StockItem>(STORE_KEYS.STOCK, [])
+    const today = new Date().toISOString().split('T')[0]
+    const restored = stockNow.map(s => {
+      const qty = entry.items.filter(i => i.materialCode === s.materialCode).reduce((a, i) => a + i.qty, 0)
+      if (!qty) return s
+      const onHand = s.qtyOnHand + qty
+      return { ...s, qtyOnHand: onHand, qtyAvailable: onHand - s.qtyReserved, lastUpdated: today }
+    })
+    setStore(STORE_KEYS.STOCK, restored)
+    const movs = getStore<StockMovement>('jkj_stock_movements', [])
+    setStore('jkj_stock_movements', movs.filter(m => parseBpbTag(m.notes) !== entry.noBukti))
+  }
+
+  function persistHistory(next: HistoryEntry[]) {
+    setHistory(next)
+    setStore(STORE_KEYS.BPB_HISTORY, next)
+  }
 
   function updateItem(id: string, patch: Partial<IssueItem>) {
     setItems(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i))
@@ -134,22 +130,17 @@ export default function WarehouseIssuePage() {
     const validItems = items.filter(i => i.materialCode && Number(i.qtyIssued) > 0)
     if (!validItems.length || !referensi) return
 
-    const noBukti = `BPB-${new Date().getFullYear()}-${String(history.length + 1).padStart(3, '0')}`
+    const noBukti = nextBpbNumber(history)
 
     validItems.forEach(i => {
-      deductStock(i.materialCode, Number(i.qtyIssued), referensi, tujuan === 'Produksi' ? 'WO' : 'SUBKON', 'PRODUCTION_OUT')
+      deductStock(i.materialCode, Number(i.qtyIssued), referensi, tujuan === 'Produksi' ? 'WO' : 'SUBKON', 'PRODUCTION_OUT', bpbNotes(noBukti, i.satuan))
     })
 
     const entry: HistoryEntry = {
       id: noBukti, tanggal, noBukti, tujuan, referensi, catatan, status: 'Selesai',
       items: validItems.map(i => ({ materialCode: i.materialCode, materialName: i.materialName, qty: Number(i.qtyIssued), satuan: i.satuan }))
     }
-    setHistory(prev => {
-      const next = [entry, ...prev]
-      const persisted = getStore(STORE_KEYS.BPB_HISTORY, SEED_HISTORY)
-      setStore(STORE_KEYS.BPB_HISTORY, [entry, ...persisted])
-      return next
-    })
+    persistHistory([entry, ...history])
     setSubmitted(true)
   }
 
@@ -175,22 +166,25 @@ export default function WarehouseIssuePage() {
 
   function saveEdit() {
     if (!editTarget) return
-    // Reverse old stock, apply new stock
-    editTarget.items.forEach(item => {
-      if (item.qty > 0) addStock(item.materialCode, item.materialName, item.qty, editTarget.id, 'BPB_EDIT', 'BB', item.satuan)
+    // Balikkan stok lama, lalu terapkan qty baru dengan tag BPB yang sama
+    restoreBpbStock(editTarget)
+    const newItems = editItems.filter(i => i.qty > 0)
+    newItems.forEach(item => {
+      deductStock(item.materialCode, item.qty, editTarget.referensi, editTarget.tujuan === 'Produksi' ? 'WO' : 'SUBKON', 'PRODUCTION_OUT', bpbNotes(editTarget.noBukti, item.satuan))
     })
-    editItems.forEach(item => {
-      if (item.qty > 0) deductStock(item.materialCode, item.qty, editTarget.id, editTarget.tujuan === 'Produksi' ? 'WO' : 'SUBKON', 'PRODUCTION_OUT')
-    })
-    setHistory(prev => {
-      const next = prev.map(h => h.id === editTarget.id
-        ? { ...h, items: editItems, catatan: editCatatan }
-        : h
-      )
-      setStore(STORE_KEYS.BPB_HISTORY, next)
-      return next
-    })
+    persistHistory(history.map(h => h.id === editTarget.id ? { ...h, items: newItems, catatan: editCatatan } : h))
+    refresh()
     setEditTarget(null)
+  }
+
+  function confirmDelete() {
+    const entry = history.find(h => h.id === deleteId)
+    if (entry) {
+      restoreBpbStock(entry)
+      persistHistory(history.filter(h => h.id !== entry.id))
+      refresh()
+    }
+    setDeleteId(null)
   }
 
   return (
@@ -298,17 +292,19 @@ export default function WarehouseIssuePage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600 hover:text-green-800" title="Print BC 1.2" onClick={() => window.open(`/warehouse/issue/print?id=${h.id}`, '_blank')}>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600 hover:text-green-800" title="Cetak Bukti Pengeluaran" onClick={() => window.open(`/warehouse/issue/print?id=${encodeURIComponent(h.id)}`, '_blank')}>
                           <Printer className="h-3.5 w-3.5" />
                         </Button>
-                        {history.find(e => e.id === h.id) && (
-                          <Button size="icon" variant="ghost" className="h-7 w-7 text-blue-500 hover:text-blue-700" onClick={() => openEdit(h)}>
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
+                        {history.some(e => e.id === h.id) && (
+                          <>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-blue-500 hover:text-blue-700" title="Edit qty" onClick={() => openEdit(h)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-700" title="Hapus & kembalikan stok" onClick={() => setDeleteId(h.id)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
                         )}
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-700" onClick={() => setDeleteId(h.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -559,20 +555,7 @@ export default function WarehouseIssuePage() {
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteId(null)}>Batal</Button>
-            <Button variant="destructive" onClick={() => {
-              const entry = history.find(h => h.id === deleteId)
-              if (entry) {
-                entry.items.forEach(item => {
-                  if (item.qty > 0) addStock(item.materialCode, item.materialName, item.qty, entry.id, 'BPB_DELETE', 'BB', item.satuan)
-                })
-              }
-              setHistory(prev => {
-                const next = prev.filter(h => h.id !== deleteId)
-                setStore(STORE_KEYS.BPB_HISTORY, next)
-                return next
-              })
-              setDeleteId(null)
-            }}>Hapus</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Hapus</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
