@@ -37,6 +37,10 @@ export interface PEBDocument {
   notes?: string
   createdAt: string
   createdBy: string
+  submittedAt?: string
+  submittedBy?: string
+  approvedAt?: string
+  approvedBy?: string
   history: Array<{ date: string; action: string; user: string; status: string }>
 }
 

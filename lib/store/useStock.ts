@@ -165,9 +165,23 @@ export function useStock() {
     setMovements([...currentMovements, newMovement])
   }, [])
 
+  // Cek kecukupan stok sebelum pengeluaran. Kode yang belum terdaftar di stok dianggap stok 0.
+  const getShortages = useCallback((needs: { code: string; qty: number }[]) => {
+    const current = getStore<StockItem>(STORE_KEYS.STOCK, SEED_STOCK)
+    const totals = new Map<string, number>()
+    needs.forEach(n => totals.set(n.code, (totals.get(n.code) || 0) + n.qty))
+    const shortages: { code: string; needed: number; available: number; registered: boolean }[] = []
+    totals.forEach((needed, code) => {
+      const item = current.find(s => s.materialCode === code)
+      const available = item ? item.qtyOnHand : 0
+      if (needed > available) shortages.push({ code, needed, available, registered: !!item })
+    })
+    return shortages
+  }, [])
+
   const getByCode = useCallback((code: string) => {
     return getStore<StockItem>(STORE_KEYS.STOCK, SEED_STOCK).find(s => s.materialCode === code)
   }, [])
 
-  return { stock, movements, addStock, deductStock, adjustStock, getByCode, refresh }
+  return { stock, movements, addStock, deductStock, adjustStock, getShortages, getByCode, refresh }
 }

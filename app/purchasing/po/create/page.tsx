@@ -146,8 +146,9 @@ export default function CreatePOPage() {
   const handlePrint = () => {
     const printWindow = window.open('', '_blank', 'width=800,height=900')
     if (!printWindow) return
+    const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     const html = `<!DOCTYPE html>
-<html><head><title>Purchase Order ${poNumber}</title>
+<html><head><title>Purchase Order ${esc(poNumber)}</title>
 <style>
   body { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 24px; }
   h2 { margin: 0; font-size: 18px; }
@@ -170,23 +171,23 @@ export default function CreatePOPage() {
 <body>
 <div class="header">
   <div><h2>PT. JKJ Indonesia</h2><div class="label">PURCHASE ORDER</div></div>
-  <div style="text-align:right"><b style="font-size:16px">${poNumber || '-'}</b><br/><span class="label">${today}</span></div>
+  <div style="text-align:right"><b style="font-size:16px">${esc(poNumber) || '-'}</b><br/><span class="label">${today}</span></div>
 </div>
 <div class="meta">
-  <div><div class="label">Tipe PO</div><b>${poType}</b></div>
-  <div><div class="label">Supplier</div><b>${supplier || '-'}</b></div>
-  <div><div class="label">Tanggal Pengiriman</div><b>${deliveryDate || '-'}</b></div>
-  <div><div class="label">Mata Uang</div><b>${currency}</b>${currency !== 'IDR' ? ` (Kurs: ${exchangeRate.toLocaleString('id-ID')})` : ''}</div>
+  <div><div class="label">Tipe PO</div><b>${esc(poType)}</b></div>
+  <div><div class="label">Supplier</div><b>${esc(supplier) || '-'}</b></div>
+  <div><div class="label">Tanggal Pengiriman</div><b>${esc(deliveryDate) || '-'}</b></div>
+  <div><div class="label">Mata Uang</div><b>${esc(currency)}</b>${currency !== 'IDR' ? ` (Kurs: ${exchangeRate.toLocaleString('id-ID')})` : ''}</div>
 </div>
 <table>
   <thead><tr><th>#</th><th>Kode Material</th><th>Nama Item</th><th>Qty</th><th>Satuan</th><th style="text-align:right">Harga Satuan</th><th style="text-align:right">Total</th></tr></thead>
   <tbody>
     ${items.map((item, i) => `<tr>
       <td>${i + 1}</td>
-      <td>${item.materialCode || '-'}</td>
-      <td>${item.name || '-'}</td>
+      <td>${esc(item.materialCode) || '-'}</td>
+      <td>${esc(item.name) || '-'}</td>
       <td>${item.qty}</td>
-      <td>${item.unit}</td>
+      <td>${esc(item.unit)}</td>
       <td style="text-align:right">${currencySymbol} ${item.price.toLocaleString('id-ID')}</td>
       <td style="text-align:right">${currencySymbol} ${(item.qty * item.price).toLocaleString('id-ID')}</td>
     </tr>`).join('')}
@@ -199,7 +200,7 @@ export default function CreatePOPage() {
   <div class="summary-row"><span>PPN 12%</span><span>Rp ${ppn.toLocaleString('id-ID')}</span></div>
   <div class="total-row"><span>Total Tagihan</span><span>Rp ${grandTotalCalc.toLocaleString('id-ID')}</span></div>
 </div>
-${notes ? `<div style="margin-top:16px"><div class="label">Catatan</div><div>${notes}</div></div>` : ''}
+${notes ? `<div style="margin-top:16px"><div class="label">Catatan</div><div>${esc(notes)}</div></div>` : ''}
 <div class="signatures">
   ${['Purchase', 'Accounting', 'Manager', 'Direktur Utama'].map(role => `<div class="sig-box"><div class="sig-label">${role}</div><div class="sig-space"></div><div class="sig-label">Nama &amp; Tanggal</div></div>`).join('')}
 </div>

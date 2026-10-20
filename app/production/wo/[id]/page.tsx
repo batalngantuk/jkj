@@ -59,7 +59,7 @@ export default function WorkOrderDetailPage() {
   const params = useParams()
   const id = params.id as string
   const { getById, updateWorkOrder } = useWorkOrders()
-  const { deductStock } = useStock()
+  const { deductStock, getShortages } = useStock()
   const { updateOrder } = useSalesOrders()
   const wo = getById(id)
 
@@ -77,13 +77,16 @@ export default function WorkOrderDetailPage() {
   }
 
   const bom = MOCK_BOMS.find(b => b.id === wo.bomId)
+  // Salinan non-undefined untuk dipakai di fungsi bersarang (TS tidak mempersempit `wo` di dalamnya)
+  const woId = wo.id
+  const woBbItems = wo.bbItems
 
   // Edit BOM state (only for manual bbItems when no official BOM)
   const [editBOMOpen, setEditBOMOpen] = useState(false)
   const [editBOMItems, setEditBOMItems] = useState<{ code: string; name: string; qty: number; unit: string }[]>([])
 
   function openEditBOM() {
-    setEditBOMItems(wo.bbItems?.map(i => ({ ...i })) || [{ code: '', name: '', qty: 0, unit: 'kg' }])
+    setEditBOMItems(woBbItems?.map(i => ({ ...i })) || [{ code: '', name: '', qty: 0, unit: 'kg' }])
     setEditBOMOpen(true)
   }
 
@@ -93,7 +96,7 @@ export default function WorkOrderDetailPage() {
 
   function saveBOM() {
     const valid = editBOMItems.filter(i => i.code && i.name)
-    updateWorkOrder(wo.id, { bbItems: valid })
+    updateWorkOrder(woId, { bbItems: valid })
     setEditBOMOpen(false)
   }
 
@@ -106,14 +109,14 @@ export default function WorkOrderDetailPage() {
     const updated = worksheetSteps.map(s => s.id === stepId
       ? { ...s, status: 'done' as const, doneBy: wsOperator[stepId] || 'Operator', doneAt: new Date().toISOString().split('T')[0], notes: wsNotes[stepId] || '' }
       : s)
-    updateWorkOrder(wo.id, { worksheetSteps: updated })
+    updateWorkOrder(woId, { worksheetSteps: updated })
   }
 
   function markStepPending(stepId: string) {
     const updated = worksheetSteps.map(s => s.id === stepId
       ? { ...s, status: 'pending' as const, doneBy: undefined, doneAt: undefined }
       : s)
-    updateWorkOrder(wo.id, { worksheetSteps: updated })
+    updateWorkOrder(woId, { worksheetSteps: updated })
   }
 
   const wsProgress = Math.round((worksheetSteps.filter(s => s.status === 'done').length / worksheetSteps.length) * 100)
@@ -169,15 +172,15 @@ export default function WorkOrderDetailPage() {
               const Icon = action.icon
               const handleAction = () => {
                 if (action.label === 'Mulai Produksi') {
-                  if (bom) {
-                    bom.items.forEach(item => {
-                      deductStock(item.code, item.quantityPerUnit * wo.quantity, wo.id, 'WO', 'PRODUCTION_OUT', `satuan:${item.unit}`)
-                    })
-                  } else if (wo.bbItems?.length) {
-                    wo.bbItems.forEach(item => {
-                      deductStock(item.code, item.qty * wo.quantity, wo.id, 'WO', 'PRODUCTION_OUT', `satuan:${item.unit}`)
-                    })
+                  const needs = bom
+                    ? bom.items.map(item => ({ code: item.code, qty: item.quantityPerUnit * wo.quantity, unit: item.unit }))
+                    : (wo.bbItems || []).map(item => ({ code: item.code, qty: item.qty * wo.quantity, unit: item.unit }))
+                  const shortages = getShortages(needs)
+                  if (shortages.length > 0) {
+                    const detail = shortages.map(sh => `- ${sh.code}: butuh ${sh.needed.toLocaleString('id-ID')}, tersedia ${sh.available.toLocaleString('id-ID')}${sh.registered ? '' : ' (kode belum terdaftar di stok)'}`).join('\n')
+                    if (!window.confirm(`Stok bahan baku tidak mencukupi:\n${detail}\n\nLanjutkan mulai produksi? Stok akan dikurangi sebatas yang tersedia dan laporan bisa tidak akurat.`)) return
                   }
+                  needs.forEach(n => deductStock(n.code, n.qty, wo.id, 'WO', 'PRODUCTION_OUT', `satuan:${n.unit}`))
                   updateWorkOrder(wo.id, { status: 'IN PROGRESS', progress: 0 })
                 }
                 else if (action.label === 'Selesai → QC') updateWorkOrder(wo.id, { status: 'QC INSPECTION', progress: 90 })

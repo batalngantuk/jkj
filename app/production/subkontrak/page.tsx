@@ -94,7 +94,7 @@ interface BBItem { kodeBB: string; namaBB: string; qty: number; satuan: string; 
 export default function SubkontrakPage() {
   const { records, createSubkon, updateSubkon } = useSubkontrak()
   const { createReceipt: createFGReceipt } = useFGReceipts()
-  const { addStock, deductStock } = useStock()
+  const { addStock, deductStock, getShortages } = useStock()
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [selectedRecord, setSelectedRecord] = useState<SubkonRecord | null>(null)
   const [showFormDialog, setShowFormDialog] = useState(false)
@@ -236,6 +236,11 @@ export default function SubkontrakPage() {
 
   function handleConfirmKirim() {
     if (!kirimTarget) return
+    const shortages = getShortages(kirimTarget.items.filter(i => i.qtyKirim > 0).map(i => ({ code: i.kodeBB, qty: i.qtyKirim })))
+    if (shortages.length > 0) {
+      const detail = shortages.map(sh => `- ${sh.code}: kirim ${sh.needed.toLocaleString('id-ID')}, tersedia ${sh.available.toLocaleString('id-ID')}${sh.registered ? '' : ' (kode belum terdaftar di stok)'}`).join('\n')
+      if (!window.confirm(`Stok bahan baku tidak mencukupi:\n${detail}\n\nLanjutkan kirim BB ke subkon?`)) return
+    }
     const isAdditional = kirimTarget.status === 'BB Dikirim' || kirimTarget.status === 'Dalam Proses'
     updateSubkon(kirimTarget.id, {
       status: isAdditional ? 'Dalam Proses' : 'BB Dikirim',

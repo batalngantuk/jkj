@@ -70,10 +70,10 @@ export default function PEBDetailPage() {
     formEFile: null,
     healthCertFile: null,
     notes: livePeb.notes || '',
-    submittedAt: '',
-    submittedBy: '',
-    approvedAt: '',
-    approvedBy: '',
+    submittedAt: livePeb.submittedAt || '',
+    submittedBy: livePeb.submittedBy || '',
+    approvedAt: livePeb.approvedAt || '',
+    approvedBy: livePeb.approvedBy || '',
   }
 
 
@@ -128,7 +128,7 @@ export default function PEBDetailPage() {
 
   const handleSubmit = async () => {
     setLoading(true)
-    updatePEB(livePeb.id, { status: 'SUBMITTED' })
+    updatePEB(livePeb.id, { status: 'SUBMITTED', submittedAt: new Date().toISOString(), submittedBy: 'Staff Ekspor' })
     setTimeout(() => setLoading(false), 400)
   }
 

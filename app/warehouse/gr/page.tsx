@@ -38,30 +38,30 @@ import { useRouter } from 'next/navigation'
 export default function GoodsReceiptPage() {
   const { addStock } = useStock()
   const router = useRouter()
-  const [deliveredQty, setDeliveredQty] = useState({
+  const [deliveredQty, setDeliveredQty] = useState<Record<string, any>>({
     'LAT-001': 10000,
     'LAT-002': 4950,
   })
 
-  const [qualityStatus, setQualityStatus] = useState({
+  const [qualityStatus, setQualityStatus] = useState<Record<string, any>>({
     'LAT-001': 'Passed',
     'LAT-002': 'Passed',
   })
 
-  const [storageLocation, setStorageLocation] = useState({
+  const [storageLocation, setStorageLocation] = useState<Record<string, any>>({
     'LAT-001': 'Bin A-01',
     'LAT-002': 'Bin A-02',
   })
 
   const [temperature, setTemperature] = useState('25')
-  const [inspectionChecks, setInspectionChecks] = useState({
+  const [inspectionChecks, setInspectionChecks] = useState<Record<string, any>>({
     packaging: true,
     contamination: true,
     labeling: true,
     documentation: true,
   })
   const [sampledForLab, setSampledForLab] = useState(false)
-  const [uploads, setUploads] = useState({
+  const [uploads, setUploads] = useState<Record<string, any>>({
     deliveryNote: null,
     qualityPhotos: null,
     weightTicket: null,
@@ -84,13 +84,13 @@ export default function GoodsReceiptPage() {
     },
   ]
 
-  const calculateVariance = (code) => {
+  const calculateVariance = (code: string) => {
     const qty = deliveredQty[code] || 0
     const poQty = items.find((i) => i.code === code)?.poQty || 0
     return qty - poQty
   }
 
-  const getVarianceColor = (variance) => {
+  const getVarianceColor = (variance: number) => {
     if (variance === 0) return 'text-green-600 bg-green-50'
     if (variance < 0) return 'text-yellow-600 bg-yellow-50'
     return 'text-blue-600 bg-blue-50'
@@ -101,7 +101,7 @@ export default function GoodsReceiptPage() {
   const totalVariance = totalReceived - totalOrdered
   const variancePercent = ((totalVariance / totalOrdered) * 100).toFixed(2)
 
-  const handleFileUpload = (field, file) => {
+  const handleFileUpload = (field: string, file: File | null | undefined) => {
     if (file) {
       setUploads((prev) => ({
         ...prev,
@@ -387,7 +387,7 @@ export default function GoodsReceiptPage() {
                   <Checkbox
                     id="sampled"
                     checked={sampledForLab}
-                    onCheckedChange={setSampledForLab}
+                    onCheckedChange={(v) => setSampledForLab(v === true)}
                   />
                   <label htmlFor="sampled" className="text-sm font-semibold text-foreground">
                     Sampled for lab test

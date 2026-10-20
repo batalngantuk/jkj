@@ -26,7 +26,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import AppLayout from '@/components/app-layout'
-import { StatusTimeline } from '@/components/shared/status-timeline'
+import { StatusTimeline, type TimelineStep } from '@/components/shared/status-timeline'
 import { DocumentUpload, type Document } from '@/components/purchasing/document-upload'
 
 // BC 2.0 Status Types
@@ -80,7 +80,7 @@ const MOCK_BC20_DETAIL = {
     billNumber: 'VB-PIB-001234-2026',
     amount: 787500000,
     dueDate: '2026-03-31',
-    status: 'PENDING' as const,
+    status: 'PENDING' as 'PENDING' | 'PAID',
     paidAmount: 0,
     remainingAmount: 787500000,
   },
@@ -92,11 +92,12 @@ const MOCK_BC20_DETAIL = {
     pph22: 20668750,
     totalAmount: 151000000,
     dueDate: '2026-03-08',
-    status: 'PENDING' as const,
+    status: 'PENDING' as 'PENDING' | 'PAID',
     paidAmount: 0,
     remainingAmount: 151000000,
   },
   taxPaymentStatus: 'PENDING' as TaxPaymentStatus,
+  sppbNumber: null as string | null,
 
   // Items
   items: [
@@ -270,29 +271,34 @@ export default function BC20DetailPage() {
     }
   }
 
-  const statusSteps = [
+  const statusSteps: TimelineStep[] = [
     {
+      id: '1',
       label: 'Draft',
-      status: 'complete' as const,
+      status: 'completed' as const,
       date: new Date(bc20.createdAt).toLocaleDateString('id-ID')
     },
     {
+      id: '2',
       label: 'Submitted',
-      status: bc20.submittedAt ? 'complete' as const : 'pending' as const,
+      status: bc20.submittedAt ? 'completed' as const : 'upcoming' as const,
       date: bc20.submittedAt ? new Date(bc20.submittedAt).toLocaleDateString('id-ID') : undefined
     },
     {
+      id: '3',
       label: 'Tax Payment',
-      status: taxPaid || bc20.taxPaymentStatus === 'PAID' ? 'complete' as const :
-              bc20.status === 'TAX_PAYMENT_PENDING' ? 'current' as const : 'pending' as const,
+      status: taxPaid || bc20.taxPaymentStatus === 'PAID' ? 'completed' as const :
+              bc20.status === 'TAX_PAYMENT_PENDING' ? 'current' as const : 'upcoming' as const,
     },
     {
+      id: '4',
       label: 'Customs Released',
-      status: bc20.status === 'CUSTOMS_RELEASED' || bc20.status === 'RECEIVED' || bc20.status === 'COMPLETED' ? 'complete' as const : 'pending' as const,
+      status: bc20.status === 'CUSTOMS_RELEASED' || bc20.status === 'RECEIVED' || bc20.status === 'COMPLETED' ? 'completed' as const : 'upcoming' as const,
     },
     {
+      id: '5',
       label: 'Goods Received',
-      status: bc20.status === 'RECEIVED' || bc20.status === 'COMPLETED' ? 'complete' as const : 'pending' as const,
+      status: bc20.status === 'RECEIVED' || bc20.status === 'COMPLETED' ? 'completed' as const : 'upcoming' as const,
     }
   ]
 
