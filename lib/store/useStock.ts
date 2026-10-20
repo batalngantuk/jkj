@@ -90,7 +90,7 @@ export function useStock() {
     }
 
     const newMovement: StockMovement = {
-      id: `MOV-${Date.now()}`,
+      id: `MOV-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       date: new Date().toISOString().split('T')[0],
       materialCode, materialName,
       transactionType: category === 'FG' ? 'FG_IN' : category === 'WIP' ? 'WIP_IN' : 'IMPORT',
@@ -119,7 +119,7 @@ export function useStock() {
       : s)
 
     const newMovement: StockMovement = {
-      id: `MOV-${Date.now()}`,
+      id: `MOV-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       date: new Date().toISOString().split('T')[0],
       materialCode, materialName: item.materialName,
       transactionType: txType,
@@ -148,7 +148,7 @@ export function useStock() {
       : s)
 
     const newMovement: StockMovement = {
-      id: `MOV-ADJ-${Date.now()}`,
+      id: `MOV-ADJ-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       date: new Date().toISOString().split('T')[0],
       materialCode, materialName: item.materialName,
       transactionType: 'ADJUSTMENT',
