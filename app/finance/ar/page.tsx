@@ -70,10 +70,11 @@ export default function ARPage() {
 
   const savePay = () => {
     if (!payTarget) return
-    const amount = parseInt(payForm.nominal.replace(/\D/g, '')) || 0
+    const amount = parseFloat(payForm.nominal.replace(/[^0-9.]/g, '')) || 0
     if (amount <= 0) return
     const newPaid = payTarget.paidAmount + amount
-    const newBalance = Math.max(0, payTarget.totalAmount - newPaid)
+    const rawBalance = Math.max(0, Math.round((payTarget.totalAmount - newPaid) * 100) / 100)
+    const newBalance = rawBalance < 1 ? 0 : rawBalance
     let newStatus: ARInvoice['status'] = payTarget.status
     if (newBalance === 0) {
       newStatus = 'PAID'
@@ -332,10 +333,10 @@ export default function ARPage() {
               <Input
                 placeholder="0"
                 value={payForm.nominal}
-                onChange={e => setPayForm(p => ({ ...p, nominal: e.target.value.replace(/\D/g, '') }))}
+                onChange={e => setPayForm(p => ({ ...p, nominal: e.target.value.replace(/[^0-9.]/g, '') }))}
               />
               <p className="text-xs text-muted-foreground">
-                Rp {parseInt(payForm.nominal || '0').toLocaleString('id-ID')}
+                Rp {(parseFloat(payForm.nominal) || 0).toLocaleString('id-ID')}
               </p>
             </div>
 

@@ -75,10 +75,11 @@ export default function APPage() {
 
   const savePay = () => {
     if (!payTarget) return
-    const amount = parseInt(payForm.nominal.replace(/\D/g, '')) || 0
+    const amount = parseFloat(payForm.nominal.replace(/[^0-9.]/g, '')) || 0
     if (amount <= 0) return
     const newPaid = payTarget.paidAmount + amount
-    const newBalance = Math.max(0, payTarget.totalAmount - newPaid)
+    const rawBalance = Math.max(0, Math.round((payTarget.totalAmount - newPaid) * 100) / 100)
+    const newBalance = rawBalance < 1 ? 0 : rawBalance
     const newStatus: APInvoice['status'] = newBalance === 0 ? 'PAID' : 'SCHEDULED'
     updateInvoice(payTarget.id, { paidAmount: newPaid, balance: newBalance, status: newStatus })
     setPayDialog(false)
@@ -347,10 +348,10 @@ export default function APPage() {
               <Input
                 placeholder="0"
                 value={payForm.nominal}
-                onChange={e => setPayForm(p => ({ ...p, nominal: e.target.value.replace(/\D/g, '') }))}
+                onChange={e => setPayForm(p => ({ ...p, nominal: e.target.value.replace(/[^0-9.]/g, '') }))}
               />
               <p className="text-xs text-muted-foreground">
-                Rp {parseInt(payForm.nominal || '0').toLocaleString('id-ID')}
+                Rp {(parseFloat(payForm.nominal) || 0).toLocaleString('id-ID')}
               </p>
             </div>
 
